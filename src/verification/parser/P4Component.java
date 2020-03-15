@@ -1,6 +1,6 @@
 package verification.parser;
 
-import net.sf.json.JSONObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class P4Component extends Node {
 
@@ -10,10 +10,9 @@ class P4Program extends P4Component {
 	Node declarations;
 	
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		JSONObject declarations = object.getJSONObject(JsonKeyName.DECLARATIONS);
-		this.declarations = Parser.jsonParse(declarations);
+		this.declarations = Parser.jsonParse(object.get(JsonKeyName.DECLARATIONS));
 		addChild(this.declarations);
 		return true;
 	}
@@ -32,14 +31,14 @@ class P4Parser extends P4Component {
 	Node states;        // parse states
 	
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		name = object.getString(JsonKeyName.NAME);
-		type = Parser.jsonParse(object.getJSONObject(JsonKeyName.TYPE));
+		name = object.get(JsonKeyName.NAME).asText();
+		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
-		parserLocals = Parser.jsonParse(object.getJSONObject(JsonKeyName.PARSERLOCALS));
+		parserLocals = Parser.jsonParse(object.get(JsonKeyName.PARSERLOCALS));
 		addChild(parserLocals);
-		states = Parser.jsonParse(object.getJSONObject(JsonKeyName.STATES));
+		states = Parser.jsonParse(object.get(JsonKeyName.STATES));
 		addChild(states);
 		return true;
 	}
@@ -62,13 +61,13 @@ class ParserState extends P4Component {
 	Node selectExpression;
 	
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		name = object.getString(JsonKeyName.NAME);
-		components = Parser.jsonParse(object.getJSONObject(JsonKeyName.COMPONENTS));
+		name = object.get(JsonKeyName.NAME).asText();
+		components = Parser.jsonParse(object.get(JsonKeyName.COMPONENTS));
 		addChild(components);
-		if(object.containsKey(JsonKeyName.SELECTEXPRESSION)) {
-			selectExpression = Parser.jsonParse(object.getJSONObject(JsonKeyName.SELECTEXPRESSION));
+		if(object.has(JsonKeyName.SELECTEXPRESSION)) {
+			selectExpression = Parser.jsonParse(object.get(JsonKeyName.SELECTEXPRESSION));
 			addChild(selectExpression);
 		}
 		else
@@ -87,11 +86,11 @@ class ParserState extends P4Component {
 }
 
 class P4Control extends P4Component {
-	@Override
-	boolean parse(JSONObject object) {
-		// TODO Auto-generated method stub
-		return super.parse(object);
-	}
+//	@Override
+//	boolean parse(JSONObject object) {
+//		// TODO Auto-generated method stub
+//		return super.parse(object);
+//	}
 }
 
 /* P4 actions */
@@ -106,9 +105,9 @@ class Method extends P4Component {
 class ParameterList extends P4Component {
 	Node parameters;
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		parameters = Parser.jsonParse(object.getJSONObject(JsonKeyName.PARAMETERS));
+		parameters = Parser.jsonParse(object.get(JsonKeyName.PARAMETERS));
 		addChild(parameters);
 		return true;
 	}
@@ -124,11 +123,11 @@ class Parameter extends P4Component {
 	String direction;
 	Node type;
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		name = object.getString(JsonKeyName.NAME);
-		direction = object.getString(JsonKeyName.DIRECTION);
-		type = Parser.jsonParse(object.getJSONObject(JsonKeyName.TYPE));
+		name = object.get(JsonKeyName.NAME).asText();
+		direction = object.get(JsonKeyName.DIRECTION).asText();
+		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
 		return true;
 	}
 	@Override

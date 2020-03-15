@@ -1,21 +1,16 @@
 package verification.parser;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
 public class Parser {
 	private String jsonFileName;
@@ -42,14 +37,27 @@ public class Parser {
 			getAllNodes(rootNode);
 			System.out.println("getAllNodes() ends");
 			System.out.println(allJsonNodes.size());
-			System.out.println(allJsonNodes.get(136));
-			HashSet<Integer> set = new HashSet<>();
-			for(Integer i : allJsonNodes.keySet()) {
-				set.add(i);
-//				System.out.println(i);
+			
+			//parse
+			Node program = jsonParse(rootNode);
+			System.out.println("jsonParse() ends");
+			
+			// for testing unhandled types
+			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
+					"Type_Bits", "Type_Name", "Path", "Type_Struct", "Type_Typedef",
+					"Parameter", "ParameterList", "PathExpression"};
+//			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
+//					"Type_Bits", "Type_Name", "Path", "Type_Struct", "Type_Typedef", 
+//					"Parameter", "ParameterList", "PathExpression"};
+			for(String str : handledTypes){
+				types.remove(str);
 			}
-			System.out.println(set.size());
-//			Node program = jsonParse(root)
+			System.out.println("######## Unhandled Types ########");
+			for(String type : types) {	
+				System.out.println(type);
+			}
+			System.out.println("######## Program ########");
+			System.out.println(program.p4_to_C());
 		}catch(JsonProcessingException e) {
 			e.printStackTrace();
 		}catch(IOException e) {
@@ -155,30 +163,31 @@ public class Parser {
 		}
 	}
 	
-	public static Node jsonParse(JSONObject object) {
-//		object = getJsonNode(object.get(JsonKeyName.NODE_ID).);
-//		String typeName = object.getString(JsonKeyName.NODE_TYPE);
+	public static Node jsonParse(JsonNode jsonNode) {
+		ObjectNode object = (ObjectNode)jsonNode;
+		object = getJsonNode(object.get(JsonKeyName.NODE_ID).asInt());
+		String typeName = object.get(JsonKeyName.NODE_TYPE).asText();
 ////		System.out.println(typeName);
-//		try{
-//			Node node;
-//			if(object.has(JsonKeyName.VEC)) {
-//				node = new TypeVector();
-//			}
-//			else {
-//				types.add(typeName);
-//				Class nodeClass = Class.forName("verification.parser."+typeName);
-//				node = (Node)nodeClass.newInstance();
-//			}
-////			System.out.println(object.getInt(JsonKeyName.NODE_ID));
-//			node.parse(object);
-//			return node;
-//		} catch (ClassNotFoundException e) {
-//			e.printStackTrace();
-//		} catch (IllegalAccessException e) {
-//			e.printStackTrace();
-//		} catch (InstantiationException e) {
-//			e.printStackTrace();
-//		}
+		try{
+			Node node;
+			if(object.has(JsonKeyName.VEC)) {
+				node = new TypeVector();
+			}
+			else {
+				types.add(typeName);
+				Class nodeClass = Class.forName("verification.parser."+typeName);
+				node = (Node)nodeClass.newInstance();
+			}
+//			System.out.println(object.getInt(JsonKeyName.NODE_ID));
+			node.parse(object);
+			return node;
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 	

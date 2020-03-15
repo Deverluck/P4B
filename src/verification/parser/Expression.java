@@ -1,6 +1,6 @@
 package verification.parser;
 
-import net.sf.json.JSONObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Expression extends Node {
 
@@ -21,9 +21,9 @@ class MethodCallExpression extends Expression {
 class PathExpression extends Expression {
 	Node path;
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		path = Parser.jsonParse(object.getJSONObject(JsonKeyName.PATH));
+		path = Parser.jsonParse(object.get(JsonKeyName.PATH));
 		addChild(path);
 		return true;
 	}
@@ -34,12 +34,12 @@ class PathExpression extends Expression {
 }
 
 class SelectExpression extends Expression {
-	@Override
-	boolean parse(JSONObject object) {
-		super.parse(object);
-		
-		return true;
-	}
+//	@Override
+//	boolean parse(JSONObject object) {
+//		super.parse(object);
+//		
+//		return true;
+//	}
 }
 
 class ExpressionValue extends Expression {

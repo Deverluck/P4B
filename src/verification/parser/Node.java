@@ -2,7 +2,7 @@ package verification.parser;
 
 import java.util.ArrayList;
 
-import net.sf.json.JSONObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Node {
 	int Node_ID;
@@ -21,10 +21,10 @@ public class Node {
 		children.add(child);
 	}
 	
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 //		System.out.println(object);
-		Node_ID = object.getInt(JsonKeyName.NODE_ID);
-		Node_Type = object.getString(JsonKeyName.NODE_TYPE);
+		Node_ID = object.get(JsonKeyName.NODE_ID).asInt();
+		Node_Type = object.get(JsonKeyName.NODE_TYPE).asText();
 		return true;
 	}
 	

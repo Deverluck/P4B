@@ -1,15 +1,15 @@
 package verification.parser;
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class TypeVector extends Node{
 	@Override
-	boolean parse(JSONObject object) {
-		// TODO Auto-generated method stub
-		JSONArray jsonArray = object.getJSONArray(JsonKeyName.VEC);
-		for(Object jsonobject : jsonArray.toArray()) {
-			Node node = Parser.jsonParse((JSONObject)jsonobject);
+	boolean parse(ObjectNode object) {
+		ArrayNode jsonArray = (ArrayNode)object.get(JsonKeyName.VEC);
+		for(Object jsonobject : jsonArray) {
+			Node node = Parser.jsonParse((JsonNode)jsonobject);
 			addChild(node);
 		}
 		return true;

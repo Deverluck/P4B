@@ -3,13 +3,13 @@ package verification.parser;
 import net.sf.json.JSONObject;
 
 public class BinaryOperator extends Node {
-	int left;
-	int right;
-	@Override
-	boolean parse(JSONObject object) {
-		// TODO Auto-generated method stub
-		return super.parse(object);
-	}
+//	int left;
+//	int right;
+//	@Override
+//	boolean parse(JSONObject object) {
+//		// TODO Auto-generated method stub
+//		return super.parse(object);
+//	}
 }
 
 class BAnd extends BinaryOperator {

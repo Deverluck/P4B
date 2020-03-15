@@ -1,6 +1,6 @@
 package verification.parser;
 
-import net.sf.json.JSONObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Type extends Node {
 	String name;
@@ -10,10 +10,10 @@ class Type_Bits extends Type {
 	int size;
 	boolean isSigned;
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		size = object.getInt(JsonKeyName.SIZE);
-		isSigned = object.getBoolean(JsonKeyName.ISSIGNED);
+		size = object.get(JsonKeyName.SIZE).asInt();
+		isSigned = object.get(JsonKeyName.ISSIGNED).asBoolean();
 		return true;
 	}
 }
@@ -42,9 +42,9 @@ class Type_Name extends Type {
 	Node path;
 	
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		path = Parser.jsonParse(object.getJSONObject(JsonKeyName.PATH));
+		path = Parser.jsonParse(object.get(JsonKeyName.PATH));
 		addChild(path);
 		return true;
 	}
@@ -62,10 +62,10 @@ class Type_Struct extends Type {
 	Node fields;
 	
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		name = object.getString(JsonKeyName.NAME);
-		fields = Parser.jsonParse(object.getJSONObject(JsonKeyName.FIELDs));
+		name = object.get(JsonKeyName.NAME).asText();
+		fields = Parser.jsonParse(object.get(JsonKeyName.FIELDs));
 		return true;
 	}
 }
@@ -78,10 +78,10 @@ class Type_Typedef extends Type {
 	Node type;
 	
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		name = object.getString(JsonKeyName.NAME);
-		type = Parser.jsonParse(object.getJSONObject(JsonKeyName.TYPE));
+		name = object.get(JsonKeyName.NAME).asText();
+		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
 		return true;
 	}
@@ -97,9 +97,9 @@ class Type_Error extends Type {
 
 class Type_Extern extends Type {
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		name = object.getString(JsonKeyName.NAME);
+		name = object.get(JsonKeyName.NAME).asText();
 		return true;
 	}
 	@Override
@@ -113,10 +113,10 @@ class Type_Extern extends Type {
 // Header
 class Type_Header extends Type {
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		name = object.getString(JsonKeyName.NAME);
-		Node child = Parser.jsonParse(object.getJSONObject(JsonKeyName.FIELDs));
+		name = object.get(JsonKeyName.NAME).asText();
+		Node child = Parser.jsonParse(object.get(JsonKeyName.FIELDs));
 		addChild(child);
 		return true;
 	}
@@ -130,10 +130,10 @@ class Type_Parser extends Type {
 	Node applyParams;
 	
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		name = object.getString(JsonKeyName.NAME);
-		applyParams = Parser.jsonParse(object.getJSONObject(JsonKeyName.APPLYPARAMS));
+		name = object.get(JsonKeyName.NAME).asText();
+		applyParams = Parser.jsonParse(object.get(JsonKeyName.APPLYPARAMS));
 		return true;
 	}
 	
@@ -144,12 +144,4 @@ class Type_Parser extends Type {
 		}
 		return "";
 	}
-	
-//	@Override
-//	String p4_to_C() {
-//		String code = name+"()(";
-//		
-//		code += ")";
-//		return name+"()";
-//	}
 }

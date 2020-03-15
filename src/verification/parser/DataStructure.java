@@ -1,6 +1,6 @@
 package verification.parser;
 
-import net.sf.json.JSONObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class DataStructure extends Node{
 
@@ -31,10 +31,10 @@ class StructField extends DataStructure {
 	Node type;
 	
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		name = object.getString(JsonKeyName.NAME);
-		type = Parser.jsonParse(object.getJSONObject(JsonKeyName.TYPE));
+		name = object.get(JsonKeyName.NAME).asText();
+		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
 		return true;
 	}
@@ -56,10 +56,10 @@ class Path extends DataStructure {
 	String name;
 	boolean absolute;
 	@Override
-	boolean parse(JSONObject object) {
+	boolean parse(ObjectNode object) {
 		super.parse(object);
-		name = object.getString(JsonKeyName.NAME);
-		absolute = object.getBoolean(JsonKeyName.ABSOLUTE);
+		name = object.get(JsonKeyName.NAME).asText();
+		absolute = object.get(JsonKeyName.ABSOLUTE).asBoolean();
 		return true;
 	}
 	@Override
