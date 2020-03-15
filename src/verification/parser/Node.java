@@ -21,15 +21,18 @@ public class Node {
 		children.add(child);
 	}
 	
-	boolean parse(ObjectNode object) {
+	void parse(ObjectNode object) {
 //		System.out.println(object);
 		Node_ID = object.get(JsonKeyName.NODE_ID).asInt();
 		Node_Type = object.get(JsonKeyName.NODE_TYPE).asText();
-		return true;
 	}
 	
 	String p4_to_C() {
 		return "";
+	}
+	
+	String p4_to_C(String arg) {
+		return p4_to_C();
 	}
 	
 	boolean isVector() {

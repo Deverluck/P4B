@@ -1,15 +1,15 @@
 package verification.parser;
 
-import net.sf.json.JSONObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class BinaryOperator extends Node {
-//	int left;
-//	int right;
-//	@Override
-//	boolean parse(JSONObject object) {
-//		// TODO Auto-generated method stub
-//		return super.parse(object);
-//	}
+	int left;
+	int right;
+	@Override
+	void parse(ObjectNode object) {
+		// TODO Auto-generated method stub
+		super.parse(object);
+	}
 }
 
 class BAnd extends BinaryOperator {

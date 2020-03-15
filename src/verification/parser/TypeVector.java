@@ -6,13 +6,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class TypeVector extends Node{
 	@Override
-	boolean parse(ObjectNode object) {
+	void parse(ObjectNode object) {
 		ArrayNode jsonArray = (ArrayNode)object.get(JsonKeyName.VEC);
 		for(Object jsonobject : jsonArray) {
 			Node node = Parser.jsonParse((JsonNode)jsonobject);
 			addChild(node);
 		}
-		return true;
 	}
 	
 	@Override
@@ -40,7 +39,7 @@ public class TypeVector extends Node{
 		String code = "(";
 		int size = children.size();
 		int cnt = 0;
-		System.out.println(size);
+//		System.out.println(size);
 		for(Node node : children) {
 			cnt += 1;
 			code += node.p4_to_C();

@@ -15,7 +15,19 @@ class Declaration_Variable extends DataStructure {
 }
 
 class Constant extends DataStructure {
-	
+	int value;
+	int base;
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		value = object.get(JsonKeyName.VALUE).asInt();
+		base = object.get(JsonKeyName.BASE).asInt();
+	}
+	@Override
+	String p4_to_C() {
+		String code = value+"";
+		return code;
+	}
 }
 
 class BoolLiteral extends DataStructure {
@@ -31,12 +43,11 @@ class StructField extends DataStructure {
 	Node type;
 	
 	@Override
-	boolean parse(ObjectNode object) {
+	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
 		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
-		return true;
 	}
 }
 
@@ -56,11 +67,10 @@ class Path extends DataStructure {
 	String name;
 	boolean absolute;
 	@Override
-	boolean parse(ObjectNode object) {
+	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
 		absolute = object.get(JsonKeyName.ABSOLUTE).asBoolean();
-		return true;
 	}
 	@Override
 	String p4_to_C() {

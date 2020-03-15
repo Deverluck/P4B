@@ -31,6 +31,8 @@ public class Parser {
 		ObjectMapper mapper = new ObjectMapper();
 		File file = new File(filename);
 		try {
+			long startTime = System.currentTimeMillis();
+			
 			System.out.println("parse:");
 			System.out.println("####################");
 			ObjectNode rootNode = (ObjectNode)mapper.readTree(file);
@@ -45,7 +47,9 @@ public class Parser {
 			// for testing unhandled types
 			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
 					"Type_Bits", "Type_Name", "Path", "Type_Struct", "Type_Typedef",
-					"Parameter", "ParameterList", "PathExpression"};
+					"Parameter", "ParameterList", "PathExpression", "Member", "P4Parser", "Type_Parser",
+					"MethodCallStatement", "MethodCallExpression", "Constant", "ParserState",
+					"Type_Control"};
 //			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
 //					"Type_Bits", "Type_Name", "Path", "Type_Struct", "Type_Typedef", 
 //					"Parameter", "ParameterList", "PathExpression"};
@@ -58,6 +62,9 @@ public class Parser {
 			}
 			System.out.println("######## Program ########");
 			System.out.println(program.p4_to_C());
+			
+			long endTime = System.currentTimeMillis(); 
+			System.out.println("程序运行时间：" + (endTime - startTime) + "ms");
 		}catch(JsonProcessingException e) {
 			e.printStackTrace();
 		}catch(IOException e) {
@@ -175,7 +182,7 @@ public class Parser {
 			}
 			else {
 				types.add(typeName);
-				Class nodeClass = Class.forName("verification.parser."+typeName);
+				Class<?> nodeClass = Class.forName("verification.parser."+typeName);
 				node = (Node)nodeClass.newInstance();
 			}
 //			System.out.println(object.getInt(JsonKeyName.NODE_ID));

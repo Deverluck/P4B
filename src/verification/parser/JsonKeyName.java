@@ -20,4 +20,18 @@ public class JsonKeyName {
 	public static final String PARAMETERS = "parameters";
 	public static final String DIRECTION = "direction";
 	public static final String SELECTEXPRESSION = "selectExpression";
+	public static final String MEMBER = "member";
+	public static final String EXPR = "expr";
+	public static final String PARSERSTATE = "parserState";
+	public static final String SELECT = "select";
+	public static final String VALUE = "value";
+	public static final String BASE = "base";
+	public static final String SELECTCASES = "selectCases";
+	public static final String KEYSET = "keyset";
+	public static final String STATE = "state";
+	public static final String DEFAULTEXPRESSION = "DefaultExpression";
+	public static final String METHODCALL = "methodCall";
+	public static final String METHOD = "method";
+	public static final String ARGUMENTS = "arguments";
+	public static final String TYPEARGUMENTS = "typeArguments";
 }

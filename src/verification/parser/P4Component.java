@@ -10,11 +10,10 @@ class P4Program extends P4Component {
 	Node declarations;
 	
 	@Override
-	boolean parse(ObjectNode object) {
+	void parse(ObjectNode object) {
 		super.parse(object);
 		this.declarations = Parser.jsonParse(object.get(JsonKeyName.DECLARATIONS));
 		addChild(this.declarations);
-		return true;
 	}
 	
 	@Override
@@ -31,7 +30,7 @@ class P4Parser extends P4Component {
 	Node states;        // parse states
 	
 	@Override
-	boolean parse(ObjectNode object) {
+	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
 		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
@@ -40,12 +39,12 @@ class P4Parser extends P4Component {
 		addChild(parserLocals);
 		states = Parser.jsonParse(object.get(JsonKeyName.STATES));
 		addChild(states);
-		return true;
 	}
 	
 	@Override
 	String p4_to_C() {
 		String code = "void "+name;
+		// Type_Parser is unable by default
 		type.setEnable();
 		code += type.p4_to_C();
 		code += "{\n	start();\n}\n";
@@ -61,7 +60,7 @@ class ParserState extends P4Component {
 	Node selectExpression;
 	
 	@Override
-	boolean parse(ObjectNode object) {
+	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
 		components = Parser.jsonParse(object.get(JsonKeyName.COMPONENTS));
@@ -73,24 +72,37 @@ class ParserState extends P4Component {
 		else
 			selectExpression = null;
 //		addChild(selectExpression);
-		return true;
 	}
 	@Override
 	String p4_to_C() {
 		String code = "void "+name+"(){\n";
+		code += components.p4_to_C();
 		if(selectExpression != null)
-			code += selectExpression.p4_to_C();
+			code += selectExpression.p4_to_C(JsonKeyName.PARSERSTATE);
 		code += "}\n";
 		return code;
 	}
 }
 
 class P4Control extends P4Component {
-//	@Override
-//	boolean parse(JSONObject object) {
-//		// TODO Auto-generated method stub
-//		return super.parse(object);
-//	}
+	String name;
+	Node type;
+	
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		name = object.get(JsonKeyName.NAME).asText();
+		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
+	}
+	
+	@Override
+	String p4_to_C() {
+		type.setEnable();
+		String code = "void "+name;
+		code += type.p4_to_C();
+		code += "{}\n";
+		return code;
+	}
 }
 
 /* P4 actions */
@@ -105,11 +117,10 @@ class Method extends P4Component {
 class ParameterList extends P4Component {
 	Node parameters;
 	@Override
-	boolean parse(ObjectNode object) {
+	void parse(ObjectNode object) {
 		super.parse(object);
 		parameters = Parser.jsonParse(object.get(JsonKeyName.PARAMETERS));
 		addChild(parameters);
-		return true;
 	}
 	@Override
 	String p4_to_C() {
@@ -123,12 +134,11 @@ class Parameter extends P4Component {
 	String direction;
 	Node type;
 	@Override
-	boolean parse(ObjectNode object) {
+	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
 		direction = object.get(JsonKeyName.DIRECTION).asText();
 		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
-		return true;
 	}
 	@Override
 	String p4_to_C() {
