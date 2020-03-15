@@ -8,5 +8,8 @@
 	<classpathentry kind="lib" path="E:/Programs/Java/p4/json-lib/commons-logging.jar"/>
 	<classpathentry kind="lib" path="E:/Programs/Java/p4/json-lib/ezmorph-1.0.6.jar"/>
 	<classpathentry kind="lib" path="E:/Programs/Java/p4/json-lib/json-lib-2.4-jdk15.jar"/>
+	<classpathentry kind="lib" path="Jackson_jar/jackson-annotations-2.10.3.jar"/>
+	<classpathentry kind="lib" path="Jackson_jar/jackson-core-2.10.3.jar"/>
+	<classpathentry kind="lib" path="Jackson_jar/jackson-databind-2.10.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
