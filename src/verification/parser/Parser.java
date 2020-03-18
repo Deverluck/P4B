@@ -44,12 +44,14 @@ public class Parser {
 			Node program = jsonParse(rootNode);
 			System.out.println("jsonParse() ends");
 			
+			// "Type_Struct", "Type_Typedef",
 			// for testing unhandled types
 			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
-					"Type_Bits", "Type_Name", "Path", "Type_Struct", "Type_Typedef",
+					"Type_Bits", "Type_Name", "Path", 
 					"Parameter", "ParameterList", "PathExpression", "Member", "P4Parser", "Type_Parser",
 					"MethodCallStatement", "MethodCallExpression", "Constant", "ParserState",
-					"Type_Control"};
+					"Type_Control", "BlockStatement", "AssignmentStatement", "Add", "Sub", "LAnd", "LOr",
+					"BAnd", "BOr", "BXor", "Geq", "Leq", "LAnd", "LOr", "Shl", "Shr", "Mul"};
 //			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
 //					"Type_Bits", "Type_Name", "Path", "Type_Struct", "Type_Typedef", 
 //					"Parameter", "ParameterList", "PathExpression"};
