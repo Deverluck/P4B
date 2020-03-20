@@ -32,25 +32,33 @@ class MethodCallExpression extends Expression {
 		super.parse(object);
 		method = Parser.jsonParse(object.get(JsonKeyName.METHOD));
 		ArrayNode arguments_node = (ArrayNode)object.get(JsonKeyName.ARGUMENTS).get(JsonKeyName.VEC);
-		for(JsonNode node : arguments_node) {
-			arguments.add(Parser.jsonParse(node));
+		if(arguments_node != null) {
+			for(JsonNode node : arguments_node) {
+				arguments.add(Parser.jsonParse(node));
+			}
 		}
 		ArrayNode typeArguments_node = (ArrayNode)object.get(JsonKeyName.TYPEARGUMENTS).get(JsonKeyName.VEC);
-		for(JsonNode node : typeArguments_node) {
-			typeArguments.add(Parser.jsonParse(node));
+		if(typeArguments_node != null) {
+			for(JsonNode node : typeArguments_node) {
+				typeArguments.add(Parser.jsonParse(node));
+			}
 		}
 	}
 	@Override
 	String p4_to_C() {
 		String code = method.p4_to_C()+"(";
 		int cnt = 0;
-		for(Node node : arguments) {
-			cnt++;
-			code += node.p4_to_C();
-			if(cnt < arguments.size())
-				code += ", ";
+		if(!arguments.isEmpty()) {
+			for(Node node : arguments) {
+//				System.out.println(code);
+				cnt++;
+				code += node.p4_to_C();
+				if(cnt < arguments.size())
+					code += ", ";
+			}
 		}
-		code = code + ");\n";
+//		code = code + ");\n";
+		code = code + ")";
 		return code;
 	}
 }
@@ -158,7 +166,17 @@ class SelectExpression extends Expression {
 }
 
 class ExpressionValue extends Expression {
-	
+	Node expression;
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		expression = Parser.jsonParse(object.get(JsonKeyName.EXPRESSION));
+	}
+	@Override
+	String p4_to_C() {
+		// TODO Auto-generated method stub
+		return super.p4_to_C();
+	}
 }
 
 class Slice extends Expression {
@@ -184,4 +202,8 @@ class Member extends Expression {
 		code = expr.p4_to_C()+"."+code;
 		return code;
 	}
+}
+
+class ListExpression extends Expression {
+	
 }

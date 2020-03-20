@@ -35,6 +35,11 @@ public class Node {
 		return p4_to_C();
 	}
 	
+	// for declaring structs and important instances
+	String p4_to_C_preprocess() {
+		return "";
+	}
+	
 	boolean isVector() {
 		return false;
 	}

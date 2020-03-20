@@ -41,7 +41,35 @@ class EmptyStatement extends Statement {
 }
 
 class IfStatement extends Statement {
-	
+	Node condition;
+	Node ifTrue;
+	Node ifFalse;
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		condition = Parser.jsonParse(object.get(JsonKeyName.CONDITION));
+		ifTrue = Parser.jsonParse(object.get(JsonKeyName.IFTRUE));
+		if(object.has(JsonKeyName.IFFALSE)) {
+			ifFalse = Parser.jsonParse(object.get(JsonKeyName.IFFALSE));
+		}
+		else {
+			ifFalse = null;
+		}
+	}
+	@Override
+	String p4_to_C() {
+		String code = "if(";
+		code += condition.p4_to_C();
+		code += "){\n";
+		code += ifTrue.p4_to_C();
+		code += "}\n";
+		if(ifFalse != null) {
+			code += "else {\n";
+			code += ifFalse.p4_to_C();
+			code += "}\n";
+		}
+		return code;
+	}
 }
 
 class MethodCallStatement extends Statement {
@@ -53,7 +81,7 @@ class MethodCallStatement extends Statement {
 	}
 	@Override
 	String p4_to_C() {
-		return methodCall.p4_to_C();
+		return methodCall.p4_to_C()+";\n";
 	}
 }
 

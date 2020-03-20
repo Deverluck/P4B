@@ -51,7 +51,8 @@ public class Parser {
 					"Parameter", "ParameterList", "PathExpression", "Member", "P4Parser", "Type_Parser",
 					"MethodCallStatement", "MethodCallExpression", "Constant", "ParserState",
 					"Type_Control", "BlockStatement", "AssignmentStatement", "Add", "Sub", "LAnd", "LOr",
-					"BAnd", "BOr", "BXor", "Geq", "Leq", "LAnd", "LOr", "Shl", "Shr", "Mul"};
+					"BAnd", "BOr", "BXor", "Geq", "Leq", "LAnd", "LOr", "Shl", "Shr", "Mul", "LNot",
+					"IfStatement", "ActionListElement"};
 //			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
 //					"Type_Bits", "Type_Name", "Path", "Type_Struct", "Type_Typedef", 
 //					"Parameter", "ParameterList", "PathExpression"};

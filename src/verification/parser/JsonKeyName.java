@@ -38,4 +38,12 @@ public class JsonKeyName {
 	public static final String NODE_ID = "Node_ID";
 	public static final String LEFT = "left";
 	public static final String RIGHT = "right";
+	public static final String CONDITION = "condition";
+	public static final String IFTRUE = "ifTrue";
+	public static final String IFFALSE = "ifFalse";
+	public static final String PROPERTIES = "properties";
+	public static final String KEYELEMENTS = "keyElements";
+	public static final String MATCHTYPE = "matchType";
+	public static final String EXPRESSION = "expression";
+	public static final String ACTIONLIST = "actionList";
 }
