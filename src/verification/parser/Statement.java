@@ -11,7 +11,7 @@ class BlockStatement extends Statement {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		components = Parser.jsonParse(object.get(JsonKeyName.COMPONENTS));
+		components = Parser.getInstance().jsonParse(object.get(JsonKeyName.COMPONENTS));
 	}
 	@Override
 	String p4_to_C() {
@@ -26,8 +26,8 @@ class AssignmentStatement extends Statement {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		left = Parser.jsonParse(object.get(JsonKeyName.LEFT));
-		right = Parser.jsonParse(object.get(JsonKeyName.RIGHT));
+		left = Parser.getInstance().jsonParse(object.get(JsonKeyName.LEFT));
+		right = Parser.getInstance().jsonParse(object.get(JsonKeyName.RIGHT));
 	}
 	@Override
 	String p4_to_C() {
@@ -47,10 +47,10 @@ class IfStatement extends Statement {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		condition = Parser.jsonParse(object.get(JsonKeyName.CONDITION));
-		ifTrue = Parser.jsonParse(object.get(JsonKeyName.IFTRUE));
+		condition = Parser.getInstance().jsonParse(object.get(JsonKeyName.CONDITION));
+		ifTrue = Parser.getInstance().jsonParse(object.get(JsonKeyName.IFTRUE));
 		if(object.has(JsonKeyName.IFFALSE)) {
-			ifFalse = Parser.jsonParse(object.get(JsonKeyName.IFFALSE));
+			ifFalse = Parser.getInstance().jsonParse(object.get(JsonKeyName.IFFALSE));
 		}
 		else {
 			ifFalse = null;
@@ -77,7 +77,7 @@ class MethodCallStatement extends Statement {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		methodCall = Parser.jsonParse(object.get(JsonKeyName.METHODCALL));
+		methodCall = Parser.getInstance().jsonParse(object.get(JsonKeyName.METHODCALL));
 	}
 	@Override
 	String p4_to_C() {

@@ -36,7 +36,7 @@ class Type_Control extends Type {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		applyParams = Parser.jsonParse(object.get(JsonKeyName.APPLYPARAMS));
+		applyParams = Parser.getInstance().jsonParse(object.get(JsonKeyName.APPLYPARAMS));
 	}
 	
 	@Override
@@ -58,7 +58,7 @@ class Type_Name extends Type {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		path = Parser.jsonParse(object.get(JsonKeyName.PATH));
+		path = Parser.getInstance().jsonParse(object.get(JsonKeyName.PATH));
 		addChild(path);
 	}
 	@Override
@@ -78,7 +78,7 @@ class Type_Struct extends Type {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		fields = Parser.jsonParse(object.get(JsonKeyName.FIELDs));
+		fields = Parser.getInstance().jsonParse(object.get(JsonKeyName.FIELDs));
 	}
 }
 
@@ -93,7 +93,7 @@ class Type_Typedef extends Type {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
 	}
 }
@@ -126,7 +126,7 @@ class Type_Header extends Type {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		Node child = Parser.jsonParse(object.get(JsonKeyName.FIELDs));
+		Node child = Parser.getInstance().jsonParse(object.get(JsonKeyName.FIELDs));
 		addChild(child);
 	}
 }
@@ -142,7 +142,7 @@ class Type_Parser extends Type {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		applyParams = Parser.jsonParse(object.get(JsonKeyName.APPLYPARAMS));
+		applyParams = Parser.getInstance().jsonParse(object.get(JsonKeyName.APPLYPARAMS));
 	}
 	
 	@Override

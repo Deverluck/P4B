@@ -16,16 +16,28 @@ public class Parser {
 	private String jsonFileName;
 	static HashSet<String> types;
 	static HashMap<Integer, ObjectNode> allJsonNodes;
+	private static Parser instance;
+	public static Parser getInstance() {
+		if(instance == null) {
+			instance = new Parser();
+		}
+		return instance;
+	}
 	
-	public Parser(String filename) {
-		jsonFileName = filename;
+	private Parser() {
 		types = new HashSet<>();
 		allJsonNodes = new HashMap<>();
 	}
 	
-	public void parse() {
-		parse(jsonFileName);
-	}
+//	public Parser(String filename) {
+//		jsonFileName = filename;
+//		types = new HashSet<>();
+//		allJsonNodes = new HashMap<>();
+//	}
+	
+//	public void parse() {
+//		parse(jsonFileName);
+//	}
 	
 	public void parse(String filename) {
 		ObjectMapper mapper = new ObjectMapper();
@@ -173,7 +185,7 @@ public class Parser {
 		}
 	}
 	
-	public static Node jsonParse(JsonNode jsonNode) {
+	public  Node jsonParse(JsonNode jsonNode) {
 		ObjectNode object = (ObjectNode)jsonNode;
 		object = getJsonNode(object.get(JsonKeyName.NODE_ID).asInt());
 		String typeName = object.get(JsonKeyName.NODE_TYPE).asText();

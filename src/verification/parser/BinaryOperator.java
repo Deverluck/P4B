@@ -8,8 +8,8 @@ public class BinaryOperator extends Node {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		left = Parser.jsonParse(object.get(JsonKeyName.LEFT));
-		right = Parser.jsonParse(object.get(JsonKeyName.RIGHT));
+		left = Parser.getInstance().jsonParse(object.get(JsonKeyName.LEFT));
+		right = Parser.getInstance().jsonParse(object.get(JsonKeyName.RIGHT));
 	}
 }
 

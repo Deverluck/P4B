@@ -46,7 +46,7 @@ class StructField extends DataStructure {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
 	}
 }

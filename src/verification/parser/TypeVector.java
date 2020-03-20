@@ -9,7 +9,7 @@ public class TypeVector extends Node{
 	void parse(ObjectNode object) {
 		ArrayNode jsonArray = (ArrayNode)object.get(JsonKeyName.VEC);
 		for(Object jsonobject : jsonArray) {
-			Node node = Parser.jsonParse((JsonNode)jsonobject);
+			Node node = Parser.getInstance().jsonParse((JsonNode)jsonobject);
 			addChild(node);
 		}
 	}

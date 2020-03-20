@@ -16,7 +16,7 @@ class P4Program extends P4Component {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		this.declarations = Parser.jsonParse(object.get(JsonKeyName.DECLARATIONS));
+		this.declarations = Parser.getInstance().jsonParse(object.get(JsonKeyName.DECLARATIONS));
 		addChild(this.declarations);
 	}
 	
@@ -37,11 +37,11 @@ class P4Parser extends P4Component {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
-		parserLocals = Parser.jsonParse(object.get(JsonKeyName.PARSERLOCALS));
+		parserLocals = Parser.getInstance().jsonParse(object.get(JsonKeyName.PARSERLOCALS));
 		addChild(parserLocals);
-		states = Parser.jsonParse(object.get(JsonKeyName.STATES));
+		states = Parser.getInstance().jsonParse(object.get(JsonKeyName.STATES));
 		addChild(states);
 	}
 	
@@ -67,10 +67,10 @@ class ParserState extends P4Component {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		components = Parser.jsonParse(object.get(JsonKeyName.COMPONENTS));
+		components = Parser.getInstance().jsonParse(object.get(JsonKeyName.COMPONENTS));
 		addChild(components);
 		if(object.has(JsonKeyName.SELECTEXPRESSION)) {
-			selectExpression = Parser.jsonParse(object.get(JsonKeyName.SELECTEXPRESSION));
+			selectExpression = Parser.getInstance().jsonParse(object.get(JsonKeyName.SELECTEXPRESSION));
 			addChild(selectExpression);
 		}
 		else
@@ -98,9 +98,9 @@ class P4Control extends P4Component {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
-		controlLocals = Parser.jsonParse(object.get(JsonKeyName.CONTROLLOCALS));
-		body = Parser.jsonParse(object.get(JsonKeyName.BODY));
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
+		controlLocals = Parser.getInstance().jsonParse(object.get(JsonKeyName.CONTROLLOCALS));
+		body = Parser.getInstance().jsonParse(object.get(JsonKeyName.BODY));
 	}
 	
 	@Override
@@ -127,8 +127,8 @@ class P4Action extends P4Component {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		parameters = Parser.jsonParse(object.get(JsonKeyName.PARAMETERS));
-		body = Parser.jsonParse(object.get(JsonKeyName.BODY));
+		parameters = Parser.getInstance().jsonParse(object.get(JsonKeyName.PARAMETERS));
+		body = Parser.getInstance().jsonParse(object.get(JsonKeyName.BODY));
 	}
 	@Override
 	String p4_to_C() {
@@ -150,7 +150,7 @@ class ParameterList extends P4Component {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		parameters = Parser.jsonParse(object.get(JsonKeyName.PARAMETERS));
+		parameters = Parser.getInstance().jsonParse(object.get(JsonKeyName.PARAMETERS));
 		addChild(parameters);
 	}
 	@Override
@@ -169,7 +169,7 @@ class Parameter extends P4Component {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
 		direction = object.get(JsonKeyName.DIRECTION).asText();
-		type = Parser.jsonParse(object.get(JsonKeyName.TYPE));
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 	}
 	@Override
 	String p4_to_C() {
@@ -186,7 +186,7 @@ class P4Table extends P4Component {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		properties = Parser.jsonParse(object.get(JsonKeyName.PROPERTIES));
+		properties = Parser.getInstance().jsonParse(object.get(JsonKeyName.PROPERTIES));
 	}
 	@Override
 	String p4_to_C() {
@@ -212,7 +212,7 @@ class Property extends P4Component {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		value = Parser.jsonParse(object.get(JsonKeyName.VALUE));
+		value = Parser.getInstance().jsonParse(object.get(JsonKeyName.VALUE));
 	}
 	@Override
 	String p4_to_C() {
@@ -232,7 +232,7 @@ class TableProperties extends P4Component {
 		super.parse(object);
 		ArrayNode properties_node = (ArrayNode)object.get(JsonKeyName.PROPERTIES).get(JsonKeyName.VEC);
 		for(JsonNode property : properties_node) {
-			properties.add((Property)Parser.jsonParse(property));
+			properties.add((Property)Parser.getInstance().jsonParse(property));
 		}
 	}
 	@Override
@@ -254,7 +254,7 @@ class ActionList extends P4Component {
 		super.parse(object);
 		ArrayNode elements = (ArrayNode)object.get(JsonKeyName.ACTIONLIST).get(JsonKeyName.VEC);
 		for(JsonNode element : elements) {
-			actionList.add((ActionListElement)Parser.jsonParse(element));
+			actionList.add((ActionListElement)Parser.getInstance().jsonParse(element));
 		}
 	}
 	@Override
@@ -269,7 +269,7 @@ class ActionListElement extends P4Component {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		expression = Parser.jsonParse(object.get(JsonKeyName.EXPRESSION));
+		expression = Parser.getInstance().jsonParse(object.get(JsonKeyName.EXPRESSION));
 	}
 	@Override
 	String p4_to_C() {
@@ -290,8 +290,8 @@ class Key extends P4Component {
 		super.parse(object);
 		ArrayNode keyElements = (ArrayNode)object.get(JsonKeyName.KEYELEMENTS).get(JsonKeyName.VEC);
 		for(JsonNode keyElement : keyElements) {
-			expressions.add(Parser.jsonParse(keyElement.get(JsonKeyName.EXPRESSION)));
-			matchTypes.add(Parser.jsonParse(keyElement.get(JsonKeyName.MATCHTYPE)));
+			expressions.add(Parser.getInstance().jsonParse(keyElement.get(JsonKeyName.EXPRESSION)));
+			matchTypes.add(Parser.getInstance().jsonParse(keyElement.get(JsonKeyName.MATCHTYPE)));
 		}
 	}
 	@Override

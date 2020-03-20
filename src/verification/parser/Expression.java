@@ -30,17 +30,17 @@ class MethodCallExpression extends Expression {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		method = Parser.jsonParse(object.get(JsonKeyName.METHOD));
+		method = Parser.getInstance().jsonParse(object.get(JsonKeyName.METHOD));
 		ArrayNode arguments_node = (ArrayNode)object.get(JsonKeyName.ARGUMENTS).get(JsonKeyName.VEC);
 		if(arguments_node != null) {
 			for(JsonNode node : arguments_node) {
-				arguments.add(Parser.jsonParse(node));
+				arguments.add(Parser.getInstance().jsonParse(node));
 			}
 		}
 		ArrayNode typeArguments_node = (ArrayNode)object.get(JsonKeyName.TYPEARGUMENTS).get(JsonKeyName.VEC);
 		if(typeArguments_node != null) {
 			for(JsonNode node : typeArguments_node) {
-				typeArguments.add(Parser.jsonParse(node));
+				typeArguments.add(Parser.getInstance().jsonParse(node));
 			}
 		}
 	}
@@ -71,7 +71,7 @@ class PathExpression extends Expression {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		path = Parser.jsonParse(object.get(JsonKeyName.PATH));
+		path = Parser.getInstance().jsonParse(object.get(JsonKeyName.PATH));
 		addChild(path);
 	}
 	@Override
@@ -105,7 +105,7 @@ class SelectExpression extends Expression {
 		super.parse(object);
 		ArrayNode select_vec = (ArrayNode)object.get(JsonKeyName.SELECT).get(JsonKeyName.COMPONENTS).get(JsonKeyName.VEC);
 		for(JsonNode node : select_vec) {
-			select.add(Parser.jsonParse(node));
+			select.add(Parser.getInstance().jsonParse(node));
 		}
 		ArrayNode cases_vec = (ArrayNode)object.get(JsonKeyName.SELECTCASES).get(JsonKeyName.VEC);
 		for(JsonNode node : cases_vec) {
@@ -116,19 +116,19 @@ class SelectExpression extends Expression {
 				if(node.get(JsonKeyName.KEYSET).has(JsonKeyName.COMPONENTS)) {
 					ArrayNode tmpArrayNode = (ArrayNode)node.get(JsonKeyName.KEYSET).get(JsonKeyName.COMPONENTS).get(JsonKeyName.VEC);
 					for(JsonNode tmpJsonNode : tmpArrayNode)
-						list.add(Parser.jsonParse(tmpJsonNode));
+						list.add(Parser.getInstance().jsonParse(tmpJsonNode));
 				}
 				// single key
 				else {
-					list.add(Parser.jsonParse(node.get(JsonKeyName.KEYSET)));
+					list.add(Parser.getInstance().jsonParse(node.get(JsonKeyName.KEYSET)));
 					//TODO Add support for Mask
 				}
 				cases_value.add(list);
-				cases.add(Parser.jsonParse(node.get(JsonKeyName.STATE)));
+				cases.add(Parser.getInstance().jsonParse(node.get(JsonKeyName.STATE)));
 			}
 			// default
 			else
-				default_case = Parser.jsonParse(node.get(JsonKeyName.STATE));
+				default_case = Parser.getInstance().jsonParse(node.get(JsonKeyName.STATE));
 		}
 	}
 	@Override
@@ -170,7 +170,7 @@ class ExpressionValue extends Expression {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		expression = Parser.jsonParse(object.get(JsonKeyName.EXPRESSION));
+		expression = Parser.getInstance().jsonParse(object.get(JsonKeyName.EXPRESSION));
 	}
 	@Override
 	String p4_to_C() {
@@ -194,7 +194,7 @@ class Member extends Expression {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		member = object.get(JsonKeyName.MEMBER).asText();
-		expr = Parser.jsonParse(object.get(JsonKeyName.EXPR));
+		expr = Parser.getInstance().jsonParse(object.get(JsonKeyName.EXPR));
 	}
 	@Override
 	String p4_to_C() {

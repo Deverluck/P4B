@@ -15,7 +15,7 @@ class LNot extends UnaryOperator {
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
-		expr = Parser.jsonParse(object.get(JsonKeyName.EXPR));
+		expr = Parser.getInstance().jsonParse(object.get(JsonKeyName.EXPR));
 	}
 	@Override
 	String p4_to_C() {
