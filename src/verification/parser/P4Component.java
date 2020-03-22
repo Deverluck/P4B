@@ -101,6 +101,7 @@ class P4Control extends P4Component {
 		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 		controlLocals = Parser.getInstance().jsonParse(object.get(JsonKeyName.CONTROLLOCALS));
 		body = Parser.getInstance().jsonParse(object.get(JsonKeyName.BODY));
+		Parser.getInstance().addControl(this);
 	}
 	
 	@Override
@@ -113,6 +114,12 @@ class P4Control extends P4Component {
 		code += body.p4_to_C();
 		code += "}\n";
 		code += controlLocals.p4_to_C();
+		return code;
+	}
+	@Override
+	String declare() {
+		type.setEnable();
+		String code = "void "+name+" "+type.p4_to_C()+";\n";
 		return code;
 	}
 }
@@ -129,6 +136,7 @@ class P4Action extends P4Component {
 		name = object.get(JsonKeyName.NAME).asText();
 		parameters = Parser.getInstance().jsonParse(object.get(JsonKeyName.PARAMETERS));
 		body = Parser.getInstance().jsonParse(object.get(JsonKeyName.BODY));
+		Parser.getInstance().addAction(this);
 	}
 	@Override
 	String p4_to_C() {
@@ -139,8 +147,14 @@ class P4Action extends P4Component {
 		code += "}\n";
 		return code;
 	}
+	@Override
+	String declare() {
+		String code = "void "+name+parameters.p4_to_C()+";\n";
+		return code;
+	}
 }
 
+// important methods
 class Method extends P4Component {
 	
 }
@@ -187,19 +201,27 @@ class P4Table extends P4Component {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
 		properties = Parser.getInstance().jsonParse(object.get(JsonKeyName.PROPERTIES));
+		Parser.getInstance().addTable(this);
 	}
 	@Override
 	String p4_to_C() {
-		String code="// Table\n"+"void "+name+"();\n";
-		return p4_to_C_preprocess()+code;
+		String methodName = name+"_method";
+		String code="// Table\n"+"void "+methodName+"();\n";
+		code += name+".apply="+methodName+";\n";
+		return code;
 	}
 	@Override
 	String p4_to_C_preprocess() {
-		// TODO Auto-generated method stub
 		// declare struct for apply() function
-		String code = "typedef struct "+name+"_struct "+"{\n";
+		String code = "// Table declaration\n"+"typedef struct "+name+"_struct "+"{\n";
 		code += "	void (*apply)();\n";
-		code += "}"+name+";\n";
+		code += "}"+name+"_type"+";\n";
+		code += name+"_type"+" "+name+";\n";
+		return code;
+	}
+	@Override
+	String declare() {
+		String code = "void "+name+"_method();\n";
 		return code;
 	}
 }
@@ -299,4 +321,8 @@ class Key extends P4Component {
 		// TODO Auto-generated method stub
 		return super.p4_to_C();
 	}
+}
+
+class Mask extends P4Component {
+	
 }

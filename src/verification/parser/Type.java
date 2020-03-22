@@ -15,6 +15,10 @@ class Type_Bits extends Type {
 		size = object.get(JsonKeyName.SIZE).asInt();
 		isSigned = object.get(JsonKeyName.ISSIGNED).asBoolean();
 	}
+	@Override
+	String p4_to_C() {
+		return size+"";
+	}
 }
 
 class Type_Action extends Type {
@@ -72,13 +76,23 @@ class Type_Package extends Type {
 }
 
 class Type_Struct extends Type {
-	Node fields;
+	TypeVector fields;
 	
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		fields = Parser.getInstance().jsonParse(object.get(JsonKeyName.FIELDs));
+		fields = (TypeVector)Parser.getInstance().jsonParse(object.get(JsonKeyName.FIELDs));
+		Parser.getInstance().addStruct(this);
+	}
+	@Override
+	String declare() {
+		String code = "typedef struct {\n";
+		for(Node field : fields.children) {
+			code += field.p4_to_C()+";\n";
+		}
+		code += "} "+name+";\n";
+		return code;
 	}
 }
 
@@ -95,6 +109,13 @@ class Type_Typedef extends Type {
 		name = object.get(JsonKeyName.NAME).asText();
 		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
+		Parser.getInstance().addTypeDef(this);
+	}
+	@Override
+	String declare() {
+		// TODO support bits of any length
+		String code = "typedef uint64_t "+name+";\n";
+		return code;
 	}
 }
 

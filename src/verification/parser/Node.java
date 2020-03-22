@@ -40,6 +40,10 @@ public class Node {
 		return "";
 	}
 	
+	String declare() {
+		return "";
+	}
+	
 	boolean isVector() {
 		return false;
 	}

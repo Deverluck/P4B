@@ -49,6 +49,16 @@ class StructField extends DataStructure {
 		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
 	}
+	@Override
+	String p4_to_C() {
+		// TODO support bits for any length
+		String code = "";
+		if(type.Node_Type.equals("Type_Bits"))
+			code = "uint64_t "+name+": "+type.p4_to_C();
+		else if(type.Node_Type.equals("Type_Name"))
+			code = type.p4_to_C()+" "+name;
+		return code;
+	}
 }
 
 class Declaration_MatchKind extends DataStructure {

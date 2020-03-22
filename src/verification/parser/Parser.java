@@ -2,6 +2,7 @@ package verification.parser;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,10 +14,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Parser {
-	private String jsonFileName;
-	static HashSet<String> types;
-	static HashMap<Integer, ObjectNode> allJsonNodes;
+//	private String jsonFileName;
 	private static Parser instance;
+	private HashSet<String> types;
+	private HashMap<Integer, ObjectNode> allJsonNodes;
+	private ArrayList<P4Table> tables;
+	private ArrayList<P4Control> controls;
+	private ArrayList<P4Action> actions;
+	private ArrayList<Type_Struct> structs;
+	private ArrayList<Type_Typedef> typeDefinitions;
+	
 	public static Parser getInstance() {
 		if(instance == null) {
 			instance = new Parser();
@@ -27,6 +34,21 @@ public class Parser {
 	private Parser() {
 		types = new HashSet<>();
 		allJsonNodes = new HashMap<>();
+		tables = new ArrayList<>();
+		controls = new ArrayList<>();
+		actions = new ArrayList<>();
+		structs = new ArrayList<>();
+		typeDefinitions = new ArrayList<>();
+	}
+	
+	private void clear() {
+		types.clear();
+		allJsonNodes.clear();
+		tables.clear();
+		controls.clear();
+		actions.clear();
+		structs.clear();
+		typeDefinitions.clear();
 	}
 	
 //	public Parser(String filename) {
@@ -64,7 +86,7 @@ public class Parser {
 					"MethodCallStatement", "MethodCallExpression", "Constant", "ParserState",
 					"Type_Control", "BlockStatement", "AssignmentStatement", "Add", "Sub", "LAnd", "LOr",
 					"BAnd", "BOr", "BXor", "Geq", "Leq", "LAnd", "LOr", "Shl", "Shr", "Mul", "LNot",
-					"IfStatement", "ActionListElement"};
+					"IfStatement", "ActionListElement", "P4Action", "Type_Struct"};
 //			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
 //					"Type_Bits", "Type_Name", "Path", "Type_Struct", "Type_Typedef", 
 //					"Parameter", "ParameterList", "PathExpression"};
@@ -76,10 +98,13 @@ public class Parser {
 				System.out.println(type);
 			}
 			System.out.println("######## Program ########");
-			System.out.println(program.p4_to_C());
+			String code = declare()+preprocess()+program.p4_to_C();
+			System.out.println(code);
 			
 			long endTime = System.currentTimeMillis(); 
 			System.out.println("程序运行时间：" + (endTime - startTime) + "ms");
+			clear();
+//			System.out.println(tables.get(0).p4_to_C_preprocess());
 		}catch(JsonProcessingException e) {
 			e.printStackTrace();
 		}catch(IOException e) {
@@ -213,10 +238,63 @@ public class Parser {
 		return null;
 	}
 	
-	public static ObjectNode getJsonNode(int key) {
+	public ObjectNode getJsonNode(int key) {
 		if(allJsonNodes == null || !allJsonNodes.containsKey(key))
 			return null;
 		return allJsonNodes.get(key);
+	}
+	
+	public void addTable(P4Table table) {
+		tables.add(table);
+	}
+	
+	public void addControl(P4Control control) {
+		controls.add(control);
+	}
+	
+	public void addAction(P4Action action) {
+		actions.add(action);
+	}
+	
+	public void addStruct(Type_Struct struct) {
+		structs.add(struct);
+	}
+	
+	public void addTypeDef(Type_Typedef typeDef) {
+		typeDefinitions.add(typeDef);
+	}
+	
+	// declare struct for controls and tables
+	String preprocess() {
+		String code = "";
+		for(P4Control control : controls) {
+			code += control.p4_to_C_preprocess();
+		}
+		for(P4Table table : tables) {
+			code += table.p4_to_C_preprocess();
+		}
+		return code;
+	}
+	
+	// declare methods for controls, tables and actions
+	String declare() {
+		String code = "";
+		for(Type_Typedef typeDef : typeDefinitions) {
+			code += typeDef.declare();
+		}
+		for(Type_Struct struct : structs) {
+			code += struct.declare();
+		}
+		for(P4Control control : controls) {
+			code += control.declare();
+		}
+		for(P4Table table : tables) {
+			code += table.declare();
+		}
+		for(P4Action action : actions) {
+			code += action.declare();
+		}
+		return code;
 	}
 	
 //	public static JSONObject getJsonNode(JSONObject object) {
