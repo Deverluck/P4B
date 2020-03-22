@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Parser {
-//	private String jsonFileName;
 	private static Parser instance;
 	private HashSet<String> types;
 	private HashMap<Integer, ObjectNode> allJsonNodes;
@@ -51,16 +50,6 @@ public class Parser {
 		typeDefinitions.clear();
 	}
 	
-//	public Parser(String filename) {
-//		jsonFileName = filename;
-//		types = new HashSet<>();
-//		allJsonNodes = new HashMap<>();
-//	}
-	
-//	public void parse() {
-//		parse(jsonFileName);
-//	}
-	
 	public void parse(String filename) {
 		ObjectMapper mapper = new ObjectMapper();
 		File file = new File(filename);
@@ -78,7 +67,6 @@ public class Parser {
 			Node program = jsonParse(rootNode);
 			System.out.println("jsonParse() ends");
 			
-			// "Type_Struct", "Type_Typedef",
 			// for testing unhandled types
 			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
 					"Type_Bits", "Type_Name", "Path", 
@@ -87,9 +75,6 @@ public class Parser {
 					"Type_Control", "BlockStatement", "AssignmentStatement", "Add", "Sub", "LAnd", "LOr",
 					"BAnd", "BOr", "BXor", "Geq", "Leq", "LAnd", "LOr", "Shl", "Shr", "Mul", "LNot",
 					"IfStatement", "ActionListElement", "P4Action", "Type_Struct"};
-//			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
-//					"Type_Bits", "Type_Name", "Path", "Type_Struct", "Type_Typedef", 
-//					"Parameter", "ParameterList", "PathExpression"};
 			for(String str : handledTypes){
 				types.remove(str);
 			}
@@ -104,66 +89,11 @@ public class Parser {
 			long endTime = System.currentTimeMillis(); 
 			System.out.println("程序运行时间：" + (endTime - startTime) + "ms");
 			clear();
-//			System.out.println(tables.get(0).p4_to_C_preprocess());
 		}catch(JsonProcessingException e) {
 			e.printStackTrace();
 		}catch(IOException e) {
 			e.printStackTrace();
 		}
-//		File file = new File(filename);
-//		if(!file.exists()) {
-//			System.out.println("ERROR: File doesn't exist.");
-//			return;
-//		}
-//		System.out.println("parse:");
-//		System.out.println("####################");
-//		
-//		// Read json file
-//		BufferedReader bufferedReader;
-//		try{
-//			long startTime = System.currentTimeMillis();
-//			
-//			bufferedReader = new BufferedReader(new FileReader(file));
-//			StringBuffer stringBuffer = new StringBuffer();
-//			String tmpstr;
-//			while((tmpstr = bufferedReader.readLine())!=null) {
-//				stringBuffer.append(tmpstr);
-//			}
-//			bufferedReader.close();
-//			String res = stringBuffer.toString();
-////			JSONObject rootNode = JSONObject.fromObject(res);
-//			System.out.println("json file reading ends");
-//			
-//			long endTime = System.currentTimeMillis(); 
-//			System.out.println("程序运行时间：" + (endTime - startTime) + "ms");
-//			
-////			allJsonNodes.put(rootNode.getInt(JsonKeyName.NODE_ID), rootNode);
-////			getAllNodes(rootNode);
-////			System.out.println("getAllNodes() ends");
-////			System.out.println(allJsonNodes.size());
-////			System.out.println(allJsonNodes.get(136));
-//			
-//			// parse
-////			Node program = jsonParse(rootNode);
-////			System.out.println("jsonParse() ends");
-////			
-////			// for testing unhandled types
-////			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
-////					"Type_Bits", "Type_Name", "Path", "Type_Struct", "Type_Typedef", 
-////					"Parameter", "ParameterList", "PathExpression"};
-////			for(String str : handledTypes){
-////				types.remove(str);
-////			}
-////			System.out.println("######## Unhandled Types ########");
-////			for(String type : types) {	
-////				System.out.println(type);
-////			}
-////			System.out.println("######## Program ########");
-////			System.out.println(program.p4_to_C());
-//			
-//		} catch(IOException e) {
-//			e.printStackTrace();
-//		}
 	}
 	
 	// get all nodes from JSON file and update their attributes
@@ -180,11 +110,6 @@ public class Parser {
 					if(!node_at_id.has(key))
 						node_at_id.put(key, rootNode.get(key));
 				}
-//				for(String key : (Set<String>)rootNode.fieldNames()) {
-//					JSONObject node_at_id = allJsonNodes.get(id);
-//					if(!node_at_id.containsKey(key))
-//						node_at_id.put(key, rootNode.get(key));
-//				}
 			}
 			else {
 //				// add new node
@@ -214,7 +139,6 @@ public class Parser {
 		ObjectNode object = (ObjectNode)jsonNode;
 		object = getJsonNode(object.get(JsonKeyName.NODE_ID).asInt());
 		String typeName = object.get(JsonKeyName.NODE_TYPE).asText();
-////		System.out.println(typeName);
 		try{
 			Node node;
 			if(object.has(JsonKeyName.VEC)) {
@@ -225,7 +149,6 @@ public class Parser {
 				Class<?> nodeClass = Class.forName("verification.parser."+typeName);
 				node = (Node)nodeClass.newInstance();
 			}
-//			System.out.println(object.getInt(JsonKeyName.NODE_ID));
 			node.parse(object);
 			return node;
 		} catch (ClassNotFoundException e) {
@@ -296,9 +219,4 @@ public class Parser {
 		}
 		return code;
 	}
-	
-//	public static JSONObject getJsonNode(JSONObject object) {
-//		int id = object.getInt(JsonKeyName.NODE_ID);
-//		return getJsonNode(id);
-//	}
 }

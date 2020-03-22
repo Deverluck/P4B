@@ -39,7 +39,6 @@ public class TypeVector extends Node{
 		String code = "(";
 		int size = children.size();
 		int cnt = 0;
-//		System.out.println(size);
 		for(Node node : children) {
 			cnt += 1;
 			code += node.p4_to_C();
