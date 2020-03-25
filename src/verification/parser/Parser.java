@@ -20,74 +20,67 @@ public class Parser {
 	private ArrayList<P4Table> tables;
 	private ArrayList<P4Control> controls;
 	private ArrayList<P4Action> actions;
-	private ArrayList<Type_Struct> structs;
+	private HashMap<String, Type_Header> headers;
+	private HashMap<String, Type_Struct> structs;
 	private ArrayList<Type_Typedef> typeDefinitions;
-	
+
 	public static Parser getInstance() {
 		if(instance == null) {
 			instance = new Parser();
 		}
 		return instance;
 	}
-	
+
 	private Parser() {
 		types = new HashSet<>();
 		allJsonNodes = new HashMap<>();
 		tables = new ArrayList<>();
 		controls = new ArrayList<>();
 		actions = new ArrayList<>();
-		structs = new ArrayList<>();
+		headers = new HashMap<>();
+		structs = new HashMap<>();
 		typeDefinitions = new ArrayList<>();
 	}
-	
+
 	private void clear() {
 		types.clear();
 		allJsonNodes.clear();
 		tables.clear();
 		controls.clear();
 		actions.clear();
+		headers.clear();
 		structs.clear();
 		typeDefinitions.clear();
 	}
-	
+
 	public void parse(String filename) {
 		ObjectMapper mapper = new ObjectMapper();
 		File file = new File(filename);
 		try {
 			long startTime = System.currentTimeMillis();
-			
+
 			System.out.println("parse:");
 			System.out.println("####################");
 			ObjectNode rootNode = (ObjectNode)mapper.readTree(file);
 			getAllNodes(rootNode);
 			System.out.println("getAllNodes() ends");
-			System.out.println(allJsonNodes.size());
-			
+			System.out.println("total: "+allJsonNodes.size());
+
 			//parse
 			Node program = jsonParse(rootNode);
 			System.out.println("jsonParse() ends");
-			
-			// for testing unhandled types
-			String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "Type_Header", "StructField",
-					"Type_Bits", "Type_Name", "Path", 
-					"Parameter", "ParameterList", "PathExpression", "Member", "P4Parser", "Type_Parser",
-					"MethodCallStatement", "MethodCallExpression", "Constant", "ParserState",
-					"Type_Control", "BlockStatement", "AssignmentStatement", "Add", "Sub", "LAnd", "LOr",
-					"BAnd", "BOr", "BXor", "Geq", "Leq", "LAnd", "LOr", "Shl", "Shr", "Mul", "LNot",
-					"IfStatement", "ActionListElement", "P4Action", "Type_Struct"};
-			for(String str : handledTypes){
-				types.remove(str);
-			}
-			System.out.println("######## Unhandled Types ########");
-			for(String type : types) {	
-				System.out.println(type);
-			}
-			System.out.println("######## Program ########");
-			String code = declare()+preprocess()+program.p4_to_C();
-			System.out.println(code);
-			
-			long endTime = System.currentTimeMillis(); 
-			System.out.println("≥Ã–Ú‘À–– ±º‰£∫" + (endTime - startTime) + "ms");
+
+//			System.out.println("######## C Program ########");
+//			String C_code = p4_to_C(program);
+//			System.out.println(C_code);
+
+
+			String Boogie_code = p4_to_Boogie(program);
+			System.out.println("######## Boogie Program ########");
+			System.out.println(Boogie_code);
+
+			long endTime = System.currentTimeMillis();
+			System.out.println("Á®ãÂ∫èËøêË°åÊó∂Èó¥Ôºö" + (endTime - startTime) + "ms");
 			clear();
 		}catch(JsonProcessingException e) {
 			e.printStackTrace();
@@ -95,7 +88,7 @@ public class Parser {
 			e.printStackTrace();
 		}
 	}
-	
+
 	// get all nodes from JSON file and update their attributes
 	@SuppressWarnings("deprecation")
 	public void getAllNodes(ObjectNode rootNode) {
@@ -116,7 +109,7 @@ public class Parser {
 				allJsonNodes.put(id, rootNode);
 			}
 		}
-		
+
 		Iterator<String> keyset = rootNode.fieldNames();
 		while(keyset.hasNext()) {
 			String key = keyset.next();
@@ -134,7 +127,7 @@ public class Parser {
 			}
 		}
 	}
-	
+
 	public  Node jsonParse(JsonNode jsonNode) {
 		ObjectNode object = (ObjectNode)jsonNode;
 		object = getJsonNode(object.get(JsonKeyName.NODE_ID).asInt());
@@ -160,35 +153,64 @@ public class Parser {
 		}
 		return null;
 	}
-	
+
 	public ObjectNode getJsonNode(int key) {
 		if(allJsonNodes == null || !allJsonNodes.containsKey(key))
 			return null;
 		return allJsonNodes.get(key);
 	}
-	
+
 	public void addTable(P4Table table) {
 		tables.add(table);
 	}
-	
+
 	public void addControl(P4Control control) {
 		controls.add(control);
 	}
-	
+
 	public void addAction(P4Action action) {
 		actions.add(action);
 	}
-	
-	public void addStruct(Type_Struct struct) {
-		structs.add(struct);
+
+	public void addHeader(Type_Header header) {
+		if(!headers.containsKey(header.name))
+			headers.put(header.name, header);
 	}
-	
+
+	public void addStruct(Type_Struct struct) {
+		if(!structs.containsKey(struct.name))
+			structs.put(struct.name, struct);
+	}
+
 	public void addTypeDef(Type_Typedef typeDef) {
 		typeDefinitions.add(typeDef);
 	}
-	
+
+	String p4_to_C(Node program) {
+		// for testing unhandled types
+		String [] handledTypes = {"P4Program", "Type_Error", "Type_Extern", "StructField",
+			"Type_Bits", "Type_Name", "Path",
+			"Parameter", "ParameterList", "PathExpression", "Member", "P4Parser", "Type_Parser",
+			"MethodCallStatement", "MethodCallExpression", "Constant", "ParserState",
+			"Type_Control", "BlockStatement", "AssignmentStatement", "Add", "Sub", "LAnd", "LOr",
+			"BAnd", "BOr", "BXor", "Geq", "Leq", "LAnd", "LOr", "Shl", "Shr", "Mul", "LNot",
+			"IfStatement", "ActionListElement", "P4Action", "Type_Struct", "Type_Header",
+			"ConstructorCallExpression", "P4Control"};
+		for(String str : handledTypes){
+			types.remove(str);
+		}
+		System.out.println("######## Unhandled Types ########");
+		for(String type : types) {
+			System.out.println(type);
+		}
+//		System.out.println("######## Program ########");
+		String code = p4_to_C_declare()+p4_to_C_preprocess()+program.p4_to_C();
+//		System.out.println(code);
+		return code;
+	}
+
 	// declare struct for controls and tables
-	String preprocess() {
+	String p4_to_C_preprocess() {
 		String code = "";
 		for(P4Control control : controls) {
 			code += control.p4_to_C_preprocess();
@@ -196,17 +218,21 @@ public class Parser {
 		for(P4Table table : tables) {
 			code += table.p4_to_C_preprocess();
 		}
+		code += "//over\n";
 		return code;
 	}
-	
+
 	// declare methods for controls, tables and actions
-	String declare() {
+	String p4_to_C_declare() {
 		String code = "";
 		for(Type_Typedef typeDef : typeDefinitions) {
 			code += typeDef.declare();
 		}
-		for(Type_Struct struct : structs) {
-			code += struct.declare();
+		for(String key : headers.keySet()) {
+			code += headers.get(key).declare();
+		}
+		for(String key : structs.keySet()) {
+			code += structs.get(key).declare();
 		}
 		for(P4Control control : controls) {
 			code += control.declare();
@@ -217,6 +243,15 @@ public class Parser {
 		for(P4Action action : actions) {
 			code += action.declare();
 		}
+		return code;
+	}
+
+	String p4_to_Boogie(Node program) {
+		System.out.println("######## Unhandled Types ########");
+		for(String type : types) {
+			System.out.println(type);
+		}
+		String code = program.p4_to_Boogie();
 		return code;
 	}
 }

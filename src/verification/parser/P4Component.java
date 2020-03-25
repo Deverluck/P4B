@@ -12,17 +12,22 @@ public class P4Component extends Node {
 
 class P4Program extends P4Component {
 	Node declarations;
-	
+
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
 		this.declarations = Parser.getInstance().jsonParse(object.get(JsonKeyName.DECLARATIONS));
 		addChild(this.declarations);
 	}
-	
+
 	@Override
 	String p4_to_C() {
 		return declarations.p4_to_C();
+	}
+
+	@Override
+	String p4_to_Boogie() {
+		return declarations.p4_to_Boogie();
 	}
 }
 
@@ -32,7 +37,7 @@ class P4Parser extends P4Component {
 	Node type;
 	Node parserLocals;  // local variables
 	Node states;        // parse states
-	
+
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
@@ -44,10 +49,10 @@ class P4Parser extends P4Component {
 		states = Parser.getInstance().jsonParse(object.get(JsonKeyName.STATES));
 		addChild(states);
 	}
-	
+
 	@Override
 	String p4_to_C() {
-		String code = "// Parser \n"+"void "+name;
+		String code = "// Parser \n"+"void ";
 		// Type_Parser is unable by default
 		type.setEnable();
 		code += type.p4_to_C();
@@ -56,13 +61,20 @@ class P4Parser extends P4Component {
 		// TODO support local variables
 		return code;
 	}
+
+	String p4_to_Boogie() {
+		String code = "// Parser \n";
+		type.setEnable();
+		code += type.p4_to_Boogie();
+		return code;
+	}
 }
 
 class ParserState extends P4Component {
 	String name;
 	Node components;        // body
 	Node selectExpression;
-	
+
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
@@ -93,7 +105,7 @@ class P4Control extends P4Component {
 	Node type;
 	Node controlLocals;
 	Node body;
-	
+
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
@@ -103,12 +115,12 @@ class P4Control extends P4Component {
 		body = Parser.getInstance().jsonParse(object.get(JsonKeyName.BODY));
 		Parser.getInstance().addControl(this);
 	}
-	
+
 	@Override
 	String p4_to_C() {
 //		System.out.println(name);
 		type.setEnable();
-		String code = "// Control \n"+"void "+name;
+		String code = "// Control \n"+"void ";
 		code += type.p4_to_C();
 		code += "{\n";
 		code += body.p4_to_C();
@@ -129,7 +141,7 @@ class P4Action extends P4Component {
 	String name;
 	Node parameters;
 	Node body;
-	
+
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
@@ -156,7 +168,7 @@ class P4Action extends P4Component {
 
 // important methods
 class Method extends P4Component {
-	
+
 }
 
 class ParameterList extends P4Component {
@@ -171,6 +183,11 @@ class ParameterList extends P4Component {
 	String p4_to_C() {
 		parameters.setVectorType(JsonKeyName.PARAMETER);
 		return parameters.p4_to_C();
+	}
+	@Override
+	String p4_to_C(String arg) {
+		parameters.setVectorType(JsonKeyName.PARAMETER);
+		return parameters.p4_to_C(arg);
 	}
 }
 
@@ -189,6 +206,13 @@ class Parameter extends P4Component {
 	String p4_to_C() {
 		type.setEnable();
 		return type.p4_to_C()+" "+name;
+	}
+	@Override
+	String p4_to_C(String arg) {
+		if(arg.equals(JsonKeyName.METHODCALL)) {
+			return name;
+		}
+		return p4_to_C();
 	}
 }
 
@@ -229,7 +253,7 @@ class P4Table extends P4Component {
 class Property extends P4Component {
 	String name;  //  key/actions/size/default_action
 	Node value;
-	
+
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
@@ -324,5 +348,5 @@ class Key extends P4Component {
 }
 
 class Mask extends P4Component {
-	
+
 }

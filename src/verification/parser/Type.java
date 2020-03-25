@@ -46,7 +46,42 @@ class Type_Control extends Type {
 	@Override
 	String p4_to_C(){
 		if(enable) {
-			return applyParams.p4_to_C();
+			return name+applyParams.p4_to_C();
+		}
+		return "";
+	}
+	
+	@Override
+	String p4_to_C(String arg) {
+		if(enable && arg.equals(JsonKeyName.METHODCALL)) {
+			return name+applyParams.p4_to_C(arg);
+		}
+		return "";
+	}
+}
+
+class Type_Parser extends Type {
+	Node applyParams;
+	
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		name = object.get(JsonKeyName.NAME).asText();
+		applyParams = Parser.getInstance().jsonParse(object.get(JsonKeyName.APPLYPARAMS));
+	}
+	
+	@Override
+	String p4_to_C(){
+		if(enable) {
+			return name+applyParams.p4_to_C();
+		}
+		return "";
+	}
+	
+	@Override
+	String p4_to_C(String arg) {
+		if(enable && arg.equals(JsonKeyName.METHODCALL)) {
+			return name+applyParams.p4_to_C(arg);
 		}
 		return "";
 	}
@@ -85,6 +120,10 @@ class Type_Struct extends Type {
 		fields = (TypeVector)Parser.getInstance().jsonParse(object.get(JsonKeyName.FIELDs));
 		Parser.getInstance().addStruct(this);
 	}
+//	@Override
+//	String p4_to_C() {
+//		return name;
+//	}
 	@Override
 	String declare() {
 		String code = "typedef struct {\n";
@@ -143,36 +182,27 @@ class Type_Extern extends Type {
 
 // Header
 class Type_Header extends Type {
+	TypeVector fields;
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		Node child = Parser.getInstance().jsonParse(object.get(JsonKeyName.FIELDs));
-		addChild(child);
+		fields = (TypeVector)Parser.getInstance().jsonParse(object.get(JsonKeyName.FIELDs));
+		Parser.getInstance().addHeader(this);
+	}
+	@Override
+	String declare() {
+		String code = "typedef struct {\n";
+		for(Node field : fields.children) {
+			code += field.p4_to_C()+";\n";
+		}
+		code += "} "+name+";\n";
+		return code;
 	}
 }
 
 class Type_Enum extends Type {
 	
-}
-
-class Type_Parser extends Type {
-	Node applyParams;
-	
-	@Override
-	void parse(ObjectNode object) {
-		super.parse(object);
-		name = object.get(JsonKeyName.NAME).asText();
-		applyParams = Parser.getInstance().jsonParse(object.get(JsonKeyName.APPLYPARAMS));
-	}
-	
-	@Override
-	String p4_to_C(){
-		if(enable) {
-			return applyParams.p4_to_C();
-		}
-		return "";
-	}
 }
 
 class Type_Stack extends Type {

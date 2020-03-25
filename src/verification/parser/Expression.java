@@ -15,7 +15,18 @@ class TypeNameExpression extends Expression {
 }
 
 class ConstructorCallExpression extends Expression {
-	
+	Node type;
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
+	}
+	@Override
+	String p4_to_C() {
+		type.setEnable();
+		String code = type.p4_to_C(JsonKeyName.METHODCALL);
+		return code;
+	}
 }
 
 class MethodCallExpression extends Expression {
