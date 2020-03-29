@@ -290,12 +290,14 @@ public class Parser {
 	// ******************* Boogie **********************
 	String p4_to_Boogie_Header_isValid() {
 		String code = "\nvar isValid:<T>[T]bool;\n";
-		code += "procedure clear_isValid();\n";
+//		code += "function isValid<T>(header: T) returns (bool) { valid(header) }";
+		code += "procedure clear_valid();\n";
 		for(String name:headers.keySet()) {
 			code += "	ensures (forall header:"+name;
 			code += ":: isValid[header]==false);\n";
 		}
 		code += "	modifies isValid;\n";
+		addBoogieGlobalVariable("isValid");
 		return code;
 	}
 
@@ -350,7 +352,8 @@ public class Parser {
 	String p4_to_Boogie(Node program) {
 		System.out.println("######## Unhandled Types ########");
 		String [] handledTypes = {"Path", "Type_Name", "StructField", "Type_Struct",
-				"MethodCallStatement"};
+				"MethodCallStatement", "Constant", "MethodCallExpression", "Type_Header",
+				"P4Program", "Type_Typedef", "BlockStatement"};
 		HashSet<String> mytypes = new HashSet<>();
 		mytypes.addAll(types);
 		for(String str : handledTypes){
@@ -360,7 +363,7 @@ public class Parser {
 			System.out.println(type);
 		}
 		String code = program.p4_to_Boogie();
-		// Add map isValid and procedure clear_isValid()
+		// Add map isValid and procedure clear_valid()
 		code += p4_to_Boogie_Header_isValid();
 		code += p4_to_Boogie_extract();
 
@@ -374,7 +377,8 @@ public class Parser {
 		for(String name:procedures.keySet()) {
 			BoogieProcedure procedure = procedures.get(name);
 			for(String childName:procedure.childrenNames) {
-				procedures.get(childName).parents.add(procedure);
+				if(procedures.containsKey(childName))
+					procedures.get(childName).parents.add(procedure);
 			}
 		}
 		BoogieProcedureOperator bpo = new BoogieProcedureOperator();
@@ -407,13 +411,14 @@ public class Parser {
 	}
 
 	void addModifiedGlobalVariable(String var) {
-		if(currentProcedure!=null)
+		if(currentProcedure!=null && globalVariables.contains(var))
 			currentProcedure.updateModifies(var);
 	}
 
-//	void addBoogieGlobalVariable(String var) {
-//		globalVariables.add(var);
-//	}
+	void addBoogieGlobalVariable(String var) {
+		globalVariables.add(var);
+	}
+
 //
 //	void addModifiedGlobalVariable(String var) {
 //		if(globalVariables.contains(var))

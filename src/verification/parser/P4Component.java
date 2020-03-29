@@ -187,6 +187,28 @@ class P4Control extends P4Component {
 		String code = "void "+name+" "+type.p4_to_C()+";\n";
 		return code;
 	}
+
+	@Override
+	String p4_to_Boogie() {
+		BoogieProcedure procedure = new BoogieProcedure(name);
+		Parser.getInstance().setCurrentProcedure(procedure);
+		Parser.getInstance().addProcedure(procedure);
+
+		String declare = "\n// Control "+name+"\n";
+		//TODO Add parameters
+		declare += "procedure "+name+"()\n";
+		incIndent();
+		String body = "{\n";
+		body += this.body.p4_to_Boogie();
+		body += "}\n";
+		decIndent();
+
+		procedure.declare = declare;
+		procedure.body = body;
+		//TODO may be mistakes
+		controlLocals.p4_to_Boogie();
+		return "";
+	}
 }
 
 /* P4 actions */
@@ -216,6 +238,25 @@ class P4Action extends P4Component {
 	String p4_to_C_declare() {
 		String code = "void "+name+parameters.p4_to_C()+";\n";
 		return code;
+	}
+
+	@Override
+	String p4_to_Boogie() {
+		BoogieProcedure procedure = new BoogieProcedure(name);
+		Parser.getInstance().setCurrentProcedure(procedure);
+		Parser.getInstance().addProcedure(procedure);
+
+		String declare = "\n// Action "+name+"\n";
+		declare += "procedure "+name+"()\n";
+		incIndent();
+		String body = "{\n";
+		body += this.body.p4_to_Boogie();
+		body += "}\n";
+		decIndent();
+
+		procedure.declare = declare;
+		procedure.body = body;
+		return super.p4_to_Boogie();
 	}
 }
 
@@ -300,6 +341,24 @@ class P4Table extends P4Component {
 	String p4_to_C_declare() {
 		String code = "void "+name+"_method();\n";
 		return code;
+	}
+
+	@Override
+	String p4_to_Boogie() {
+		BoogieProcedure procedure = new BoogieProcedure(name);
+		Parser.getInstance().setCurrentProcedure(procedure);
+		Parser.getInstance().addProcedure(procedure);
+
+		String declare = "\n// Table "+name+"\n";
+		declare += "procedure "+name+".apply()\n";
+		incIndent();
+		String body = "{\n";
+		body += "}\n";
+		decIndent();
+
+		procedure.declare = declare;
+		procedure.body = body;
+		return "";
 	}
 }
 

@@ -56,13 +56,104 @@ class Type_Header extends Type {
 		code += "type "+name+";\n";
 		for(StructField field : fields) {
 //			Parser.getInstance().addBoogieGlobalVariable(name+"."+field.name);
-			code += "var "+name+"."+field.name+":["+name+"]"+field.p4_to_Boogie()+";\n";
+			String var = name+"."+field.name;
+			Parser.getInstance().addBoogieGlobalVariable(var);
+			code += "var "+var+":["+name+"]"+field.p4_to_Boogie()+";\n";
 		}
 		return code;
 	}
 	@Override
 	String getTypeName() {
 		return name;
+	}
+}
+
+class Type_Struct extends Type {
+	ArrayList<StructField> fields;
+//	TypeVector fields;
+
+	public Type_Struct() {
+		fields = new ArrayList<>();
+	}
+
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		name = object.get(JsonKeyName.NAME).asText();
+		ArrayNode field_array= (ArrayNode)object.get(JsonKeyName.FIELDs).get(JsonKeyName.VEC);
+		for(JsonNode field_node : field_array) {
+			fields.add((StructField)Parser.getInstance().jsonParse(field_node));
+		}
+//		fields = (TypeVector)Parser.getInstance().jsonParse(object.get(JsonKeyName.FIELDs));
+		Parser.getInstance().addStruct(this);
+	}
+
+//	@Override
+//	String p4_to_C() {
+//		return name;
+//	}
+
+	@Override
+	String p4_to_C_declare() {
+		String code = "typedef struct {\n";
+		for(Node field : fields) {
+			code += field.p4_to_C()+";\n";
+		}
+		code += "} "+name+";\n";
+		return code;
+	}
+
+	@Override
+	String p4_to_Boogie() {
+		// TODO field may be bv, header, typedef
+		String code = "\n// Struct "+name+"\n";
+		code += "type "+name+";\n";
+		for(StructField field : fields) {
+//			Parser.getInstance().addBoogieGlobalVariable(name+"."+field.name);
+			String var = name+"."+field.name;
+			Parser.getInstance().addBoogieGlobalVariable(var);
+			code += "var "+var+":["+name+"]"+field.p4_to_Boogie()+";\n";
+		}
+		return code;
+	}
+
+	@Override
+	String getTypeName() {
+		return name;
+	}
+}
+
+class Type_Typedef extends Type {
+	Node type;
+	int len;
+
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		name = object.get(JsonKeyName.NAME).asText();
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
+		addChild(type);
+		len = -1;
+		if(type instanceof Type_Bits) {
+			Type_Bits tb= (Type_Bits)type;
+			len = tb.size;
+		}
+		Parser.getInstance().addTypeDef(this);
+	}
+
+	@Override
+	String p4_to_C_declare() {
+		// TODO support bits of any length
+		String code = "typedef uint64_t "+name+";\n";
+		return code;
+	}
+
+	@Override
+	String p4_to_Boogie() {
+		String code = "type "+name+" = bv"+len+";\n";
+		if(len != -1)
+			return code;
+		return "";
 	}
 }
 
@@ -143,10 +234,6 @@ class Type_Parser extends Type {
 	}
 }
 
-class Type_Method extends Type {
-
-}
-
 class Type_Name extends Type {
 	Node path;
 	String name;
@@ -172,109 +259,6 @@ class Type_Name extends Type {
 	}
 }
 
-class Type_Package extends Type {
-
-}
-
-class Type_Struct extends Type {
-	ArrayList<StructField> fields;
-//	TypeVector fields;
-
-	public Type_Struct() {
-		fields = new ArrayList<>();
-	}
-
-	@Override
-	void parse(ObjectNode object) {
-		super.parse(object);
-		name = object.get(JsonKeyName.NAME).asText();
-		ArrayNode field_array= (ArrayNode)object.get(JsonKeyName.FIELDs).get(JsonKeyName.VEC);
-		for(JsonNode field_node : field_array) {
-			fields.add((StructField)Parser.getInstance().jsonParse(field_node));
-		}
-//		fields = (TypeVector)Parser.getInstance().jsonParse(object.get(JsonKeyName.FIELDs));
-		Parser.getInstance().addStruct(this);
-	}
-
-//	@Override
-//	String p4_to_C() {
-//		return name;
-//	}
-
-	@Override
-	String p4_to_C_declare() {
-		String code = "typedef struct {\n";
-		for(Node field : fields) {
-			code += field.p4_to_C()+";\n";
-		}
-		code += "} "+name+";\n";
-		return code;
-	}
-
-	@Override
-	String p4_to_Boogie() {
-		// TODO field may be bv, header, typedef
-		String code = "\n// Struct "+name+"\n";
-		code += "type "+name+";\n";
-		for(StructField field : fields) {
-//			Parser.getInstance().addBoogieGlobalVariable(name+"."+field.name);
-			code += "var "+name+"."+field.name+":["+name+"]"+field.p4_to_Boogie()+";\n";
-		}
-		return code;
-	}
-
-	@Override
-	String getTypeName() {
-		return name;
-	}
-}
-
-class Type_Table extends Type {
-
-}
-
-class Type_Typedef extends Type {
-	Node type;
-	int len;
-
-	@Override
-	void parse(ObjectNode object) {
-		super.parse(object);
-		name = object.get(JsonKeyName.NAME).asText();
-		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
-		addChild(type);
-		len = -1;
-		if(type instanceof Type_Bits) {
-			Type_Bits tb= (Type_Bits)type;
-			len = tb.size;
-		}
-		Parser.getInstance().addTypeDef(this);
-	}
-
-	@Override
-	String p4_to_C_declare() {
-		// TODO support bits of any length
-		String code = "typedef uint64_t "+name+";\n";
-		return code;
-	}
-
-	@Override
-	String p4_to_Boogie() {
-		String code = "type "+name+" = bv"+len+";\n";
-		if(len != -1)
-			return code;
-		return "";
-	}
-}
-
-class Type_Unknown extends Type {
-
-}
-
-class Type_Error extends Type {
-
-}
-
 class Type_Extern extends Type {
 	@Override
 	void parse(ObjectNode object) {
@@ -287,6 +271,26 @@ class Type_Extern extends Type {
 			return name;
 		return "";
 	}
+}
+
+class Type_Package extends Type {
+
+}
+
+class Type_Table extends Type {
+
+}
+
+class Type_Method extends Type {
+
+}
+
+class Type_Unknown extends Type {
+
+}
+
+class Type_Error extends Type {
+
 }
 
 class Type_Enum extends Type {
@@ -314,5 +318,9 @@ class Type_State extends Type {
 }
 
 class Type_MatchKind extends Type {
+
+}
+
+class Type_InfInt extends Type {
 
 }

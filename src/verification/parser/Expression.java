@@ -81,7 +81,10 @@ class MethodCallExpression extends Expression {
 		if(methodName.equals("extract")) {
 			methodName = "packet_in."+methodName+"."+typeArguments.get(0).getTypeName();
 		}
-		System.out.println(methodName);
+		// deal with isValid()
+		else if(methodName.length()>8 && methodName.substring(0, 8).equals("isValid[")) {
+			return methodName;
+		}
 		Parser.getInstance().getCurrentProcedure().childrenNames.add(methodName);
 		code = methodName+"(";
 		int cnt = 0;
@@ -234,7 +237,11 @@ class SelectExpression extends Expression {
 			cnt1 = 0;
 			for(Node select_node : select) {
 				// TODO deal with argument types (equal width)
-				code += select_node.p4_to_Boogie()+" == "+cases_value.get(cnt2).get(cnt1).p4_to_Boogie();
+				code += select_node.p4_to_Boogie()+" == ";
+				Node caseValue = cases_value.get(cnt2).get(cnt1);
+				if(caseValue instanceof Constant) {
+					code += caseValue.p4_to_Boogie();
+				}
 				cnt1++;
 				if(cnt1 < select.size())
 					code += " && ";
@@ -305,7 +312,25 @@ class Member extends Expression {
 	}
 	@Override
 	String p4_to_Boogie() {
+//		if(type instanceof Type_Method) {
+//			String code = expr.p4_to_Boogie()+"."+member;
+//			return code;
+//		}
 		if(member.equals("extract")) {
+			return member;
+		}
+		else if(member.equals("isValid")) {
+			String code = "isValid";
+			code += "[";
+			code += expr.p4_to_Boogie();
+			code += "]";
+			return code;
+		}
+		else if(member.equals("apply")) {
+			return expr.p4_to_Boogie()+"."+member;
+		}
+		else if(member.equals("emit")) {
+			// TODO
 			return member;
 		}
 		else {

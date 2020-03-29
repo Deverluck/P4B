@@ -51,11 +51,13 @@ class Declaration_Variable extends DataStructure {
 class Constant extends DataStructure {
 	int value;
 	int base;
+	Node type;
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
 		value = object.get(JsonKeyName.VALUE).asInt();
 		base = object.get(JsonKeyName.BASE).asInt();
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 	}
 
 	@Override
@@ -66,7 +68,11 @@ class Constant extends DataStructure {
 
 	@Override
 	String p4_to_Boogie() {
-		String code = value+"bv64";
+		String code = value+"";
+		if(type instanceof Type_Bits) {
+			Type_Bits tb = (Type_Bits)type;
+			code += "bv"+tb.size;
+		}
 		return code;
 	}
 }

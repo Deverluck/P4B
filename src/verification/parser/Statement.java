@@ -18,6 +18,11 @@ class BlockStatement extends Statement {
 		String code = components.p4_to_C();
 		return code;
 	}
+	@Override
+	String p4_to_Boogie() {
+		String code = components.p4_to_Boogie();
+		return code;
+	}
 }
 
 class AssignmentStatement extends Statement {
@@ -67,6 +72,24 @@ class IfStatement extends Statement {
 			code += "else {\n";
 			code += ifFalse.p4_to_C();
 			code += "}\n";
+		}
+		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		String code = addIndent()+"if(";
+		code += condition.p4_to_Boogie();
+		code += "){\n";
+		incIndent();
+		code += ifTrue.p4_to_Boogie();
+		decIndent();
+		code += addIndent()+"}\n";
+		if(ifFalse != null) {
+			code += addIndent()+"else {\n";
+			incIndent();
+			code += ifFalse.p4_to_Boogie();
+			decIndent();
+			code += addIndent()+"}\n";
 		}
 		return code;
 	}

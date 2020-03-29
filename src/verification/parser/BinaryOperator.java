@@ -59,6 +59,11 @@ class LAnd extends BinaryOperator {
 		String code = left.p4_to_C()+"&&"+right.p4_to_C();
 		return code;
 	}
+	@Override
+	String p4_to_Boogie() {
+		String code = left.p4_to_Boogie()+"&&"+right.p4_to_Boogie();
+		return code;
+	}
 }
 
 class LOr extends BinaryOperator {
@@ -110,13 +115,13 @@ class Sub extends BinaryOperator {
 }
 
 class Neq extends BinaryOperator {
-	
+
 }
 
 class Equ extends BinaryOperator {
-	
+
 }
 
 class Grt extends BinaryOperator {
-	
+
 }
