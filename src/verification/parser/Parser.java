@@ -48,6 +48,7 @@ public class Parser {
 		globalVariables = new HashSet<>();
 		modifiedGlobalVariables = new HashSet<>();
 		procedures = new HashMap<>();
+		boogieFunctions = new HashMap<>();
 	}
 
 	private void clear() {
@@ -62,6 +63,7 @@ public class Parser {
 		globalVariables.clear();
 		modifiedGlobalVariables.clear();
 		procedures.clear();
+		boogieFunctions.clear();
 	}
 
 	public String addIndent() {
@@ -291,13 +293,34 @@ public class Parser {
 	String p4_to_Boogie_Header_isValid() {
 		String code = "\nvar isValid:<T>[T]bool;\n";
 //		code += "function isValid<T>(header: T) returns (bool) { valid(header) }";
-		code += "procedure clear_valid();\n";
+
+		BoogieProcedure procedure = new BoogieProcedure("clear_valid");
+		addProcedure(procedure);
+
+		String declare = "procedure clear_valid();\n";
 		for(String name:headers.keySet()) {
-			code += "	ensures (forall header:"+name;
-			code += ":: isValid[header]==false);\n";
+			declare += "	ensures (forall header:"+name;
+			declare += ":: isValid[header]==false);\n";
 		}
-		code += "	modifies isValid;\n";
+		declare += "	modifies isValid;\n";
+		procedure.declare = declare;
+
 		addBoogieGlobalVariable("isValid");
+		return code;
+	}
+
+	String p4_to_Boogie_extern() {
+		BoogieProcedure procedure = new BoogieProcedure("mark_to_drop");
+		addProcedure(procedure);
+
+		String declare = "";
+		declare += "\nprocedure mark_to_drop()\n";
+		String body = "{\n";
+		body += "}\n";
+		procedure.declare = declare;
+		procedure.body = body;
+
+		String code = "";
 		return code;
 	}
 
@@ -353,7 +376,8 @@ public class Parser {
 		System.out.println("######## Unhandled Types ########");
 		String [] handledTypes = {"Path", "Type_Name", "StructField", "Type_Struct",
 				"MethodCallStatement", "Constant", "MethodCallExpression", "Type_Header",
-				"P4Program", "Type_Typedef", "BlockStatement"};
+				"P4Program", "Type_Typedef", "BlockStatement", "AssignmentStatement",
+				"LNot", "LAnd"};
 		HashSet<String> mytypes = new HashSet<>();
 		mytypes.addAll(types);
 		for(String str : handledTypes){
@@ -363,9 +387,16 @@ public class Parser {
 			System.out.println(type);
 		}
 		String code = program.p4_to_Boogie();
+		// Add SMT built-in functions
+		for(String functionName:boogieFunctions.keySet()) {
+			code += boogieFunctions.get(functionName)+"\n";
+		}
 		// Add map isValid and procedure clear_valid()
 		code += p4_to_Boogie_Header_isValid();
+		// Add extract procedures
 		code += p4_to_Boogie_extract();
+		// Add support for extern methods
+		code += p4_to_Boogie_extern();
 
 //		for(String name:procedures.keySet()) {
 //			BoogieProcedure procedure = procedures.get(name);
@@ -397,6 +428,7 @@ public class Parser {
 	private HashSet<String> modifiedGlobalVariables;
 	private HashMap<String, BoogieProcedure> procedures;
 	private BoogieProcedure currentProcedure;
+	private HashMap<String, String> boogieFunctions; //SMT bit-vector
 
 	void addProcedure(BoogieProcedure procedure) {
 		procedures.put(procedure.name, procedure);
@@ -417,6 +449,11 @@ public class Parser {
 
 	void addBoogieGlobalVariable(String var) {
 		globalVariables.add(var);
+	}
+
+	void addBoogieFunction(String name, String cont) {
+		if(!boogieFunctions.containsKey(name))
+			boogieFunctions.put(name, cont);
 	}
 
 //

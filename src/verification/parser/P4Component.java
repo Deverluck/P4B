@@ -69,7 +69,11 @@ class P4Parser extends P4Component {
 
 		String declare = "\n// Parser "+name+"\n";
 		declare += "procedure "+name+"()\n";
-		String body = "{\n	call start();\n}\n";
+		String body = "{\n";
+		body += "	call clear_valid();\n";
+		body += "	call start();\n";
+		body += "}\n";
+		procedure.childrenNames.add("clear_valid");
 		procedure.childrenNames.add("start");
 		procedure.declare = declare;
 		procedure.body = body;
@@ -247,7 +251,8 @@ class P4Action extends P4Component {
 		Parser.getInstance().addProcedure(procedure);
 
 		String declare = "\n// Action "+name+"\n";
-		declare += "procedure "+name+"()\n";
+		declare += "procedure "+name;
+		declare += parameters.p4_to_Boogie()+"\n";
 		incIndent();
 		String body = "{\n";
 		body += this.body.p4_to_Boogie();
@@ -271,17 +276,24 @@ class ParameterList extends P4Component {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		parameters = Parser.getInstance().jsonParse(object.get(JsonKeyName.PARAMETERS));
+		parameters.setVectorType(JsonKeyName.PARAMETER);
 		addChild(parameters);
 	}
 	@Override
 	String p4_to_C() {
-		parameters.setVectorType(JsonKeyName.PARAMETER);
 		return parameters.p4_to_C();
 	}
 	@Override
 	String p4_to_C(String arg) {
-		parameters.setVectorType(JsonKeyName.PARAMETER);
 		return parameters.p4_to_C(arg);
+	}
+	@Override
+	String p4_to_Boogie() {
+		return parameters.p4_to_Boogie();
+	}
+	@Override
+	String p4_to_Boogie(String arg) {
+		return parameters.p4_to_Boogie(arg);
 	}
 }
 
@@ -307,6 +319,11 @@ class Parameter extends P4Component {
 			return name;
 		}
 		return p4_to_C();
+	}
+	@Override
+	String p4_to_Boogie() {
+		type.setEnable();
+		return name+":"+type.p4_to_Boogie();
 	}
 }
 

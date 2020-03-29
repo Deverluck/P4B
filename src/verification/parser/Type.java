@@ -324,3 +324,7 @@ class Type_MatchKind extends Type {
 class Type_InfInt extends Type {
 
 }
+
+class Type_Boolean extends Type {
+
+}

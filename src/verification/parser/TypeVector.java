@@ -82,10 +82,61 @@ public class TypeVector extends Node{
 	// *********** Boogie **********
 	@Override
 	String p4_to_Boogie() {
+		switch (T) {
+		case JsonKeyName.PARAMETER:
+			return parameter_p4_to_Boogie();
+
+		default:
+			break;
+		}
 		String code = "";
 		for(Node node : children) {
 			code += node.p4_to_Boogie();
 		}
+		return code;
+	}
+
+	@Override
+	String p4_to_Boogie(String arg) {
+		switch (T) {
+		case JsonKeyName.PARAMETER:
+			return parameter_p4_to_Boogie(arg);
+
+		default:
+			break;
+		}
+		String code = "";
+		for(Node node : children) {
+			code += node.p4_to_Boogie(arg);
+		}
+		return code;
+	}
+
+	String parameter_p4_to_Boogie() {
+		String code = "(";
+		int size = children.size();
+		int cnt = 0;
+		for(Node node : children) {
+			cnt += 1;
+			code += node.p4_to_Boogie();
+			if(cnt != size)
+				code += ", ";
+		}
+		code += ")";
+		return code;
+	}
+
+	String parameter_p4_to_Boogie(String arg) {
+		String code = "(";
+		int size = children.size();
+		int cnt = 0;
+		for(Node node : children) {
+			cnt += 1;
+			code += node.p4_to_Boogie(arg);
+			if(cnt != size)
+				code += ", ";
+		}
+		code += ")";
 		return code;
 	}
 }

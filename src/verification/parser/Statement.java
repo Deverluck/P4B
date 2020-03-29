@@ -39,6 +39,12 @@ class AssignmentStatement extends Statement {
 		String code = left.p4_to_C()+"="+right.p4_to_C()+";\n";
 		return code;
 	}
+
+	@Override
+	String p4_to_Boogie() {
+		String code = addIndent()+left.p4_to_Boogie()+" := "+right.p4_to_Boogie()+";\n";
+		return code;
+	}
 }
 
 class EmptyStatement extends Statement {
