@@ -18,7 +18,7 @@ class Declaration_Instance extends DataStructure {
 		super();
 		arguments = new ArrayList<>();
 	}
-	
+
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
@@ -28,7 +28,7 @@ class Declaration_Instance extends DataStructure {
 			arguments.add(Parser.getInstance().jsonParse(arg));
 		}
 	}
-	
+
 	@Override
 	String p4_to_C() {
 		String code = "";
@@ -45,7 +45,7 @@ class Declaration_Instance extends DataStructure {
 }
 
 class Declaration_Variable extends DataStructure {
-	
+
 }
 
 class Constant extends DataStructure {
@@ -57,32 +57,43 @@ class Constant extends DataStructure {
 		value = object.get(JsonKeyName.VALUE).asInt();
 		base = object.get(JsonKeyName.BASE).asInt();
 	}
+
 	@Override
 	String p4_to_C() {
 		String code = value+"";
 		return code;
 	}
-}
 
-class BoolLiteral extends DataStructure {
-	
-}
-
-class ArrayIndex extends DataStructure {
-	
+	@Override
+	String p4_to_Boogie() {
+		String code = value+"bv64";
+		return code;
+	}
 }
 
 class StructField extends DataStructure {
 	String name;
 	Node type;
-	
+	int len;
+
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
 		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
+
+		// get length
+		if(type.Node_Type.equals("Type_Bits")) {
+			Type_Bits tb = (Type_Bits)type;
+			len = tb.size;
+		}
+		else if(type.Node_Type.equals("Type_Name")) {
+			Type_Name tn = (Type_Name)type;
+			len = Parser.getInstance().getTypeLength(tn.name);
+		}
 	}
+
 	@Override
 	String p4_to_C() {
 		// TODO support bits for any length
@@ -93,18 +104,16 @@ class StructField extends DataStructure {
 			code = type.p4_to_C()+" "+name;
 		return code;
 	}
-}
 
-class Declaration_MatchKind extends DataStructure {
-	
-}
-
-class StringLiteral extends DataStructure {
-	
-}
-
-class NameMapProperty extends DataStructure {
-	
+	@Override
+	String p4_to_Boogie() {
+		String code = "";
+		if(type.Node_Type.equals("Type_Bits"))
+			code = "bv"+len;
+		else if(type.Node_Type.equals("Type_Name"))
+			code = type.p4_to_Boogie();
+		return code;
+	}
 }
 
 class Path extends DataStructure {
@@ -120,4 +129,28 @@ class Path extends DataStructure {
 	String p4_to_C() {
 		return name;
 	}
+	@Override
+	String p4_to_Boogie() {
+		return name;
+	}
+}
+
+class BoolLiteral extends DataStructure {
+
+}
+
+class ArrayIndex extends DataStructure {
+
+}
+
+class Declaration_MatchKind extends DataStructure {
+
+}
+
+class StringLiteral extends DataStructure {
+
+}
+
+class NameMapProperty extends DataStructure {
+
 }

@@ -63,10 +63,29 @@ class P4Parser extends P4Component {
 	}
 
 	String p4_to_Boogie() {
-		String code = "// Parser \n";
-		type.setEnable();
-		code += type.p4_to_Boogie();
+		BoogieProcedure procedure = new BoogieProcedure(name);
+		Parser.getInstance().setCurrentProcedure(procedure);
+		Parser.getInstance().addProcedure(procedure);
+
+		String declare = "\n// Parser "+name+"\n";
+		declare += "procedure "+name+"()\n";
+		String body = "{\n	call start();\n}\n";
+		procedure.childrenNames.add("start");
+		procedure.declare = declare;
+		procedure.body = body;
+
+		String code = states.p4_to_Boogie();
 		return code;
+
+//		String code, body, modifies;
+//		code = "\n// Parser "+name+"\n";
+//		code += "procedure "+name+"()";
+//		body = "{\n	call start();\n}\n";
+//		body = states.p4_to_Boogie();
+//		code += body;
+//		type.setEnable();
+//		code += type.p4_to_Boogie();
+//		return code;
 	}
 }
 
@@ -97,6 +116,40 @@ class ParserState extends P4Component {
 			code += selectExpression.p4_to_C(JsonKeyName.PARSERSTATE);
 		code += "}\n";
 		return code;
+	}
+
+	@Override
+	String p4_to_Boogie() {
+		BoogieProcedure procedure = new BoogieProcedure(name);
+		Parser.getInstance().setCurrentProcedure(procedure);
+		Parser.getInstance().addProcedure(procedure);
+
+		String declare = "\n//Parser State "+name+"\n";
+		declare += "procedure "+name+"()\n";
+		incIndent();
+		String body = "{";
+		body += components.p4_to_Boogie();
+		if(selectExpression != null)
+			body += selectExpression.p4_to_Boogie(JsonKeyName.PARSERSTATE);
+		body += "}\n";
+		decIndent();
+		procedure.declare = declare;
+		procedure.body = body;
+		String code = "";
+		return code;
+
+//		String code = "\n//Parser State "+name+"\n";
+//		code += "procedure "+name+"(){\n";
+//
+////		Parser.getInstance().clearModifiedGlobalVariables();
+//
+//		incIndent();
+//		code += components.p4_to_Boogie();
+//		if(selectExpression != null)
+//			code += selectExpression.p4_to_Boogie(JsonKeyName.PARSERSTATE);
+//		code += "}\n";
+//		decIndent();
+//		return code;
 	}
 }
 
@@ -129,7 +182,7 @@ class P4Control extends P4Component {
 		return code;
 	}
 	@Override
-	String declare() {
+	String p4_to_C_declare() {
 		type.setEnable();
 		String code = "void "+name+" "+type.p4_to_C()+";\n";
 		return code;
@@ -160,7 +213,7 @@ class P4Action extends P4Component {
 		return code;
 	}
 	@Override
-	String declare() {
+	String p4_to_C_declare() {
 		String code = "void "+name+parameters.p4_to_C()+";\n";
 		return code;
 	}
@@ -244,7 +297,7 @@ class P4Table extends P4Component {
 		return code;
 	}
 	@Override
-	String declare() {
+	String p4_to_C_declare() {
 		String code = "void "+name+"_method();\n";
 		return code;
 	}

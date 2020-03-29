@@ -3,7 +3,7 @@ package verification.parser;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Statement extends Node {
-	
+
 }
 
 class BlockStatement extends Statement {
@@ -37,7 +37,7 @@ class AssignmentStatement extends Statement {
 }
 
 class EmptyStatement extends Statement {
-	
+
 }
 
 class IfStatement extends Statement {
@@ -83,12 +83,17 @@ class MethodCallStatement extends Statement {
 	String p4_to_C() {
 		return methodCall.p4_to_C()+";\n";
 	}
+	@Override
+	String p4_to_Boogie() {
+		String code = addIndent()+"call ";
+		return code+methodCall.p4_to_Boogie()+";\n";
+	}
 }
 
 class SwitchStatement extends Statement {
-	
+
 }
 
 class SwitchCase extends Statement {
-	
+
 }

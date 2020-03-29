@@ -48,7 +48,7 @@ public class Node {
 		return "";
 	}
 
-	String declare() {
+	String p4_to_C_declare() {
 		return "";
 	}
 
@@ -67,5 +67,21 @@ public class Node {
 
 	void setVectorType(String type) {
 		T = type;
+	}
+
+	String addIndent() {
+		return Parser.getInstance().addIndent();
+	}
+
+	void incIndent() {
+		Parser.getInstance().incIndent();
+	}
+
+	void decIndent() {
+		Parser.getInstance().decIndent();
+	}
+
+	String getTypeName() {
+		return "";
 	}
 }

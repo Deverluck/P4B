@@ -23,6 +23,9 @@ public class Parser {
 	private HashMap<String, Type_Header> headers;
 	private HashMap<String, Type_Struct> structs;
 	private ArrayList<Type_Typedef> typeDefinitions;
+	private HashMap<String, Integer> typeDefLength;  // Record the length of user-defined type
+	private int indent;
+	private final String INDENT = "	";
 
 	public static Parser getInstance() {
 		if(instance == null) {
@@ -40,6 +43,11 @@ public class Parser {
 		headers = new HashMap<>();
 		structs = new HashMap<>();
 		typeDefinitions = new ArrayList<>();
+		typeDefLength = new HashMap<>();
+		indent = 0;
+		globalVariables = new HashSet<>();
+		modifiedGlobalVariables = new HashSet<>();
+		procedures = new HashMap<>();
 	}
 
 	private void clear() {
@@ -51,6 +59,25 @@ public class Parser {
 		headers.clear();
 		structs.clear();
 		typeDefinitions.clear();
+		globalVariables.clear();
+		modifiedGlobalVariables.clear();
+		procedures.clear();
+	}
+
+	public String addIndent() {
+		String str="";
+		for(int i = 0; i < indent; i++)
+			str += INDENT;
+		return str;
+	}
+
+	public void incIndent() {
+		indent++;
+	}
+
+	public void decIndent() {
+		if(indent>0)
+			indent--;
 	}
 
 	public void parse(String filename) {
@@ -184,6 +211,17 @@ public class Parser {
 
 	public void addTypeDef(Type_Typedef typeDef) {
 		typeDefinitions.add(typeDef);
+		if(!typeDefLength.containsKey(typeDef.name)) {
+			typeDefLength.put(typeDef.name, typeDef.len);
+			System.out.println(typeDef.name+"  "+typeDef.len);
+		}
+	}
+
+	public int getTypeLength(String name) {
+		if(typeDefLength.containsKey(name))
+			return typeDefLength.get(name);
+		else
+			return -1;
 	}
 
 	String p4_to_C(Node program) {
@@ -196,11 +234,13 @@ public class Parser {
 			"BAnd", "BOr", "BXor", "Geq", "Leq", "LAnd", "LOr", "Shl", "Shr", "Mul", "LNot",
 			"IfStatement", "ActionListElement", "P4Action", "Type_Struct", "Type_Header",
 			"ConstructorCallExpression", "P4Control"};
+		HashSet<String> mytypes = new HashSet<>();
+		mytypes.addAll(types);
 		for(String str : handledTypes){
-			types.remove(str);
+			mytypes.remove(str);
 		}
 		System.out.println("######## Unhandled Types ########");
-		for(String type : types) {
+		for(String type : mytypes) {
 			System.out.println(type);
 		}
 //		System.out.println("######## Program ########");
@@ -226,32 +266,176 @@ public class Parser {
 	String p4_to_C_declare() {
 		String code = "";
 		for(Type_Typedef typeDef : typeDefinitions) {
-			code += typeDef.declare();
+			code += typeDef.p4_to_C_declare();
 		}
 		for(String key : headers.keySet()) {
-			code += headers.get(key).declare();
+			code += headers.get(key).p4_to_C_declare();
 		}
 		for(String key : structs.keySet()) {
-			code += structs.get(key).declare();
+			code += structs.get(key).p4_to_C_declare();
 		}
 		for(P4Control control : controls) {
-			code += control.declare();
+			code += control.p4_to_C_declare();
 		}
 		for(P4Table table : tables) {
-			code += table.declare();
+			code += table.p4_to_C_declare();
 		}
 		for(P4Action action : actions) {
-			code += action.declare();
+			code += action.p4_to_C_declare();
 		}
+		return code;
+	}
+
+
+	// ******************* Boogie **********************
+	String p4_to_Boogie_Header_isValid() {
+		String code = "\nvar isValid:<T>[T]bool;\n";
+		code += "procedure clear_isValid();\n";
+		for(String name:headers.keySet()) {
+			code += "	ensures (forall header:"+name;
+			code += ":: isValid[header]==false);\n";
+		}
+		code += "	modifies isValid;\n";
+		return code;
+	}
+
+	String p4_to_Boogie_extract() {
+		String code = "";
+		int totalLen = 0;
+		int start = 0; //for extracting
+		for(String name:headers.keySet()) {
+			totalLen += headers.get(name).length();
+
+			String procedureName = "packet_in.extract."+name;
+			BoogieProcedure procedure = new BoogieProcedure(procedureName);
+			addProcedure(procedure);
+			setCurrentProcedure(procedure);
+			String declare = "\nprocedure "+procedureName+"(header:"+name+")\n";
+			getCurrentProcedure().declare = declare;
+			addModifiedGlobalVariable("isValid");
+
+//			code += "\nprocedure "+procedureName+"(header:"+name+")\n";
+//			code += "modifies isValid";
+//			int tmp = headers.get(name).fields.size();
+//			if(tmp != 0)
+//				code += ", ";
+//			else
+//				code += ";\n";
+			for(StructField field:headers.get(name).fields) {
+				addModifiedGlobalVariable(name+"."+field.name);
+
+//				code += name+"."+field.name;
+//				tmp--;
+//				if(tmp > 0)
+//					code += ", ";
+//				else
+//					code += ";\n";
+			}
+			String body = "";
+			body += "{\n";
+			for(StructField field:headers.get(name).fields) {
+				body += "	"+name+"."+field.name+"[header] := packet";
+				body += "["+(start+field.len)+":"+start+"];\n";
+				start += field.len;
+			}
+			body += "	isValid[header] := true;\n";
+			body += "}\n";
+			getCurrentProcedure().body = body;
+		}
+		code += "\ntype packet_in = bv"+totalLen+";\n";
+		code += "const packet:packet_in;\n";
 		return code;
 	}
 
 	String p4_to_Boogie(Node program) {
 		System.out.println("######## Unhandled Types ########");
-		for(String type : types) {
+		String [] handledTypes = {"Path", "Type_Name", "StructField", "Type_Struct",
+				"MethodCallStatement"};
+		HashSet<String> mytypes = new HashSet<>();
+		mytypes.addAll(types);
+		for(String str : handledTypes){
+			mytypes.remove(str);
+		}
+		for(String type : mytypes) {
 			System.out.println(type);
 		}
 		String code = program.p4_to_Boogie();
+		// Add map isValid and procedure clear_isValid()
+		code += p4_to_Boogie_Header_isValid();
+		code += p4_to_Boogie_extract();
+
+//		for(String name:procedures.keySet()) {
+//			BoogieProcedure procedure = procedures.get(name);
+//			System.out.println(name+":");
+//			for(String childName:procedure.childrenNames) {
+//				System.out.println("	"+childName);
+//			}
+//		}
+		for(String name:procedures.keySet()) {
+			BoogieProcedure procedure = procedures.get(name);
+			for(String childName:procedure.childrenNames) {
+				procedures.get(childName).parents.add(procedure);
+			}
+		}
+		BoogieProcedureOperator bpo = new BoogieProcedureOperator();
+		for(String name:procedures.keySet()) {
+			bpo.addProcedure(procedures.get(name));
+		}
+		bpo.update();
+		for(BoogieProcedure procedure:bpo.procedures) {
+			code += procedure.toBoogie();
+//			System.out.println(procedure.toBoogie());
+		}
 		return code;
 	}
+
+	private HashSet<String> globalVariables;
+	private HashSet<String> modifiedGlobalVariables;
+	private HashMap<String, BoogieProcedure> procedures;
+	private BoogieProcedure currentProcedure;
+
+	void addProcedure(BoogieProcedure procedure) {
+		procedures.put(procedure.name, procedure);
+	}
+
+	void setCurrentProcedure(BoogieProcedure procedure) {
+		this.currentProcedure = procedure;
+	}
+
+	BoogieProcedure getCurrentProcedure() {
+		return this.currentProcedure;
+	}
+
+	void addModifiedGlobalVariable(String var) {
+		if(currentProcedure!=null)
+			currentProcedure.updateModifies(var);
+	}
+
+//	void addBoogieGlobalVariable(String var) {
+//		globalVariables.add(var);
+//	}
+//
+//	void addModifiedGlobalVariable(String var) {
+//		if(globalVariables.contains(var))
+//			modifiedGlobalVariables.add(var);
+//	}
+//
+//	HashSet<String> getModifiedGlobalVariables() {
+//		return modifiedGlobalVariables;
+//	}
+//
+//	void clearModifiedGlobalVariables() {
+//		modifiedGlobalVariables.clear();
+//	}
+//
+//	void addProcedure(String name) {
+//		HashSet<String> list = new HashSet<>();
+//		procedures.put(name, list);
+//	}
+//
+//	void addProcedureModifiedVariable(String name, String var) {
+//		if(!procedures.containsKey(name))
+//			addProcedure(name);
+//		procedures.get(name).add(var);
+//	}
 }

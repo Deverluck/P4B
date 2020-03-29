@@ -11,7 +11,7 @@ public class Expression extends Node {
 }
 
 class TypeNameExpression extends Expression {
-	
+
 }
 
 class ConstructorCallExpression extends Expression {
@@ -55,6 +55,7 @@ class MethodCallExpression extends Expression {
 			}
 		}
 	}
+
 	@Override
 	String p4_to_C() {
 		String code = method.p4_to_C()+"(";
@@ -72,10 +73,34 @@ class MethodCallExpression extends Expression {
 		code = code + ")";
 		return code;
 	}
+
+	@Override
+	String p4_to_Boogie() {
+		String code = "";
+		String methodName = method.p4_to_Boogie();
+		if(methodName.equals("extract")) {
+			methodName = "packet_in."+methodName+"."+typeArguments.get(0).getTypeName();
+		}
+		System.out.println(methodName);
+		Parser.getInstance().getCurrentProcedure().childrenNames.add(methodName);
+		code = methodName+"(";
+		int cnt = 0;
+		if(!arguments.isEmpty()) {
+			for(Node node : arguments) {
+				cnt++;
+				code += node.p4_to_Boogie();
+				if(cnt < arguments.size())
+					code += ", ";
+			}
+		}
+		code = code + ")";
+		return code;
+	}
 }
 
 class PathExpression extends Expression {
 	Node path;
+	Node type;
 	public PathExpression() {
 		super();
 	}
@@ -83,7 +108,9 @@ class PathExpression extends Expression {
 	void parse(ObjectNode object) {
 		super.parse(object);
 		path = Parser.getInstance().jsonParse(object.get(JsonKeyName.PATH));
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(path);
+		addChild(type);
 	}
 	@Override
 	String p4_to_C() {
@@ -95,6 +122,27 @@ class PathExpression extends Expression {
 			return path.p4_to_C()+"();\n";
 		return p4_to_C();
 	}
+
+	@Override
+	String p4_to_Boogie() {
+		return path.p4_to_Boogie();
+	}
+	@Override
+	String p4_to_Boogie(String arg) {
+		String code = "";
+		if(arg.equals(JsonKeyName.PARSERSTATE)) {
+			code += addIndent();
+			String methodName = path.p4_to_Boogie();
+			code += "call "+methodName+"();\n";
+			Parser.getInstance().getCurrentProcedure().childrenNames.add(methodName);
+			return code;
+		}
+		return p4_to_Boogie();
+	}
+	@Override
+	String getTypeName() {
+		return type.getTypeName();
+	}
 }
 
 class SelectExpression extends Expression {
@@ -102,7 +150,7 @@ class SelectExpression extends Expression {
 	ArrayList<ArrayList<Node>> cases_value;
 	ArrayList<Node> cases;
 	Node default_case;
-	
+
 	public SelectExpression() {
 		super();
 		select = new ArrayList<>();
@@ -110,7 +158,7 @@ class SelectExpression extends Expression {
 		cases = new ArrayList<>();
 		default_case = null;
 	}
-	
+
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
@@ -161,7 +209,7 @@ class SelectExpression extends Expression {
 			if(cnt2 != cases.size())
 				code += "else";
 		}
-		
+
 		if(default_case != null) {
 			if(cases.size()!=0)
 				code += "else{\n" + default_case.p4_to_C(JsonKeyName.PARSERSTATE) + "}\n";
@@ -172,6 +220,46 @@ class SelectExpression extends Expression {
 		else if(cases.size()==1 && default_case == null) {
 			code += "else{\n" + cases.get(0).p4_to_C(JsonKeyName.PARSERSTATE) + "}\n";
 		}
+		return code;
+	}
+
+	@Override
+	String p4_to_Boogie() {
+		// TODO Add support for Mask
+		String code = "";
+		int cnt1 = 0; // counter for keys (&&)
+		int cnt2 = 0; // counter for cases (else if{})
+		for(Node case_node : cases) {
+			code += "	if(";
+			cnt1 = 0;
+			for(Node select_node : select) {
+				// TODO deal with argument types (equal width)
+				code += select_node.p4_to_Boogie()+" == "+cases_value.get(cnt2).get(cnt1).p4_to_Boogie();
+				cnt1++;
+				if(cnt1 < select.size())
+					code += " && ";
+			}
+			code += "){\n";
+
+			incIndent();
+			code += case_node.p4_to_Boogie(JsonKeyName.PARSERSTATE)+"	}\n";
+			decIndent();
+
+			cnt2++;
+			if(cnt2 != cases.size())
+				code += "	else";
+		}
+
+//		if(default_case != null) {
+//			if(cases.size()!=0)
+//				code += "else{\n" + default_case.p4_to_C(JsonKeyName.PARSERSTATE) + "}\n";
+//			else
+//				code += default_case.p4_to_C(JsonKeyName.PARSERSTATE);
+//		}
+//		// there may be no default case
+//		else if(cases.size()==1 && default_case == null) {
+//			code += "else{\n" + cases.get(0).p4_to_C(JsonKeyName.PARSERSTATE) + "}\n";
+//		}
 		return code;
 	}
 }
@@ -191,21 +279,23 @@ class ExpressionValue extends Expression {
 }
 
 class Slice extends Expression {
-	
+
 }
 
 class Cast extends Expression {
-	
+
 }
 
 class Member extends Expression {
 	String member;
 	Node expr;
+	Node type;
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
 		member = object.get(JsonKeyName.MEMBER).asText();
 		expr = Parser.getInstance().jsonParse(object.get(JsonKeyName.EXPR));
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 	}
 	@Override
 	String p4_to_C() {
@@ -213,8 +303,24 @@ class Member extends Expression {
 		code = expr.p4_to_C()+"."+code;
 		return code;
 	}
+	@Override
+	String p4_to_Boogie() {
+		if(member.equals("extract")) {
+			return member;
+		}
+		else {
+			Parser.getInstance().addModifiedGlobalVariable(expr.getTypeName()+"."+member);
+			String code = expr.getTypeName()+"."+member;
+			code += "["+expr.p4_to_Boogie()+"]";
+			return code;
+		}
+	}
+	@Override
+	String getTypeName() {
+		return type.getTypeName();
+	}
 }
 
 class ListExpression extends Expression {
-	
+
 }
