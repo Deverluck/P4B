@@ -109,7 +109,7 @@ public class Parser {
 			System.out.println(Boogie_code);
 
 			long endTime = System.currentTimeMillis();
-			System.out.println("程序运行时间：" + (endTime - startTime) + "ms");
+			System.out.println("Time: " + (endTime - startTime) + "ms");
 			clear();
 		}catch(JsonProcessingException e) {
 			e.printStackTrace();
@@ -297,7 +297,7 @@ public class Parser {
 		BoogieProcedure procedure = new BoogieProcedure("clear_valid");
 		addProcedure(procedure);
 
-		String declare = "procedure clear_valid();\n";
+		String declare = "\nprocedure clear_valid();\n";
 		for(String name:headers.keySet()) {
 			declare += "	ensures (forall header:"+name;
 			declare += ":: isValid[header]==false);\n";

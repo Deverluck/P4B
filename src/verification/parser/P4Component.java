@@ -131,7 +131,7 @@ class ParserState extends P4Component {
 		String declare = "\n//Parser State "+name+"\n";
 		declare += "procedure "+name+"()\n";
 		incIndent();
-		String body = "{";
+		String body = "{\n";
 		body += components.p4_to_Boogie();
 		if(selectExpression != null)
 			body += selectExpression.p4_to_Boogie(JsonKeyName.PARSERSTATE);
@@ -210,8 +210,8 @@ class P4Control extends P4Component {
 		procedure.declare = declare;
 		procedure.body = body;
 		//TODO may be mistakes
-		controlLocals.p4_to_Boogie();
-		return "";
+//		controlLocals.p4_to_Boogie();
+		return controlLocals.p4_to_Boogie();
 	}
 }
 
@@ -330,12 +330,39 @@ class Parameter extends P4Component {
 /* P4 table and properties*/
 class P4Table extends P4Component {
 	String name;
-	Node properties;
+	Node key;
+	Node actions;
+	Node size;
+	Node default_action;
+
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
-		properties = Parser.getInstance().jsonParse(object.get(JsonKeyName.PROPERTIES));
+		ArrayNode properties = (ArrayNode)object.get(JsonKeyName.PROPERTIES).get(JsonKeyName.PROPERTIES)
+				.get(JsonKeyName.VEC);
+		for(JsonNode property:properties) {
+//			System.out.println(property);
+			if(property.has(JsonKeyName.NAME)) {
+				String property_name = property.get(JsonKeyName.NAME).asText();
+				switch (property_name) {
+					case JsonKeyName.KEY:
+						key = Parser.getInstance().jsonParse(property);
+						break;
+					case JsonKeyName.ACTIONS:
+						actions = Parser.getInstance().jsonParse(property);
+						break;
+					case JsonKeyName.SIZE:
+						size = Parser.getInstance().jsonParse(property);
+						break;
+					case JsonKeyName.DEFAULT_ACTION:
+						default_action = Parser.getInstance().jsonParse(property);
+						break;
+					default:
+						break;
+				}
+			}
+		}
 		Parser.getInstance().addTable(this);
 	}
 	@Override
@@ -370,12 +397,36 @@ class P4Table extends P4Component {
 		declare += "procedure "+name+".apply()\n";
 		incIndent();
 		String body = "{\n";
+		if(actions != null) {
+			Property property = (Property)actions;
+			ActionList actionList = (ActionList)property.value;
+			int cnt = actionList.actionList.size();
+			for(String actionName:actionList.actionList) {
+				body += addIndent()+"if("+name+".select == "+"action."+actionName+"){\n";
+				incIndent();
+				body += addIndent()+"call "+actionName+"();\n";
+				// TODO deal with action arguments
+				Parser.getInstance().getCurrentProcedure().childrenNames.add(actionName);
+				decIndent();
+				body += addIndent()+"}\n";
+				cnt--;
+				if(cnt != 0)
+					body += addIndent()+"else";
+			}
+		}
 		body += "}\n";
 		decIndent();
-
 		procedure.declare = declare;
 		procedure.body = body;
-		return "";
+		
+		String code = "";
+		if(actions != null) {
+			code += "\n// Table "+name+" Actionlist Declaration\n";
+			code += "type "+name+".action;\n";
+			code += actions.p4_to_Boogie(name+".action");
+			code += "var "+name+".select : "+name+".action;\n";
+		}
+		return code;
 	}
 }
 
@@ -393,6 +444,13 @@ class Property extends P4Component {
 	String p4_to_C() {
 		// TODO Auto-generated method stub
 		return super.p4_to_C();
+	}
+	@Override
+	String p4_to_Boogie(String arg) {
+		if(name.equals(JsonKeyName.ACTIONS)) {
+			return value.p4_to_Boogie(arg);
+		}
+		return super.p4_to_Boogie(arg);
 	}
 }
 
@@ -419,7 +477,7 @@ class TableProperties extends P4Component {
 }
 
 class ActionList extends P4Component {
-	ArrayList<ActionListElement> actionList;
+	ArrayList<String> actionList;
 	public ActionList() {
 		super();
 		actionList = new ArrayList<>();
@@ -429,13 +487,34 @@ class ActionList extends P4Component {
 		super.parse(object);
 		ArrayNode elements = (ArrayNode)object.get(JsonKeyName.ACTIONLIST).get(JsonKeyName.VEC);
 		for(JsonNode element : elements) {
-			actionList.add((ActionListElement)Parser.getInstance().jsonParse(element));
+			actionList.add(element.get(JsonKeyName.EXPRESSION).get(JsonKeyName.METHOD)
+					.get(JsonKeyName.PATH).get(JsonKeyName.NAME).asText());
+//			actionList.add((ActionListElement)Parser.getInstance().jsonParse(element));
 		}
 	}
 	@Override
 	String p4_to_C() {
 		// TODO Auto-generated method stub
 		return super.p4_to_C();
+	}
+	@Override
+	String p4_to_Boogie(String arg) {
+		String code = "";
+		for(String actionName:actionList) {
+			code += "const unique action."+actionName+" : "+arg+";\n";
+		}
+		int cnt = actionList.size();
+		if(cnt != 0) {
+			code += "axiom(forall action:"+arg+" :: ";
+			for(String actionName:actionList) {
+				code += "action==action."+actionName;
+				cnt--;
+				if(cnt!=0)
+					code += " || ";
+			}
+			code += ");\n";
+		}
+		return code;
 	}
 }
 

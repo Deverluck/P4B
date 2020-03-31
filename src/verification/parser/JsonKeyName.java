@@ -46,4 +46,7 @@ public class JsonKeyName {
 	public static final String TYPEARGUMENTS = "typeArguments";
 	public static final String VALUE = "value";
 	public static final String VEC = "vec";
+	public static final String KEY = "key";
+	public static final String ACTIONS = "actions";
+	public static final String DEFAULT_ACTION = "default_action";
 }
