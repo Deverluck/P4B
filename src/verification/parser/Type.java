@@ -44,14 +44,6 @@ class Type_Header extends Type {
 	}
 	@Override
 	String p4_to_Boogie() {
-//		String code = "type "+name+" = bv"+length()+";\n";
-//		int start = 0;
-//		for(StructField field : fields) {
-//			code += "function "+name+"."+field.name;
-//			code += "(header : "+name+") returns (bv"+field.len+")";
-//			code += " {header["+(start+field.len)+":"+start+"]}\n";
-//			start += field.len;
-//		}
 		String code = "\n// Header "+name+"\n";
 		code += "type "+name+";\n";
 		for(StructField field : fields) {
@@ -70,10 +62,15 @@ class Type_Header extends Type {
 
 class Type_Struct extends Type {
 	ArrayList<StructField> fields;
-//	TypeVector fields;
-
 	public Type_Struct() {
 		fields = new ArrayList<>();
+	}
+	int length() {
+		int len = 0;
+		for(StructField field : fields) {
+			len += field.len;
+		}
+		return len;
 	}
 
 	@Override

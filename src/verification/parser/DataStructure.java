@@ -98,6 +98,10 @@ class StructField extends DataStructure {
 			Type_Name tn = (Type_Name)type;
 			len = Parser.getInstance().getTypeLength(tn.name);
 		}
+		else if(type.Node_Type.equals("Type_Header")) {
+			Type_Header th = (Type_Header)type;
+			len = Parser.getInstance().getTypeLength(th.name);
+		}
 	}
 
 	@Override
@@ -119,6 +123,10 @@ class StructField extends DataStructure {
 		else if(type.Node_Type.equals("Type_Name"))
 			code = type.p4_to_Boogie();
 		return code;
+	}
+	@Override
+	String getTypeName() {
+		return type.getTypeName();
 	}
 }
 

@@ -106,12 +106,11 @@ public class Parser {
 
 			String Boogie_code = p4_to_Boogie(program);
 			System.out.println("######## Boogie Program ########");
-//			System.out.println(Boogie_code);
+			System.out.println(Boogie_code);
 
 			long endTime = System.currentTimeMillis();
 			System.out.println("Time: " + (endTime - startTime) + "ms");
 			clear();
-			System.out.println(headersName);
 		}catch(JsonProcessingException e) {
 			e.printStackTrace();
 		}catch(IOException e) {
@@ -216,13 +215,14 @@ public class Parser {
 		typeDefinitions.add(typeDef);
 		if(!typeDefLength.containsKey(typeDef.name)) {
 			typeDefLength.put(typeDef.name, typeDef.len);
-			System.out.println(typeDef.name+"  "+typeDef.len);
 		}
 	}
 
 	public int getTypeLength(String name) {
 		if(typeDefLength.containsKey(name))
 			return typeDefLength.get(name);
+		else if(headers.containsKey(name))
+			return headers.get(name).length();
 		else
 			return -1;
 	}
@@ -327,12 +327,12 @@ public class Parser {
 
 	String p4_to_Boogie_extract() {
 		String code = "";
-		int totalLen = 0;
+		Type_Struct myheaders = structs.get(headersName);
+		int totalLen = myheaders.length();
 		int start = 0; //for extracting
-		for(String name:headers.keySet()) {
-			totalLen += headers.get(name).length();
-
-			String procedureName = "packet_in.extract."+name;
+		for(StructField headersField:myheaders.fields) {
+			String name = headersField.getTypeName();
+			String procedureName = "packet_in.extract.headers."+headersField.name;
 			BoogieProcedure procedure = new BoogieProcedure(procedureName);
 			addProcedure(procedure);
 			setCurrentProcedure(procedure);
@@ -340,22 +340,8 @@ public class Parser {
 			getCurrentProcedure().declare = declare;
 			addModifiedGlobalVariable("isValid");
 
-//			code += "\nprocedure "+procedureName+"(header:"+name+")\n";
-//			code += "modifies isValid";
-//			int tmp = headers.get(name).fields.size();
-//			if(tmp != 0)
-//				code += ", ";
-//			else
-//				code += ";\n";
 			for(StructField field:headers.get(name).fields) {
 				addModifiedGlobalVariable(name+"."+field.name);
-
-//				code += name+"."+field.name;
-//				tmp--;
-//				if(tmp > 0)
-//					code += ", ";
-//				else
-//					code += ";\n";
 			}
 			String body = "";
 			body += "{\n";
