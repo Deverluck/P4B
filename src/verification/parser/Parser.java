@@ -106,11 +106,12 @@ public class Parser {
 
 			String Boogie_code = p4_to_Boogie(program);
 			System.out.println("######## Boogie Program ########");
-			System.out.println(Boogie_code);
+//			System.out.println(Boogie_code);
 
 			long endTime = System.currentTimeMillis();
 			System.out.println("Time: " + (endTime - startTime) + "ms");
 			clear();
+			System.out.println(headersName);
 		}catch(JsonProcessingException e) {
 			e.printStackTrace();
 		}catch(IOException e) {
@@ -429,6 +430,7 @@ public class Parser {
 	private HashMap<String, BoogieProcedure> procedures;
 	private BoogieProcedure currentProcedure;
 	private HashMap<String, String> boogieFunctions; //SMT bit-vector
+	private String headersName;
 
 	void addProcedure(BoogieProcedure procedure) {
 		procedures.put(procedure.name, procedure);
@@ -454,6 +456,10 @@ public class Parser {
 	void addBoogieFunction(String name, String cont) {
 		if(!boogieFunctions.containsKey(name))
 			boogieFunctions.put(name, cont);
+	}
+	
+	void setHeadersName(String headersName) {
+		this.headersName = headersName;
 	}
 
 //

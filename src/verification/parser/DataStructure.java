@@ -139,6 +139,14 @@ class Path extends DataStructure {
 	String p4_to_Boogie() {
 		return name;
 	}
+	@Override
+	String getTypeName() {
+		return name;
+	}
+	@Override
+	String getName() {
+		return name;
+	}
 }
 
 class BoolLiteral extends DataStructure {

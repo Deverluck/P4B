@@ -79,7 +79,8 @@ class MethodCallExpression extends Expression {
 		String code = "";
 		String methodName = method.p4_to_Boogie();
 		if(methodName.equals("extract")) {
-			methodName = "packet_in."+methodName+"."+typeArguments.get(0).getTypeName();
+//			methodName = "packet_in."+methodName+"."+typeArguments.get(0).getTypeName();
+			methodName = "packet_in."+methodName+".headers."+arguments.get(0).getName();
 		}
 		// deal with isValid()
 		else if(methodName.length()>8 && methodName.substring(0, 8).equals("isValid[")) {
@@ -145,6 +146,10 @@ class PathExpression extends Expression {
 	@Override
 	String getTypeName() {
 		return type.getTypeName();
+	}
+	@Override
+	String getName() {
+		return path.getName();
 	}
 }
 
@@ -343,6 +348,10 @@ class Member extends Expression {
 	@Override
 	String getTypeName() {
 		return type.getTypeName();
+	}
+	@Override
+	String getName() {
+		return member;
 	}
 }
 

@@ -207,6 +207,12 @@ class Type_Parser extends Type {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
 		applyParams = Parser.getInstance().jsonParse(object.get(JsonKeyName.APPLYPARAMS));
+		
+		// get the second parameter which should represent headers
+		if(applyParams instanceof ParameterList) {
+			ParameterList pl = (ParameterList)applyParams;
+			Parser.getInstance().setHeadersName(((TypeVector)pl.parameters).children.get(1).getTypeName());
+		}
 	}
 
 	@Override
@@ -243,7 +249,7 @@ class Type_Name extends Type {
 		super.parse(object);
 		path = Parser.getInstance().jsonParse(object.get(JsonKeyName.PATH));
 		addChild(path);
-		name = path.p4_to_C();
+		name = path.getTypeName();
 	}
 	@Override
 	String p4_to_C() {

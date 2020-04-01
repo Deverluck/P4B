@@ -325,6 +325,10 @@ class Parameter extends P4Component {
 		type.setEnable();
 		return name+":"+type.p4_to_Boogie();
 	}
+	@Override
+	String getTypeName() {
+		return type.getTypeName();
+	}
 }
 
 /* P4 table and properties*/

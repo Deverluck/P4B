@@ -84,4 +84,9 @@ public class Node {
 	String getTypeName() {
 		return "";
 	}
+	
+	// for methodCall extract()
+	String getName() {
+		return "";
+	}
 }
