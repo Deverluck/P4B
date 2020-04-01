@@ -86,6 +86,7 @@ class MethodCallExpression extends Expression {
 		else if(methodName.length()>8 && methodName.substring(0, 8).equals("isValid[")) {
 			return methodName;
 		}
+//		System.out.println(Parser.getInstance().getCurrentProcedure().name+":"+methodName);
 		Parser.getInstance().getCurrentProcedure().childrenNames.add(methodName);
 		code = methodName+"(";
 		int cnt = 0;

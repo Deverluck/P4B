@@ -393,7 +393,7 @@ class P4Table extends P4Component {
 
 	@Override
 	String p4_to_Boogie() {
-		BoogieProcedure procedure = new BoogieProcedure(name);
+		BoogieProcedure procedure = new BoogieProcedure(name+".apply");
 		Parser.getInstance().setCurrentProcedure(procedure);
 		Parser.getInstance().addProcedure(procedure);
 
