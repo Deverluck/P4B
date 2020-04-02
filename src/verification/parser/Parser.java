@@ -358,6 +358,57 @@ public class Parser {
 		code += "const packet:packet_in;\n";
 		return code;
 	}
+	
+	String p4_to_Boogie_emit() {
+		String packetoutName = "packet_o";
+		String code = "";
+		code += "\ntype packet_out = packet_in;\n";
+		code += "var "+packetoutName+":packet_in;\n";
+		addBoogieGlobalVariable(packetoutName);
+		
+		Type_Struct myheaders = structs.get(headersName);
+		int totalLen = myheaders.length();
+		int start = 0; //for extracting
+		for(StructField headersField:myheaders.fields) {
+			String name = headersField.getTypeName();
+			String procedureName = "packet_out.emit.headers."+headersField.name;
+			BoogieProcedure procedure = new BoogieProcedure(procedureName);
+			addProcedure(procedure);
+			setCurrentProcedure(procedure);
+			String declare = "\nprocedure "+procedureName+"(header:"+name+")\n";
+			getCurrentProcedure().declare = declare;
+			addModifiedGlobalVariable(packetoutName);
+
+//			for(StructField field:headers.get(name).fields) {
+//				addModifiedGlobalVariable(name+"."+field.name);
+//			}
+			String body = "";
+			body += "{\n";
+			incIndent();
+			body += addIndent()+"if(isValid[header]){\n";
+			incIndent();
+			for(StructField field:headers.get(name).fields) {
+				int end = start+field.len;
+				body += addIndent();
+				body += packetoutName+" := ";
+				if(start+field.len != totalLen) {
+					body += packetoutName+"["+totalLen+":"+end+"]++";
+				}
+				body += name+"."+field.name+"[header]";
+				if(start!=0) {
+					body += "++"+packetoutName+"["+start+":"+"0"+"]";
+				}
+				body += ";\n";
+				start += field.len;
+			}
+			decIndent();
+			body += addIndent()+"}\n";
+			decIndent();
+			body += "}\n";
+			getCurrentProcedure().body = body;
+		}
+		return code;
+	}
 
 	String p4_to_Boogie(Node program) {
 		System.out.println("######## Unhandled Types ########");
@@ -382,6 +433,8 @@ public class Parser {
 		code += p4_to_Boogie_Header_isValid();
 		// Add extract procedures
 		code += p4_to_Boogie_extract();
+		// Add emit procedures
+		code += p4_to_Boogie_emit();
 		// Add support for extern methods
 		code += p4_to_Boogie_extern();
 

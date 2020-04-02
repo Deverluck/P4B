@@ -82,6 +82,9 @@ class MethodCallExpression extends Expression {
 //			methodName = "packet_in."+methodName+"."+typeArguments.get(0).getTypeName();
 			methodName = "packet_in."+methodName+".headers."+arguments.get(0).getName();
 		}
+		else if(methodName.equals("emit")) {
+			methodName = "packet_out."+methodName+".headers."+arguments.get(0).getName();
+		}
 		// deal with isValid()
 		else if(methodName.length()>8 && methodName.substring(0, 8).equals("isValid[")) {
 			return methodName;
@@ -322,7 +325,7 @@ class Member extends Expression {
 //			String code = expr.p4_to_Boogie()+"."+member;
 //			return code;
 //		}
-		if(member.equals("extract")) {
+		if(member.equals("extract") || member.equals("emit")) {
 			return member;
 		}
 		else if(member.equals("isValid")) {
