@@ -276,6 +276,10 @@ class Type_Extern extends Type {
 	}
 }
 
+class Type_Stack extends Type {
+
+}
+
 class Type_Package extends Type {
 
 }
@@ -297,10 +301,6 @@ class Type_Error extends Type {
 }
 
 class Type_Enum extends Type {
-
-}
-
-class Type_Stack extends Type {
 
 }
 

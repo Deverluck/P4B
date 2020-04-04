@@ -415,7 +415,7 @@ public class Parser {
 		String [] handledTypes = {"Path", "Type_Name", "StructField", "Type_Struct",
 				"MethodCallStatement", "Constant", "MethodCallExpression", "Type_Header",
 				"P4Program", "Type_Typedef", "BlockStatement", "AssignmentStatement",
-				"LNot", "LAnd"};
+				"LNot", "LAnd", "Add", "Sub", "Mul", "Shl", "BAnd", "BOr", "BXor"};
 		HashSet<String> mytypes = new HashSet<>();
 		mytypes.addAll(types);
 		for(String str : handledTypes){

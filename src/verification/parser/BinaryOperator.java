@@ -13,6 +13,20 @@ public class BinaryOperator extends Node {
 		right = Parser.getInstance().jsonParse(object.get(JsonKeyName.RIGHT));
 		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 	}
+
+	String p4_to_Boogie(String op, String opbuiltin) {
+		if(type instanceof Type_Bits) {
+			Type_Bits tb = (Type_Bits)type;
+			String typeName = "bv"+tb.size;
+			String functionName = op+"."+typeName;
+			String function = "function {:bvbuiltin \""+opbuiltin+"\"} "+functionName;
+			function += "(left:"+typeName+", right:"+typeName+") returns("+typeName+");";
+			Parser.getInstance().addBoogieFunction(functionName, function);
+			String code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+")";
+			return code;
+		}
+		return "";
+	}
 }
 
 class BAnd extends BinaryOperator {
@@ -20,6 +34,10 @@ class BAnd extends BinaryOperator {
 	String p4_to_C() {
 		String code = left.p4_to_C()+"&"+right.p4_to_C();
 		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("band", "bvand");
 	}
 }
 
@@ -29,6 +47,10 @@ class BOr extends BinaryOperator {
 		String code = left.p4_to_C()+"|"+right.p4_to_C();
 		return code;
 	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bor", "bvor");
+	}
 }
 
 class BXor extends BinaryOperator {
@@ -36,6 +58,10 @@ class BXor extends BinaryOperator {
 	String p4_to_C() {
 		String code = left.p4_to_C()+"^"+right.p4_to_C();
 		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bxor", "bvxor");
 	}
 }
 
@@ -74,6 +100,11 @@ class LOr extends BinaryOperator {
 		String code = left.p4_to_C()+"||"+right.p4_to_C();
 		return code;
 	}
+	@Override
+	String p4_to_Boogie() {
+		String code = "("+left.p4_to_Boogie()+"||"+right.p4_to_Boogie()+")";
+		return code;
+	}
 }
 
 class Shl extends BinaryOperator {
@@ -81,6 +112,10 @@ class Shl extends BinaryOperator {
 	String p4_to_C() {
 		String code = left.p4_to_C()+" << "+right.p4_to_C();
 		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("shl", "bvshl");
 	}
 }
 
@@ -90,6 +125,10 @@ class Shr extends BinaryOperator {
 		String code = left.p4_to_C()+" >> "+right.p4_to_C();
 		return code;
 	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("shr", "bvshr");
+	}
 }
 
 class Mul extends BinaryOperator {
@@ -97,6 +136,10 @@ class Mul extends BinaryOperator {
 	String p4_to_C() {
 		String code = left.p4_to_C()+"*"+right.p4_to_C();
 		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("mul", "bvmul");
 	}
 }
 
@@ -108,19 +151,7 @@ class Add extends BinaryOperator {
 	}
 	@Override
 	String p4_to_Boogie() {
-		if(type instanceof Type_Bits) {
-			Type_Bits tb = (Type_Bits)type;
-			String typeName = "bv"+tb.size;
-			String functionName = "add."+typeName;
-			String function = "function {:bvbuiltin \"bvadd\"} "+functionName;
-			function += "(left:"+typeName+", right:"+typeName+") returns("+typeName+");";
-			Parser.getInstance().addBoogieFunction(functionName, function);
-
-			String code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+")";
-			return code;
-		}
-
-		return super.p4_to_Boogie();
+		return super.p4_to_Boogie("add", "bvadd");
 	}
 }
 
@@ -130,14 +161,36 @@ class Sub extends BinaryOperator {
 		String code = left.p4_to_C()+"-"+right.p4_to_C();
 		return code;
 	}
-}
-
-class Neq extends BinaryOperator {
-
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("sub", "bvsub");
+	}
 }
 
 class Equ extends BinaryOperator {
+	@Override
+	String p4_to_C() {
+		String code = left.p4_to_C()+"=="+right.p4_to_C();
+		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		String code = left.p4_to_Boogie()+"=="+right.p4_to_Boogie();
+		return code;
+	}
+}
 
+class Neq extends BinaryOperator {
+	@Override
+	String p4_to_C() {
+		String code = left.p4_to_C()+"!="+right.p4_to_C();
+		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		String code = left.p4_to_Boogie()+"!="+right.p4_to_Boogie();
+		return code;
+	}
 }
 
 class Grt extends BinaryOperator {
