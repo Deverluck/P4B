@@ -49,4 +49,5 @@ public class JsonKeyName {
 	public static final String KEY = "key";
 	public static final String ACTIONS = "actions";
 	public static final String DEFAULT_ACTION = "default_action";
+	public static final String ELEMENTTYPE = "elementType";
 }

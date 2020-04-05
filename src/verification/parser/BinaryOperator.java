@@ -193,6 +193,14 @@ class Neq extends BinaryOperator {
 	}
 }
 
+class ArrayIndex extends BinaryOperator {
+	@Override
+	String p4_to_Boogie() {
+		String code = left.p4_to_Boogie()+"["+right.p4_to_Boogie()+"]";
+		return code;
+	}
+}
+
 class Grt extends BinaryOperator {
 
 }

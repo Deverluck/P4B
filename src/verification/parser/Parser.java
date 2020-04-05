@@ -299,12 +299,23 @@ public class Parser {
 		addProcedure(procedure);
 
 		String declare = "\nprocedure clear_valid();\n";
+		procedure.modifies.add("isValid");
 		for(String name:headers.keySet()) {
 			declare += "	ensures (forall header:"+name;
 			declare += ":: isValid[header]==false);\n";
 		}
-		declare += "	modifies isValid;\n";
+//		declare += "	modifies isValid;\n";
 		procedure.declare = declare;
+		
+		BoogieProcedure procedure2 = new BoogieProcedure("setInvalid");
+		addProcedure(procedure2);
+		procedure2.modifies.add("isValid");
+		String declare2 = "\nprocedure setInvalid<T>(header:T)\n";
+		String body2 = "{\n";
+		body2 += "	isValid[header]:false;\n";
+		body2 += "}\n";
+		procedure2.declare = declare2;
+		procedure2.body = body2;
 
 		addBoogieGlobalVariable("isValid");
 		return code;
@@ -340,6 +351,8 @@ public class Parser {
 			getCurrentProcedure().declare = declare;
 			addModifiedGlobalVariable("isValid");
 
+			System.out.println(headersField.type);
+			System.out.println("print header name:"+name);
 			for(StructField field:headers.get(name).fields) {
 				addModifiedGlobalVariable(name+"."+field.name);
 			}

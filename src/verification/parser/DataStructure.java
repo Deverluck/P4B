@@ -122,6 +122,10 @@ class StructField extends DataStructure {
 			code = "bv"+len;
 		else if(type.Node_Type.equals("Type_Name"))
 			code = type.p4_to_Boogie();
+		else if(type.Node_Type.equals("Type_Stack")) {
+			Type_Stack ts = (Type_Stack)type;
+			code = ts.elementType.p4_to_Boogie();
+		}
 		return code;
 	}
 	@Override
@@ -158,10 +162,6 @@ class Path extends DataStructure {
 }
 
 class BoolLiteral extends DataStructure {
-
-}
-
-class ArrayIndex extends DataStructure {
 
 }
 

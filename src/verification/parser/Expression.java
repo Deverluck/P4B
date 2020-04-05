@@ -85,6 +85,10 @@ class MethodCallExpression extends Expression {
 		else if(methodName.equals("emit")) {
 			methodName = "packet_out."+methodName+".headers."+arguments.get(0).getName();
 		}
+		else if(methodName.length()>10 && methodName.substring(0, 11).equals("setInvalid(")) {
+			// do nothing
+			return methodName;
+		}
 		// deal with isValid()
 		else if(methodName.length()>8 && methodName.substring(0, 8).equals("isValid[")) {
 			return methodName;
@@ -325,10 +329,18 @@ class Member extends Expression {
 //			String code = expr.p4_to_Boogie()+"."+member;
 //			return code;
 //		}
-		if(member.equals("extract") || member.equals("emit")) {
+		if(type.Node_Type.equals("Type_Method") && (member.equals("extract") 
+				|| member.equals("emit"))) {
 			return member;
 		}
-		else if(member.equals("isValid")) {
+		else if(type.Node_Type.equals("Type_Method") && member.equals("setInvalid")) {
+			String code = "setInvalid";
+			code += "(";
+			code += expr.p4_to_Boogie();
+			code += ")";
+			return code;
+		}
+		else if(type.Node_Type.equals("Type_Method") && member.equals("isValid")) {
 			String code = "isValid";
 			code += "[";
 			code += expr.p4_to_Boogie();
@@ -337,10 +349,6 @@ class Member extends Expression {
 		}
 		else if(member.equals("apply")) {
 			return expr.p4_to_Boogie()+"."+member;
-		}
-		else if(member.equals("emit")) {
-			// TODO
-			return member;
 		}
 		else {
 			Parser.getInstance().addModifiedGlobalVariable(expr.getTypeName()+"."+member);

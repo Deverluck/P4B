@@ -8,6 +8,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Type extends Node {
 	String name;
+	@Override
+	String getTypeName() {
+		return name;
+	}
 }
 
 //Header
@@ -117,6 +121,23 @@ class Type_Struct extends Type {
 	@Override
 	String getTypeName() {
 		return name;
+	}
+}
+
+class Type_Stack extends Type {
+	Node elementType;
+	Node size;
+	
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		elementType = Parser.getInstance().jsonParse(object.get(JsonKeyName.ELEMENTTYPE));
+		size = Parser.getInstance().jsonParse(object.get(JsonKeyName.SIZE));
+	}
+	
+	@Override
+	String getTypeName() {
+		return elementType.getTypeName();
 	}
 }
 
@@ -274,10 +295,6 @@ class Type_Extern extends Type {
 			return name;
 		return "";
 	}
-}
-
-class Type_Stack extends Type {
-
 }
 
 class Type_Package extends Type {
