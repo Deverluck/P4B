@@ -12,12 +12,14 @@ public class BoogieProcedure {
 	String declare;
 	String body;
 	BoogieBlock mainBlock;
+	boolean implemented;
 	
 	private BoogieProcedure() {
 		parents = new HashSet<>();
 		childrenNames = new HashSet<>();
 		modifies = new HashSet<>();
 		mainBlock = new BoogieBlock();
+		implemented = true;
 	}
 	public BoogieProcedure(String name, String declare, String body) {
 		this();
@@ -45,8 +47,12 @@ public class BoogieProcedure {
 			else
 				code += ";\n";
 		}
-
-		code += body;
+		if(implemented) {
+			code += "{\n";
+			code += mainBlock.toBoogie();
+			code += "}\n";
+		}
+//		code += body;
 		return code;
 	}
 }

@@ -122,6 +122,7 @@ class IfStatement extends Statement {
 			
 			Parser.getInstance().popBoogieBlock();
 		}
+//		return super.p4_to_Boogie();
 		return code;
 	}
 }
@@ -143,6 +144,7 @@ class MethodCallStatement extends Statement {
 		code = code+methodCall.p4_to_Boogie()+";\n";
 		Parser.getInstance().addBoogieStatement(code);
 		return code;
+//		return super.p4_to_Boogie();
 	}
 }
 

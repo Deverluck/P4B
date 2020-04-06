@@ -29,6 +29,9 @@ class BoogieBlock extends BoogieStatement {
 		}
 		return code;
 	}
+	boolean isEmpty() {
+		return conts.isEmpty();
+	}
 }
 
 /** for if(){}, start is "if(...){", end is "}"

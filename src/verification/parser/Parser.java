@@ -108,12 +108,12 @@ public class Parser {
 
 			String Boogie_code = p4_to_Boogie(program);
 			System.out.println("######## Boogie Program ########");
-			for(String key:procedures.keySet()) {
-				System.out.println(key);
-				System.out.println(procedures.get(key).mainBlock.toBoogie());
-				System.out.println();
-			}
-//			System.out.println(Boogie_code);
+//			for(String key:procedures.keySet()) {
+//				System.out.println(key);
+//				System.out.println(procedures.get(key).mainBlock.toBoogie());
+//				System.out.println();
+//			}
+			System.out.println(Boogie_code);
 
 			long endTime = System.currentTimeMillis();
 			System.out.println("Time: " + (endTime - startTime) + "ms");
@@ -303,6 +303,7 @@ public class Parser {
 //		code += "function isValid<T>(header: T) returns (bool) { valid(header) }";
 
 		BoogieProcedure procedure = new BoogieProcedure("clear_valid");
+		procedure.implemented = false;
 		addProcedure(procedure);
 
 		String declare = "\nprocedure clear_valid();\n";
