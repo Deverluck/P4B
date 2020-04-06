@@ -1,5 +1,9 @@
 package verification.parser;
 
+import java.util.ArrayList;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Statement extends Node {
@@ -20,7 +24,12 @@ class BlockStatement extends Statement {
 	}
 	@Override
 	String p4_to_Boogie() {
+		BoogieBlock block = new BoogieBlock();
+		Parser.getInstance().addBoogieBlock(block);
+		
 		String code = components.p4_to_Boogie();
+		
+		Parser.getInstance().popBoogieBlock();
 		return code;
 	}
 }
@@ -43,6 +52,7 @@ class AssignmentStatement extends Statement {
 	@Override
 	String p4_to_Boogie() {
 		String code = addIndent()+left.p4_to_Boogie()+" := "+right.p4_to_Boogie()+";\n";
+		Parser.getInstance().addBoogieStatement(code);
 		return code;
 	}
 }
@@ -86,16 +96,31 @@ class IfStatement extends Statement {
 		String code = addIndent()+"if(";
 		code += condition.p4_to_Boogie();
 		code += "){\n";
+		
+		String start = code;
+		String end = addIndent()+"}\n";
+		BoogieIfStatement blockIfTrue = new BoogieIfStatement(start, end);
+		Parser.getInstance().addBoogieBlock(blockIfTrue);
+		
 		incIndent();
 		code += ifTrue.p4_to_Boogie();
 		decIndent();
 		code += addIndent()+"}\n";
+		
+		Parser.getInstance().popBoogieBlock();
+		
 		if(ifFalse != null) {
+			BoogieIfStatement blockIfFalse = new BoogieIfStatement(addIndent()+"else {\n",
+					addIndent()+"}\n");
+			Parser.getInstance().addBoogieBlock(blockIfFalse);
+			
 			code += addIndent()+"else {\n";
 			incIndent();
 			code += ifFalse.p4_to_Boogie();
 			decIndent();
 			code += addIndent()+"}\n";
+			
+			Parser.getInstance().popBoogieBlock();
 		}
 		return code;
 	}
@@ -115,7 +140,138 @@ class MethodCallStatement extends Statement {
 	@Override
 	String p4_to_Boogie() {
 		String code = addIndent()+"call ";
-		return code+methodCall.p4_to_Boogie()+";\n";
+		code = code+methodCall.p4_to_Boogie()+";\n";
+		Parser.getInstance().addBoogieStatement(code);
+		return code;
+	}
+}
+
+class SelectExpression extends Statement {
+	ArrayList<Node> select; // may select more than one key
+	ArrayList<ArrayList<Node>> cases_value;
+	ArrayList<Node> cases;
+	Node default_case;
+
+	public SelectExpression() {
+		super();
+		select = new ArrayList<>();
+		cases_value = new ArrayList<>();
+		cases = new ArrayList<>();
+		default_case = null;
+	}
+
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		ArrayNode select_vec = (ArrayNode)object.get(JsonKeyName.SELECT).get(JsonKeyName.COMPONENTS).get(JsonKeyName.VEC);
+		for(JsonNode node : select_vec) {
+			select.add(Parser.getInstance().jsonParse(node));
+		}
+		ArrayNode cases_vec = (ArrayNode)object.get(JsonKeyName.SELECTCASES).get(JsonKeyName.VEC);
+		for(JsonNode node : cases_vec) {
+			node = (JsonNode)node;
+			if(!node.get(JsonKeyName.KEYSET).get(JsonKeyName.NODE_TYPE).asText().equals(JsonKeyName.DEFAULTEXPRESSION)) {
+				ArrayList<Node> list = new ArrayList<>();
+				// multiple keys
+				if(node.get(JsonKeyName.KEYSET).has(JsonKeyName.COMPONENTS)) {
+					ArrayNode tmpArrayNode = (ArrayNode)node.get(JsonKeyName.KEYSET).get(JsonKeyName.COMPONENTS).get(JsonKeyName.VEC);
+					for(JsonNode tmpJsonNode : tmpArrayNode)
+						list.add(Parser.getInstance().jsonParse(tmpJsonNode));
+				}
+				// single key
+				else {
+					list.add(Parser.getInstance().jsonParse(node.get(JsonKeyName.KEYSET)));
+					//TODO Add support for Mask
+				}
+				cases_value.add(list);
+				cases.add(Parser.getInstance().jsonParse(node.get(JsonKeyName.STATE)));
+			}
+			// default
+			else
+				default_case = Parser.getInstance().jsonParse(node.get(JsonKeyName.STATE));
+		}
+	}
+	@Override
+	String p4_to_C() {
+		String code = "";
+		int cnt1 = 0; // counter for keys (&&)
+		int cnt2 = 0; // counter for cases (else if{})
+		for(Node case_node : cases) {
+			code += "if(";
+			cnt1 = 0;
+			for(Node select_node : select) {
+				code += select_node.p4_to_C()+"=="+cases_value.get(cnt2).get(cnt1).p4_to_C();
+				cnt1++;
+				if(cnt1 < select.size())
+					code += " && ";
+			}
+			code += "){\n"+case_node.p4_to_C(JsonKeyName.PARSERSTATE)+"}\n";
+			cnt2++;
+			if(cnt2 != cases.size())
+				code += "else";
+		}
+
+		if(default_case != null) {
+			if(cases.size()!=0)
+				code += "else{\n" + default_case.p4_to_C(JsonKeyName.PARSERSTATE) + "}\n";
+			else
+				code += default_case.p4_to_C(JsonKeyName.PARSERSTATE);
+		}
+		// there may be no default case
+		else if(cases.size()==1 && default_case == null) {
+			code += "else{\n" + cases.get(0).p4_to_C(JsonKeyName.PARSERSTATE) + "}\n";
+		}
+		return code;
+	}
+
+	@Override
+	String p4_to_Boogie() {
+		// TODO Add support for Mask
+		String code = "";
+		int cnt1 = 0; // counter for keys (&&)
+		int cnt2 = 0; // counter for cases (else if{})
+		for(Node case_node : cases) {
+			String condition = "	if(";
+			if(cnt2 != 0)
+				condition = "	else if(";
+			
+			cnt1 = 0;
+			for(Node select_node : select) {
+				// TODO deal with argument types (equal width)
+				condition += select_node.p4_to_Boogie()+" == ";
+				Node caseValue = cases_value.get(cnt2).get(cnt1);
+				if(caseValue instanceof Constant) {
+					condition += caseValue.p4_to_Boogie();
+				}
+				cnt1++;
+				if(cnt1 < select.size())
+					condition += " && ";
+			}
+			condition += "){\n";
+			
+			BoogieIfStatement ifStatement = new BoogieIfStatement(condition, "	}\n");
+			Parser.getInstance().addBoogieBlock(ifStatement);
+			
+			code += condition;
+			incIndent();
+			code += case_node.p4_to_Boogie(JsonKeyName.PARSERSTATE)+"	}\n";
+			decIndent();
+
+			Parser.getInstance().popBoogieBlock();
+			cnt2++;
+		}
+
+//		if(default_case != null) {
+//			if(cases.size()!=0)
+//				code += "else{\n" + default_case.p4_to_C(JsonKeyName.PARSERSTATE) + "}\n";
+//			else
+//				code += default_case.p4_to_C(JsonKeyName.PARSERSTATE);
+//		}
+//		// there may be no default case
+//		else if(cases.size()==1 && default_case == null) {
+//			code += "else{\n" + cases.get(0).p4_to_C(JsonKeyName.PARSERSTATE) + "}\n";
+//		}
+		return code;
 	}
 }
 

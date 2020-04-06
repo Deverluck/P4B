@@ -49,6 +49,7 @@ public class Parser {
 		modifiedGlobalVariables = new HashSet<>();
 		procedures = new HashMap<>();
 		boogieFunctions = new HashMap<>();
+		blockStack = new BoogieBlockStack();
 	}
 
 	private void clear() {
@@ -64,6 +65,7 @@ public class Parser {
 		modifiedGlobalVariables.clear();
 		procedures.clear();
 		boogieFunctions.clear();
+		blockStack.clear();
 	}
 
 	public String addIndent() {
@@ -106,7 +108,12 @@ public class Parser {
 
 			String Boogie_code = p4_to_Boogie(program);
 			System.out.println("######## Boogie Program ########");
-			System.out.println(Boogie_code);
+			for(String key:procedures.keySet()) {
+				System.out.println(key);
+				System.out.println(procedures.get(key).mainBlock.toBoogie());
+				System.out.println();
+			}
+//			System.out.println(Boogie_code);
 
 			long endTime = System.currentTimeMillis();
 			System.out.println("Time: " + (endTime - startTime) + "ms");
@@ -309,10 +316,15 @@ public class Parser {
 		
 		BoogieProcedure procedure2 = new BoogieProcedure("setInvalid");
 		addProcedure(procedure2);
+		setCurrentProcedure(procedure2);
 		procedure2.modifies.add("isValid");
 		String declare2 = "\nprocedure setInvalid<T>(header:T)\n";
 		String body2 = "{\n";
-		body2 += "	isValid[header]:false;\n";
+		
+		String statement = "	isValid[header]:false;\n";
+		addBoogieStatement(statement);
+		
+		body2 += statement;
 		body2 += "}\n";
 		procedure2.declare = declare2;
 		procedure2.body = body2;
@@ -351,19 +363,23 @@ public class Parser {
 			getCurrentProcedure().declare = declare;
 			addModifiedGlobalVariable("isValid");
 
-			System.out.println(headersField.type);
-			System.out.println("print header name:"+name);
 			for(StructField field:headers.get(name).fields) {
 				addModifiedGlobalVariable(name+"."+field.name);
 			}
 			String body = "";
 			body += "{\n";
 			for(StructField field:headers.get(name).fields) {
-				body += "	"+name+"."+field.name+"[header] := packet";
-				body += "["+(start+field.len)+":"+start+"];\n";
+				String statement = "	"+name+"."+field.name+"[header] := packet";
+				statement += "["+(start+field.len)+":"+start+"];\n";
+				addBoogieStatement(statement);
+				
+				body += statement;
 				start += field.len;
 			}
-			body += "	isValid[header] := true;\n";
+			String statement = "	isValid[header] := true;\n";
+			addBoogieStatement(statement);
+			
+			body += statement;
 			body += "}\n";
 			getCurrentProcedure().body = body;
 		}
@@ -398,24 +414,35 @@ public class Parser {
 			String body = "";
 			body += "{\n";
 			incIndent();
-			body += addIndent()+"if(isValid[header]){\n";
+			
+			String ifStart = addIndent()+"if(isValid[header]){\n";
+			String ifEnd = addIndent()+"}\n";
+			BoogieIfStatement boogieIfStatement = new BoogieIfStatement(ifStart, ifEnd);
+			addBoogieBlock(boogieIfStatement);
+			
+			body += ifStart;
 			incIndent();
 			for(StructField field:headers.get(name).fields) {
 				int end = start+field.len;
-				body += addIndent();
-				body += packetoutName+" := ";
+				
+				String statement = "";
+				statement += addIndent();
+				statement += packetoutName+" := ";
 				if(start+field.len != totalLen) {
-					body += packetoutName+"["+totalLen+":"+end+"]++";
+					statement += packetoutName+"["+totalLen+":"+end+"]++";
 				}
-				body += name+"."+field.name+"[header]";
+				statement += name+"."+field.name+"[header]";
 				if(start!=0) {
-					body += "++"+packetoutName+"["+start+":"+"0"+"]";
+					statement += "++"+packetoutName+"["+start+":"+"0"+"]";
 				}
-				body += ";\n";
+				statement += ";\n";
+				addBoogieStatement(statement);
+				body += statement;
 				start += field.len;
 			}
 			decIndent();
-			body += addIndent()+"}\n";
+			body += ifEnd;
+			popBoogieBlock();
 			decIndent();
 			body += "}\n";
 			getCurrentProcedure().body = body;
@@ -481,6 +508,7 @@ public class Parser {
 	private HashSet<String> modifiedGlobalVariables;
 	private HashMap<String, BoogieProcedure> procedures;
 	private BoogieProcedure currentProcedure;
+	private BoogieBlockStack blockStack;
 	private HashMap<String, String> boogieFunctions; //SMT bit-vector
 	private String headersName;
 
@@ -489,7 +517,26 @@ public class Parser {
 	}
 
 	void setCurrentProcedure(BoogieProcedure procedure) {
+		blockStack.clear();
 		this.currentProcedure = procedure;
+		blockStack.addBlock(procedure.mainBlock);
+	}
+	
+	void popBoogieBlock() {
+		blockStack.popBlock();
+	}
+	
+	void addBoogieBlock(BoogieBlock block) {
+		blockStack.addBlock(block);
+	}
+	
+	void addBoogieStatement(BoogieStatement statement) {
+		blockStack.addStatement(statement);
+	}
+	
+	void addBoogieStatement(String cont) {
+		BoogieStatement statement = new BoogieStatement(cont);
+		addBoogieStatement(statement);
 	}
 
 	BoogieProcedure getCurrentProcedure() {

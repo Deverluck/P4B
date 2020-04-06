@@ -70,8 +70,14 @@ class P4Parser extends P4Component {
 		String declare = "\n// Parser "+name+"\n";
 		declare += "procedure "+name+"()\n";
 		String body = "{\n";
-		body += "	call clear_valid();\n";
-		body += "	call start();\n";
+		
+		String statement1 = "	call clear_valid();\n";
+		String statement2 = "	call start();\n";
+		Parser.getInstance().addBoogieStatement(statement1);
+		Parser.getInstance().addBoogieStatement(statement2);
+		
+		body += statement1;
+		body += statement2;
 		body += "}\n";
 		procedure.childrenNames.add("clear_valid");
 		procedure.childrenNames.add("start");
@@ -132,9 +138,11 @@ class ParserState extends P4Component {
 		declare += "procedure "+name+"()\n";
 		incIndent();
 		String body = "{\n";
+		addIndent();
 		body += components.p4_to_Boogie();
 		if(selectExpression != null)
 			body += selectExpression.p4_to_Boogie(JsonKeyName.PARSERSTATE);
+		decIndent();
 		body += "}\n";
 		decIndent();
 		procedure.declare = declare;
@@ -404,18 +412,30 @@ class P4Table extends P4Component {
 		if(actions != null) {
 			Property property = (Property)actions;
 			ActionList actionList = (ActionList)property.value;
-			int cnt = actionList.actionList.size();
+			int cnt = 0;
 			for(String actionName:actionList.actionList) {
-				body += addIndent()+"if("+name+".select == "+"action."+actionName+"){\n";
+				String condition = addIndent();
+				if(cnt != 0)
+					condition += "else ";
+				condition += "if("+name+".select == "+"action."+actionName+"){\n";
+				String end = addIndent()+"}\n";
+				BoogieIfStatement ifStatement = new BoogieIfStatement(condition, end);
+				Parser.getInstance().addBoogieBlock(ifStatement);
+				
+				body += condition;
 				incIndent();
-				body += addIndent()+"call "+actionName+"();\n";
+				String statement = addIndent()+"call "+actionName+"();\n";
+				Parser.getInstance().addBoogieStatement(statement);
+				body += statement;
 				// TODO deal with action arguments
 				Parser.getInstance().getCurrentProcedure().childrenNames.add(actionName);
 				decIndent();
-				body += addIndent()+"}\n";
-				cnt--;
-				if(cnt != 0)
-					body += addIndent()+"else";
+				body += end;
+				cnt++;
+				
+				Parser.getInstance().popBoogieBlock();
+//				if(cnt != 0)
+//					body += addIndent()+"else";
 			}
 		}
 		body += "}\n";

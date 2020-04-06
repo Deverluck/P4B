@@ -1,6 +1,7 @@
 package verification.parser;
 
 import java.util.ArrayList;
+import java.util.Stack;
 
 public class BoogieStatement {
 	String cont;
@@ -18,6 +19,9 @@ class BoogieBlock extends BoogieStatement {
 		super("");
 		conts = new ArrayList<>();
 	}
+	void add(BoogieStatement statement) {
+		conts.add(statement);
+	}
 	String toBoogie() {
 		String code = "";
 		for(BoogieStatement bs:conts) {
@@ -29,12 +33,11 @@ class BoogieBlock extends BoogieStatement {
 
 /** for if(){}, start is "if(...){", end is "}"
     for else{}, start is "else{", end is "}" **/
-class BoogieIfStatement extends BoogieStatement {
+class BoogieIfStatement extends BoogieBlock {
 	String start;
 	String end;
-	ArrayList<BoogieStatement> conts;
 	public BoogieIfStatement(String start, String end) {
-		super("");
+		super();
 		this.start = start;
 		this.end = end;
 	}
@@ -45,5 +48,32 @@ class BoogieIfStatement extends BoogieStatement {
 		}
 		code += end;
 		return code;
+	}
+}
+
+class BoogieBlockStack {
+	Stack<BoogieBlock> blockStack;
+	public BoogieBlockStack() {
+		blockStack = new Stack<>();
+	}
+	void addBlock(BoogieBlock block) {
+		blockStack.push(block);
+	}
+	BoogieBlock top() {
+		return blockStack.peek();
+	}
+	// pop top block and add it to new top block's content
+	BoogieBlock popBlock() {
+		BoogieBlock peek = top();
+		blockStack.pop();
+		if(!blockStack.empty())
+			top().add(peek);
+		return peek;
+	}
+	void addStatement(BoogieStatement statement) {
+		top().add(statement);
+	}
+	void clear() {
+		blockStack.clear();
 	}
 }

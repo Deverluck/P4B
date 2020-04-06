@@ -6,29 +6,27 @@ import java.util.HashSet;
 
 public class BoogieProcedure {
 	String name;
-	HashSet<BoogieProcedure> children;
-	HashSet<BoogieProcedure> parents;
+	HashSet<BoogieProcedure> parents;  //callers
 	HashSet<String> childrenNames;
 	HashSet<String> modifies;
 	String declare;
 	String body;
-	public BoogieProcedure(String name, String declare, String body) {
-		children = new HashSet<>();
+	BoogieBlock mainBlock;
+	
+	private BoogieProcedure() {
 		parents = new HashSet<>();
 		childrenNames = new HashSet<>();
 		modifies = new HashSet<>();
+		mainBlock = new BoogieBlock();
+	}
+	public BoogieProcedure(String name, String declare, String body) {
+		this();
 		this.name = name;
 		this.declare = declare;
 		this.body = body;
 	}
 	public BoogieProcedure(String name) {
-		children = new HashSet<>();
-		parents = new HashSet<>();
-		childrenNames = new HashSet<>();
-		modifies = new HashSet<>();
-		this.name = name;
-		this.declare = "";
-		this.body = "";
+		this(name, "", "");
 	}
 	public void updateModifies(String var) {
 		modifies.add(var);
