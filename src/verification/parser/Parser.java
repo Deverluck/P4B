@@ -493,53 +493,96 @@ public class Parser {
 		int totalLen = myheaders.length();
 		int start = 0; //for extracting
 		for(StructField headersField:myheaders.fields) {
-			String name = headersField.getTypeName();
-			String procedureName = "packet_out.emit.headers."+headersField.name;
-			BoogieProcedure procedure = new BoogieProcedure(procedureName);
-			addProcedure(procedure);
-			setCurrentProcedure(procedure);
-			String declare = "\nprocedure "+procedureName+"(header:"+name+")\n";
-			getCurrentProcedure().declare = declare;
-			addModifiedGlobalVariable(packetoutName);
-
-//			for(StructField field:headers.get(name).fields) {
-//				addModifiedGlobalVariable(name+"."+field.name);
-//			}
-			String body = "";
-			body += "{\n";
-			incIndent();
-			
-			String ifStart = addIndent()+"if(isValid[header]){\n";
-			String ifEnd = addIndent()+"}\n";
-			BoogieIfStatement boogieIfStatement = new BoogieIfStatement(ifStart, ifEnd);
-			addBoogieBlock(boogieIfStatement);
-			
-			body += ifStart;
-			incIndent();
-			for(StructField field:headers.get(name).fields) {
-				int end = start+field.len;
+			if(headersField.type.Node_Type.equals("Type_Stack")) {
+				Type_Stack ts = (Type_Stack)headersField.type;
+				String name = ts.name;
+				String procedureName = "packet_out.emit.headers."+headersField.name;
+				BoogieProcedure procedure = new BoogieProcedure(procedureName);
+				addProcedure(procedure);
+				setCurrentProcedure(procedure);
+				String declare = "\nprocedure "+procedureName+"(stack:"+name+")\n";
+				getCurrentProcedure().declare = declare;
+				addModifiedGlobalVariable(packetoutName);
 				
-				String statement = "";
-				statement += addIndent();
-				statement += packetoutName+" := ";
-				if(start+field.len != totalLen) {
-					statement += packetoutName+"["+totalLen+":"+end+"]++";
+				// body starts
+				incIndent();
+				for(int i = 0; i < ts.size.value; i++) {
+					String ifStart = addIndent()+"if(isValid[stack["+i+"]]){\n";
+					String ifEnd = addIndent()+"}\n";
+					BoogieIfStatement boogieIfStatement = new BoogieIfStatement(ifStart, ifEnd);
+					addBoogieBlock(boogieIfStatement);
+					incIndent();
+					for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
+						int end = start+field.len;
+						String statement = "";
+						statement += addIndent();
+						statement += packetoutName+" := ";
+						if(start+field.len != totalLen) {
+							statement += packetoutName+"["+totalLen+":"+end+"]++";
+						}
+						statement += name+"."+field.name+"[header]";
+						if(start!=0) {
+							statement += "++"+packetoutName+"["+start+":"+"0"+"]";
+						}
+						statement += ";\n";
+						addBoogieStatement(statement);
+						start += field.len;
+					}
+					popBoogieBlock();
+					decIndent();
 				}
-				statement += name+"."+field.name+"[header]";
-				if(start!=0) {
-					statement += "++"+packetoutName+"["+start+":"+"0"+"]";
-				}
-				statement += ";\n";
-				addBoogieStatement(statement);
-				body += statement;
-				start += field.len;
+				// body ends
+				decIndent();
 			}
-			decIndent();
-			body += ifEnd;
-			popBoogieBlock();
-			decIndent();
-			body += "}\n";
-			getCurrentProcedure().body = body;
+			else {
+				String name = headersField.getTypeName();
+				String procedureName = "packet_out.emit.headers."+headersField.name;
+				BoogieProcedure procedure = new BoogieProcedure(procedureName);
+				addProcedure(procedure);
+				setCurrentProcedure(procedure);
+				String declare = "\nprocedure "+procedureName+"(header:"+name+")\n";
+				getCurrentProcedure().declare = declare;
+				addModifiedGlobalVariable(packetoutName);
+
+//				for(StructField field:headers.get(name).fields) {
+//					addModifiedGlobalVariable(name+"."+field.name);
+//				}
+				String body = "";
+				body += "{\n";
+				incIndent();
+				
+				String ifStart = addIndent()+"if(isValid[header]){\n";
+				String ifEnd = addIndent()+"}\n";
+				BoogieIfStatement boogieIfStatement = new BoogieIfStatement(ifStart, ifEnd);
+				addBoogieBlock(boogieIfStatement);
+				
+				body += ifStart;
+				incIndent();
+				for(StructField field:headers.get(name).fields) {
+					int end = start+field.len;
+					
+					String statement = "";
+					statement += addIndent();
+					statement += packetoutName+" := ";
+					if(start+field.len != totalLen) {
+						statement += packetoutName+"["+totalLen+":"+end+"]++";
+					}
+					statement += name+"."+field.name+"[header]";
+					if(start!=0) {
+						statement += "++"+packetoutName+"["+start+":"+"0"+"]";
+					}
+					statement += ";\n";
+					addBoogieStatement(statement);
+					body += statement;
+					start += field.len;
+				}
+				decIndent();
+				body += ifEnd;
+				popBoogieBlock();
+				decIndent();
+				body += "}\n";
+				getCurrentProcedure().body = body;
+			}
 		}
 		return code;
 	}
