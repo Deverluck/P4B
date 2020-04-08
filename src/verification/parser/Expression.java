@@ -230,12 +230,19 @@ class Member extends Expression {
 		else if(member.equals("apply")) {
 			return expr.p4_to_Boogie()+"."+member;
 		}
+		else if(member.equals("next") && expr.Node_Type.equals("Member")) {
+			Member m = (Member)expr;
+			if(m.type.Node_Type.equals("Type_Stack")) {
+				return expr.p4_to_Boogie();
+			}
+		}
 		else {
 			Parser.getInstance().addModifiedGlobalVariable(expr.getTypeName()+"."+member);
 			String code = expr.getTypeName()+"."+member;
 			code += "["+expr.p4_to_Boogie()+"]";
 			return code;
 		}
+		return super.p4_to_Boogie();
 	}
 	@Override
 	String getTypeName() {
@@ -243,6 +250,9 @@ class Member extends Expression {
 	}
 	@Override
 	String getName() {
+		if(member.equals("next") && expr.Node_Type.equals("Member")) {
+			return expr.getName()+"."+member;
+		}
 		return member;
 	}
 }

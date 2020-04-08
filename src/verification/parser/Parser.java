@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -49,7 +50,7 @@ public class Parser {
 		indent = 0;
 		globalVariables = new HashSet<>();
 		modifiedGlobalVariables = new HashSet<>();
-		procedures = new HashMap<>();
+		procedures = new LinkedHashMap<>();
 		boogieFunctions = new HashMap<>();
 		blockStack = new BoogieBlockStack();
 		globalBoogieDeclarationBlock = new BoogieBlock();
@@ -318,7 +319,6 @@ public class Parser {
 		BoogieProcedure procedure = new BoogieProcedure("clear_valid");
 		procedure.implemented = false;
 		addProcedure(procedure);
-
 		String declare = "\nprocedure clear_valid();\n";
 		procedure.modifies.add("isValid");
 		for(String name:headers.keySet()) {
@@ -348,6 +348,16 @@ public class Parser {
 		addBoogieGlobalVariable("stack.index");
 		code += "var size:<T>[T]int;\n";
 		addBoogieGlobalVariable("size");
+		
+		BoogieProcedure initStackIndex = new BoogieProcedure("init.stack.index");
+		initStackIndex.implemented = false;
+		addProcedure(initStackIndex);
+		String declare3 = "\nprocedure init.stack.index();\n";
+		initStackIndex.modifies.add("stack.index");
+		declare3 += "ensures (forall <T>s:T::stack.index[s]==0);\n";
+		initStackIndex.declare = declare3;
+		System.out.println(initStackIndex.modifies);
+		
 		return code;
 	}
 
@@ -380,9 +390,61 @@ public class Parser {
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure "+procedureName+"(header:"+name+")\n";
+				String declare = "\nprocedure "+procedureName+"(stack:"+name+")\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable("isValid");
+				for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
+					addModifiedGlobalVariable(ts.elementType.getTypeName()+"."+field.name);
+				}
+				String body = "";
+				body += "{\n";
+				incIndent();
+				int size = ts.size.value;
+				for(int i = 0; i < size; i++) {
+					String condition = addIndent()+"if(stack.index[stack] == "+i+"){\n";
+					String end = addIndent()+"}\n";
+					BoogieIfStatement ifStatement = new BoogieIfStatement(condition, end);
+					addBoogieBlock(ifStatement);
+					incIndent();
+					String statement = addIndent()+"call packet_in.extract.headers."
+							+headersField.name+"."+i+"(stack["+i+"]);\n";
+					addBoogieStatement(statement);
+					decIndent();
+					popBoogieBlock();
+				}
+				decIndent();
+				body += "}\n";
+				procedure.body = body;
+				
+				for(int i = 0; i < size; i++) {
+					String childProcedureName = "packet_in.extract.headers."
+							+headersField.name+"."+i;
+					BoogieProcedure childProcedure = new BoogieProcedure(childProcedureName);
+					addProcedure(childProcedure);
+					setCurrentProcedure(childProcedure);
+					addModifiedGlobalVariable("isValid");
+					for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
+						addModifiedGlobalVariable(ts.elementType.getTypeName()+"."+field.name);
+					}
+					String childDeclare = "\nprocedure "+childProcedureName+"(header:"+name+")\n";
+					childProcedure.declare = childDeclare;
+					String childBody = "";
+					childBody += "{\n";
+					incIndent();
+					for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
+						String statement = addIndent()+ts.elementType.getTypeName()+"."+field.name+
+								"[header] := packet";
+						statement += "["+(start+field.len)+":"+start+"];\n";
+						addBoogieStatement(statement);
+						body += statement;
+						start += field.len;
+					}
+					String statement = addIndent()+"isValid[header] := true;\n";
+					addBoogieStatement(statement);
+					decIndent();
+					childBody += "}\n";
+					childProcedure.body = childBody;
+				}
 			}
 			else {
 				String name = headersField.getTypeName();
@@ -540,7 +602,7 @@ public class Parser {
 
 	private HashSet<String> globalVariables;
 	private HashSet<String> modifiedGlobalVariables;
-	private HashMap<String, BoogieProcedure> procedures;
+	private LinkedHashMap<String, BoogieProcedure> procedures;
 	private BoogieProcedure currentProcedure;
 	private BoogieBlockStack blockStack;
 	private BoogieBlock globalBoogieDeclarationBlock;
