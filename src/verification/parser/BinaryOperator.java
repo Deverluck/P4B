@@ -19,7 +19,7 @@ public class BinaryOperator extends Node {
 			Type_Bits tb = (Type_Bits)type;
 			String typeName = "bv"+tb.size;
 			String functionName = op+"."+typeName;
-			String function = "function {:bvbuiltin \""+opbuiltin+"\"} "+functionName;
+			String function = "\nfunction {:bvbuiltin \""+opbuiltin+"\"} "+functionName;
 			function += "(left:"+typeName+", right:"+typeName+") returns("+typeName+");";
 			Parser.getInstance().addBoogieFunction(functionName, function);
 			String code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+")";

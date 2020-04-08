@@ -22,6 +22,7 @@ public class Parser {
 	private ArrayList<P4Action> actions;
 	private HashMap<String, Type_Header> headers;
 	private HashMap<String, Type_Struct> structs;
+	private HashMap<String, Type_Stack> stacks;
 	private ArrayList<Type_Typedef> typeDefinitions;
 	private HashMap<String, Integer> typeDefLength;  // Record the length of user-defined type
 	private int indent;
@@ -42,6 +43,7 @@ public class Parser {
 		actions = new ArrayList<>();
 		headers = new HashMap<>();
 		structs = new HashMap<>();
+		stacks = new HashMap<>();
 		typeDefinitions = new ArrayList<>();
 		typeDefLength = new HashMap<>();
 		indent = 0;
@@ -50,6 +52,8 @@ public class Parser {
 		procedures = new HashMap<>();
 		boogieFunctions = new HashMap<>();
 		blockStack = new BoogieBlockStack();
+		globalBoogieDeclarationBlock = new BoogieBlock();
+		globalBoogieDeclaration = new HashSet<String>();
 	}
 
 	private void clear() {
@@ -60,12 +64,15 @@ public class Parser {
 		actions.clear();
 		headers.clear();
 		structs.clear();
+		stacks.clear();
 		typeDefinitions.clear();
 		globalVariables.clear();
 		modifiedGlobalVariables.clear();
 		procedures.clear();
 		boogieFunctions.clear();
 		blockStack.clear();
+		globalBoogieDeclarationBlock.clear();
+		globalBoogieDeclaration.clear();
 	}
 
 	public String addIndent() {
@@ -212,6 +219,11 @@ public class Parser {
 		if(!headers.containsKey(header.name))
 			headers.put(header.name, header);
 	}
+	
+	public void addStack(Type_Stack stack) {
+		if(!stacks.containsKey(stack.name))
+			stacks.put(stack.name, stack);
+	}
 
 	public void addStruct(Type_Struct struct) {
 		if(!structs.containsKey(struct.name))
@@ -300,6 +312,7 @@ public class Parser {
 	// ******************* Boogie **********************
 	String p4_to_Boogie_Header_isValid() {
 		String code = "\nvar isValid:<T>[T]bool;\n";
+		addBoogieGlobalVariable("isValid");
 //		code += "function isValid<T>(header: T) returns (bool) { valid(header) }";
 
 		BoogieProcedure procedure = new BoogieProcedure("clear_valid");
@@ -329,8 +342,12 @@ public class Parser {
 		body2 += "}\n";
 		procedure2.declare = declare2;
 		procedure2.body = body2;
-
-		addBoogieGlobalVariable("isValid");
+		
+		// support header stack
+		code += "var stack.index:<T>[T]int;\n";
+		addBoogieGlobalVariable("stack.index");
+		code += "var size:<T>[T]int;\n";
+		addBoogieGlobalVariable("size");
 		return code;
 	}
 
@@ -350,39 +367,53 @@ public class Parser {
 	}
 
 	String p4_to_Boogie_extract() {
+		// TODO support header stack
 		String code = "";
 		Type_Struct myheaders = structs.get(headersName);
 		int totalLen = myheaders.length();
 		int start = 0; //for extracting
 		for(StructField headersField:myheaders.fields) {
-			String name = headersField.getTypeName();
-			String procedureName = "packet_in.extract.headers."+headersField.name;
-			BoogieProcedure procedure = new BoogieProcedure(procedureName);
-			addProcedure(procedure);
-			setCurrentProcedure(procedure);
-			String declare = "\nprocedure "+procedureName+"(header:"+name+")\n";
-			getCurrentProcedure().declare = declare;
-			addModifiedGlobalVariable("isValid");
-
-			for(StructField field:headers.get(name).fields) {
-				addModifiedGlobalVariable(name+"."+field.name);
+			if(headersField.type.Node_Type.equals("Type_Stack")) {
+				Type_Stack ts = (Type_Stack)headersField.type;
+				String name = ts.name;
+				String procedureName = "packet_in.extract.headers."+headersField.name+".next";
+				BoogieProcedure procedure = new BoogieProcedure(procedureName);
+				addProcedure(procedure);
+				setCurrentProcedure(procedure);
+				String declare = "\nprocedure "+procedureName+"(header:"+name+")\n";
+				getCurrentProcedure().declare = declare;
+				addModifiedGlobalVariable("isValid");
 			}
-			String body = "";
-			body += "{\n";
-			for(StructField field:headers.get(name).fields) {
-				String statement = "	"+name+"."+field.name+"[header] := packet";
-				statement += "["+(start+field.len)+":"+start+"];\n";
+			else {
+				String name = headersField.getTypeName();
+				String procedureName = "packet_in.extract.headers."+headersField.name;
+				BoogieProcedure procedure = new BoogieProcedure(procedureName);
+				addProcedure(procedure);
+				setCurrentProcedure(procedure);
+				String declare = "\nprocedure "+procedureName+"(header:"+name+")\n";
+				getCurrentProcedure().declare = declare;
+				addModifiedGlobalVariable("isValid");
+
+				for(StructField field:headers.get(name).fields) {
+					addModifiedGlobalVariable(name+"."+field.name);
+				}
+				String body = "";
+				body += "{\n";
+				for(StructField field:headers.get(name).fields) {
+					String statement = "	"+name+"."+field.name+"[header] := packet";
+					statement += "["+(start+field.len)+":"+start+"];\n";
+					addBoogieStatement(statement);
+					
+					body += statement;
+					start += field.len;
+				}
+				String statement = "	isValid[header] := true;\n";
 				addBoogieStatement(statement);
 				
 				body += statement;
-				start += field.len;
+				body += "}\n";
+				getCurrentProcedure().body = body;
 			}
-			String statement = "	isValid[header] := true;\n";
-			addBoogieStatement(statement);
-			
-			body += statement;
-			body += "}\n";
-			getCurrentProcedure().body = body;
 		}
 		code += "\ntype packet_in = bv"+totalLen+";\n";
 		code += "const packet:packet_in;\n";
@@ -466,6 +497,8 @@ public class Parser {
 			System.out.println(type);
 		}
 		String code = program.p4_to_Boogie();
+		// Add global declarations
+		code += globalBoogieDeclarationBlock.toBoogie();
 		// Add SMT built-in functions
 		for(String functionName:boogieFunctions.keySet()) {
 			code += boogieFunctions.get(functionName)+"\n";
@@ -510,6 +543,8 @@ public class Parser {
 	private HashMap<String, BoogieProcedure> procedures;
 	private BoogieProcedure currentProcedure;
 	private BoogieBlockStack blockStack;
+	private BoogieBlock globalBoogieDeclarationBlock;
+	private HashSet<String> globalBoogieDeclaration;
 	private HashMap<String, String> boogieFunctions; //SMT bit-vector
 	private String headersName;
 
@@ -551,6 +586,14 @@ public class Parser {
 
 	void addBoogieGlobalVariable(String var) {
 		globalVariables.add(var);
+	}
+	
+	void addBoogieGlobalDeclaration(String cont) {
+		if(globalBoogieDeclaration.contains(cont))
+			return;
+		BoogieStatement statement = new BoogieStatement(cont);
+		globalBoogieDeclarationBlock.add(statement);
+		globalBoogieDeclaration.add(cont);
 	}
 
 	void addBoogieFunction(String name, String cont) {

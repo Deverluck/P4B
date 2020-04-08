@@ -88,7 +88,8 @@ class StructField extends DataStructure {
 		name = object.get(JsonKeyName.NAME).asText();
 		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
-
+		
+		len = 0;
 		// get length
 		if(type.Node_Type.equals("Type_Bits")) {
 			Type_Bits tb = (Type_Bits)type;
@@ -101,6 +102,10 @@ class StructField extends DataStructure {
 		else if(type.Node_Type.equals("Type_Header")) {
 			Type_Header th = (Type_Header)type;
 			len = Parser.getInstance().getTypeLength(th.name);
+		}
+		else if(type.Node_Type.equals("Type_Stack")) {
+			Type_Stack ts = (Type_Stack)type;
+			len = Parser.getInstance().getTypeLength(ts.elementType.getTypeName())*ts.size.value;
 		}
 	}
 
@@ -124,7 +129,7 @@ class StructField extends DataStructure {
 			code = type.p4_to_Boogie();
 		else if(type.Node_Type.equals("Type_Stack")) {
 			Type_Stack ts = (Type_Stack)type;
-			code = ts.elementType.p4_to_Boogie();
+			code = ts.name;
 		}
 		return code;
 	}
