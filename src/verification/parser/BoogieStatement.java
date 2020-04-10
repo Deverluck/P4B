@@ -22,6 +22,9 @@ class BoogieBlock extends BoogieStatement {
 	void add(BoogieStatement statement) {
 		conts.add(statement);
 	}
+	void addToFirst(BoogieStatement statement) {
+		conts.add(0, statement);
+	}
 	String toBoogie() {
 		String code = "";
 		for(BoogieStatement bs:conts) {

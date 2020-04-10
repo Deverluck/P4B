@@ -28,7 +28,7 @@ public class BoogieProcedure {
 		this.body = body;
 	}
 	public BoogieProcedure(String name) {
-		this(name, "", "");
+		this(name, "\nprocedure "+name+"()\n", "");
 	}
 	public void updateModifies(String var) {
 		modifies.add(var);

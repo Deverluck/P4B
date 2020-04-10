@@ -309,6 +309,19 @@ class Type_Extern extends Type {
 	}
 }
 
+class Type_Specialized extends Type {
+	Node baseType;
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		baseType = Parser.getInstance().jsonParse(object.get(JsonKeyName.BASETYPE));
+	}
+	@Override
+	String getTypeName() {
+		return baseType.getTypeName();
+	}
+}
+
 class Type_Package extends Type {
 
 }

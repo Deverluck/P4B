@@ -71,20 +71,12 @@ class P4Parser extends P4Component {
 		declare += "procedure "+name+"()\n";
 		String body = "{\n";
 		
-		String statement1 = "	call clear_valid();\n";
-		String statement2 = "	call init.stack.index();\n";
-		String statement3 = "	call start();\n";
-		Parser.getInstance().addBoogieStatement(statement1);
-		Parser.getInstance().addBoogieStatement(statement2);
-		Parser.getInstance().addBoogieStatement(statement3);
+		String statement = "	call start();\n";
+		Parser.getInstance().addBoogieStatement(statement);
 		
-		body += statement1;
-		body += statement2;
-		body += statement3;
+		body += statement;
 		body += "}\n";
-		procedure.childrenNames.add("clear_valid");
 		procedure.childrenNames.add("start");
-		procedure.childrenNames.add("init.stack.index");
 		procedure.declare = declare;
 		procedure.body = body;
 

@@ -55,6 +55,9 @@ public class Parser {
 		blockStack = new BoogieBlockStack();
 		globalBoogieDeclarationBlock = new BoogieBlock();
 		globalBoogieDeclaration = new HashSet<String>();
+		mainProcedure = new BoogieProcedure("mainProcedure");
+		
+		procedures.put(mainProcedure.name, mainProcedure);
 	}
 
 	private void clear() {
@@ -327,6 +330,8 @@ public class Parser {
 		}
 //		declare += "	modifies isValid;\n";
 		procedure.declare = declare;
+		addMainBoogieStatement("	call clear_valid();\n");
+		mainProcedure.childrenNames.add(procedure.name);
 		
 		BoogieProcedure procedure2 = new BoogieProcedure("setInvalid");
 		addProcedure(procedure2);
@@ -356,7 +361,8 @@ public class Parser {
 		initStackIndex.modifies.add("stack.index");
 		declare3 += "ensures (forall <T>s:T::stack.index[s]==0);\n";
 		initStackIndex.declare = declare3;
-		System.out.println(initStackIndex.modifies);
+		addMainBoogieStatement("	call init.stack.index();\n");
+		mainProcedure.childrenNames.add(initStackIndex.name);
 		
 		return code;
 	}
@@ -652,6 +658,7 @@ public class Parser {
 	private HashSet<String> globalBoogieDeclaration;
 	private HashMap<String, String> boogieFunctions; //SMT bit-vector
 	private String headersName;
+	private BoogieProcedure mainProcedure;
 
 	void addProcedure(BoogieProcedure procedure) {
 		procedures.put(procedure.name, procedure);
@@ -678,6 +685,11 @@ public class Parser {
 	void addBoogieStatement(String cont) {
 		BoogieStatement statement = new BoogieStatement(cont);
 		addBoogieStatement(statement);
+	}
+	
+	void addMainBoogieStatement(String cont) {
+		BoogieStatement statement = new BoogieStatement(cont);
+		mainProcedure.mainBlock.addToFirst(statement);
 	}
 
 	BoogieProcedure getCurrentProcedure() {

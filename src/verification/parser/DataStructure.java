@@ -14,6 +14,7 @@ class Declaration_Instance extends DataStructure {
 	// TODO support "VSS"
 	String name;
 	ArrayList<Node> arguments;
+	Node type;
 	public Declaration_Instance() {
 		super();
 		arguments = new ArrayList<>();
@@ -27,6 +28,7 @@ class Declaration_Instance extends DataStructure {
 		for(JsonNode arg : argumentArray) {
 			arguments.add(Parser.getInstance().jsonParse(arg));
 		}
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 	}
 
 	@Override
@@ -39,6 +41,25 @@ class Declaration_Instance extends DataStructure {
 				code += node.p4_to_C()+";\n";
 			}
 			code += "}\n";
+		}
+		return code;
+	}
+	
+	@Override
+	String getTypeName() {
+		return type.getTypeName();
+	}
+	@Override
+	String p4_to_Boogie() {
+		String code = "";
+		if(getTypeName().equals("V1Switch")) {
+			BoogieProcedure procedure = new BoogieProcedure(name);
+			Parser.getInstance().addProcedure(procedure);
+			Parser.getInstance().setCurrentProcedure(procedure);
+			incIndent();
+			String statement = addIndent()+"call "+name+"();\n";
+			Parser.getInstance().addMainBoogieStatement(statement);
+			decIndent();
 		}
 		return code;
 	}
