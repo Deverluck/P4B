@@ -51,6 +51,7 @@ class AssignmentStatement extends Statement {
 
 	@Override
 	String p4_to_Boogie() {
+		left.addAssertStatement();
 		String code = addIndent()+left.p4_to_Boogie()+" := "+right.p4_to_Boogie()+";\n";
 		Parser.getInstance().addBoogieStatement(code);
 		return code;

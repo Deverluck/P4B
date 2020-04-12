@@ -264,6 +264,15 @@ class Member extends Expression {
 		}
 		return member;
 	}
+	@Override
+	String addAssertStatement() {
+		if(type.Node_Type.equals("Type_Header")) {
+			String statement = addIndent()+"assert(isValid["+this.p4_to_Boogie()+"]);\n";
+			Parser.getInstance().addBoogieStatement(statement);
+			return statement;
+		}
+		return expr.addAssertStatement();
+	}
 }
 
 class ListExpression extends Expression {

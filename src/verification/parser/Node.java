@@ -89,4 +89,8 @@ public class Node {
 	String getName() {
 		return "";
 	}
+	
+	String addAssertStatement() {
+		return "";
+	}
 }

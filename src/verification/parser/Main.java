@@ -11,6 +11,5 @@ public class Main {
 		
 //		myParser.parse("E:\\Programs\\P4-verification\\sharedir\\test\\header_stack_test.json");
 		myParser.parse("/media/invincible/WORK/Programs/P4-verification/sharedir/test/header_stack_test.json");
-
 	}
 }
