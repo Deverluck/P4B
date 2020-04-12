@@ -369,16 +369,22 @@ public class Parser {
 
 	String p4_to_Boogie_extern() {
 		BoogieProcedure procedure = new BoogieProcedure("mark_to_drop");
+		setCurrentProcedure(procedure);
 		addProcedure(procedure);
 
 		String declare = "";
 		declare += "\nprocedure mark_to_drop()\n";
 		String body = "{\n";
+		incIndent();
+		String statement = addIndent()+"drop := true;\n";
+		procedure.updateModifies("drop");
+		addBoogieStatement(statement);
 		body += "}\n";
 		procedure.declare = declare;
 		procedure.body = body;
 
-		String code = "";
+		String code = "var drop:bool;\n";
+		addBoogieGlobalVariable("drop");
 		return code;
 	}
 

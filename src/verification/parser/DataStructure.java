@@ -61,7 +61,15 @@ class Declaration_Instance extends DataStructure {
 				String s = addIndent()+"call "+node.getName()+"();\n";
 				procedure.childrenNames.add(node.getName());
 				Parser.getInstance().addBoogieStatement(s);
+				if(node.getTypeName().equals("Type_Parser")) {
+					BoogieIfStatement ifBlock = new BoogieIfStatement(addIndent()+"if(drop != true){\n", 
+							addIndent()+"}\n");
+					Parser.getInstance().addBoogieBlock(ifBlock);
+					incIndent();
+				}
 			}
+			decIndent();
+			Parser.getInstance().popBoogieBlock();
 			
 			String statement = addIndent()+"call "+name+"();\n";
 			Parser.getInstance().addMainBoogieStatement(statement);
