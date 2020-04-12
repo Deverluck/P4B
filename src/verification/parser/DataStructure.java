@@ -54,6 +54,7 @@ class Declaration_Instance extends DataStructure {
 		String code = "";
 		if(getTypeName().equals("V1Switch")) {
 			BoogieProcedure procedure = new BoogieProcedure(name);
+			procedure.declare = "procedure {:inline 1} "+name+"()\n";
 			Parser.getInstance().addProcedure(procedure);
 			Parser.getInstance().setCurrentProcedure(procedure);
 			incIndent();

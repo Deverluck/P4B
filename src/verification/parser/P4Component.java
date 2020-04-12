@@ -70,7 +70,7 @@ class P4Parser extends P4Component {
 		Parser.getInstance().addProcedure(procedure);
 
 		String declare = "\n// Parser "+name+"\n";
-		declare += "procedure "+name+"()\n";
+		declare += "procedure {:inline 1} "+name+"()\n";
 		String body = "{\n";
 		
 		String statement = "	call start();\n";
@@ -133,7 +133,7 @@ class ParserState extends P4Component {
 		Parser.getInstance().addProcedure(procedure);
 
 		String declare = "\n//Parser State "+name+"\n";
-		declare += "procedure "+name+"()\n";
+		declare += "procedure {:inline 1} "+name+"()\n";
 		incIndent();
 		String body = "{\n";
 		addIndent();
@@ -206,7 +206,7 @@ class P4Control extends P4Component {
 
 		String declare = "\n// Control "+name+"\n";
 		//TODO Add parameters
-		declare += "procedure "+name+"()\n";
+		declare += "procedure {:inline 1} "+name+"()\n";
 		incIndent();
 		String body = "{\n";
 		body += this.body.p4_to_Boogie();
@@ -257,7 +257,7 @@ class P4Action extends P4Component {
 		Parser.getInstance().addProcedure(procedure);
 
 		String declare = "\n// Action "+name+"\n";
-		declare += "procedure "+name;
+		declare += "procedure {:inline 1} "+name;
 		declare += parameters.p4_to_Boogie()+"\n";
 		incIndent();
 		String body = "{\n";
@@ -408,7 +408,7 @@ class P4Table extends P4Component {
 		Parser.getInstance().addProcedure(procedure);
 
 		String declare = "\n// Table "+name+"\n";
-		declare += "procedure "+name+".apply()\n";
+		declare += "procedure {:inline 1} "+name+".apply()\n";
 		incIndent();
 		String body = "{\n";
 		if(actions != null) {

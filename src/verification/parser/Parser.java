@@ -337,7 +337,7 @@ public class Parser {
 		addProcedure(procedure2);
 		setCurrentProcedure(procedure2);
 		procedure2.modifies.add("isValid");
-		String declare2 = "\nprocedure setInvalid<T>(header:T)\n";
+		String declare2 = "\nprocedure {:inline 1} setInvalid<T>(header:T)\n";
 		String body2 = "{\n";
 		
 		String statement = "	isValid[header]:=false;\n";
@@ -373,7 +373,7 @@ public class Parser {
 		addProcedure(procedure);
 
 		String declare = "";
-		declare += "\nprocedure mark_to_drop()\n";
+		declare += "\nprocedure {:inline 1} mark_to_drop()\n";
 		String body = "{\n";
 		incIndent();
 		String statement = addIndent()+"drop := true;\n";
@@ -402,7 +402,7 @@ public class Parser {
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure "+procedureName+"(stack:"+name+")\n";
+				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+name+")\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable("isValid");
 				for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
@@ -441,7 +441,7 @@ public class Parser {
 					for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
 						addModifiedGlobalVariable(ts.elementType.getTypeName()+"."+field.name);
 					}
-					String childDeclare = "\nprocedure "+childProcedureName+"(header:"+
+					String childDeclare = "\nprocedure {:inline 1} "+childProcedureName+"(header:"+
 							ts.elementType.getTypeName()+")\n";
 					childProcedure.declare = childDeclare;
 					String childBody = "";
@@ -468,7 +468,7 @@ public class Parser {
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure "+procedureName+"(header:"+name+")\n";
+				String declare = "\nprocedure {:inline 1} "+procedureName+"(header:"+name+")\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable("isValid");
 
@@ -524,7 +524,7 @@ public class Parser {
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure "+procedureName+"(stack:"+name+")\n";
+				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+name+")\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable(packetoutName);
 				
@@ -564,7 +564,7 @@ public class Parser {
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure "+procedureName+"(header:"+name+")\n";
+				String declare = "\nprocedure {:inline 1} "+procedureName+"(header:"+name+")\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable(packetoutName);
 
