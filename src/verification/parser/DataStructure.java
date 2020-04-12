@@ -57,8 +57,15 @@ class Declaration_Instance extends DataStructure {
 			Parser.getInstance().addProcedure(procedure);
 			Parser.getInstance().setCurrentProcedure(procedure);
 			incIndent();
+			for(Node node : arguments) {
+				String s = addIndent()+"call "+node.getName()+"();\n";
+				procedure.childrenNames.add(node.getName());
+				Parser.getInstance().addBoogieStatement(s);
+			}
+			
 			String statement = addIndent()+"call "+name+"();\n";
 			Parser.getInstance().addMainBoogieStatement(statement);
+			Parser.getInstance().getMainProcedure().childrenNames.add(name);
 			decIndent();
 		}
 		return code;

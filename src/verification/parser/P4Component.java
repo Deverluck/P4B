@@ -1,6 +1,8 @@
 package verification.parser;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -330,6 +332,10 @@ class Parameter extends P4Component {
 		return name+":"+type.p4_to_Boogie();
 	}
 	@Override
+	String getName() {
+		return name;
+	}
+	@Override
 	String getTypeName() {
 		return type.getTypeName();
 	}
@@ -408,6 +414,13 @@ class P4Table extends P4Component {
 		if(actions != null) {
 			Property property = (Property)actions;
 			ActionList actionList = (ActionList)property.value;
+			// declare local variables for actions
+			for(String actionName:actionList.actionList) {
+				for(String parameter:actionList.actionParameters.get(actionName).keySet()) {
+					procedure.addLocalVariable(parameter, "var "+parameter+":"+
+							actionList.actionParameters.get(actionName).get(parameter)+";\n");
+				}
+			}
 			int cnt = 0;
 			for(String actionName:actionList.actionList) {
 				String condition = addIndent();
@@ -420,7 +433,16 @@ class P4Table extends P4Component {
 				
 				body += condition;
 				incIndent();
-				String statement = addIndent()+"call "+actionName+"();\n";
+				String statement = addIndent()+"call "+actionName;
+				statement += "(";
+				int tmp_cnt = actionList.actionParameters.get(actionName).size();
+				for(String parameter:actionList.actionParameters.get(actionName).keySet()) {
+					statement += parameter;
+					tmp_cnt--;
+					if(tmp_cnt>0)
+						statement += ", ";
+				}
+				statement += ");\n";
 				Parser.getInstance().addBoogieStatement(statement);
 				body += statement;
 				// TODO deal with action arguments
@@ -498,17 +520,32 @@ class TableProperties extends P4Component {
 
 class ActionList extends P4Component {
 	ArrayList<String> actionList;
+	HashMap<String, LinkedHashMap<String, String>> actionParameters;
 	public ActionList() {
 		super();
 		actionList = new ArrayList<>();
+		actionParameters = new HashMap<>();
 	}
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
 		ArrayNode elements = (ArrayNode)object.get(JsonKeyName.ACTIONLIST).get(JsonKeyName.VEC);
 		for(JsonNode element : elements) {
-			actionList.add(element.get(JsonKeyName.EXPRESSION).get(JsonKeyName.METHOD)
-					.get(JsonKeyName.PATH).get(JsonKeyName.NAME).asText());
+			String action = element.get(JsonKeyName.EXPRESSION).get(JsonKeyName.METHOD)
+					.get(JsonKeyName.PATH).get(JsonKeyName.NAME).asText();
+			ArrayNode arrayNode = (ArrayNode)element.get(JsonKeyName.EXPRESSION).get(JsonKeyName.TYPE)
+					.get(JsonKeyName.PARAMETERS).get(JsonKeyName.PARAMETERS).get(JsonKeyName.VEC);
+			LinkedHashMap<String, String> parameters = new LinkedHashMap<>();
+			for(JsonNode jsonNode:arrayNode) {
+				Node node = Parser.getInstance().jsonParse(jsonNode);
+				if(!node.getName().equals("")&&!node.getTypeName().equals("")) {
+					String parameterName = node.getName();
+					String parameterTypeName = node.getTypeName();
+					parameters.put(parameterName, parameterTypeName);
+				}
+			}
+			actionParameters.put(action, parameters);
+			actionList.add(action);
 //			actionList.add((ActionListElement)Parser.getInstance().jsonParse(element));
 		}
 	}

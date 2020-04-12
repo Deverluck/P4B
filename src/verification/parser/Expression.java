@@ -27,6 +27,14 @@ class ConstructorCallExpression extends Expression {
 		String code = type.p4_to_C(JsonKeyName.METHODCALL);
 		return code;
 	}
+	@Override
+	String getName() {
+		return type.getTypeName();
+	}
+	@Override
+	String getTypeName() {
+		return type.Node_Type;
+	}
 }
 
 class MethodCallExpression extends Expression {
@@ -86,7 +94,8 @@ class MethodCallExpression extends Expression {
 			methodName = "packet_out."+methodName+".headers."+arguments.get(0).getName();
 		}
 		else if(methodName.length()>10 && methodName.substring(0, 11).equals("setInvalid(")) {
-			// do nothing
+			methodName = "isValid["+methodName.substring(11, methodName.length()-1)+"] := false";
+			Parser.getInstance().getCurrentProcedure().updateModifies("isValid");
 			return methodName;
 		}
 		// deal with isValid()

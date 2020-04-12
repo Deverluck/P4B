@@ -3,12 +3,14 @@ package verification.parser;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 
 public class BoogieProcedure {
 	String name;
 	HashSet<BoogieProcedure> parents;  //callers
 	HashSet<String> childrenNames;
 	HashSet<String> modifies;
+	LinkedHashMap<String, String> localVariables;
 	String declare;
 	String body;
 	BoogieBlock mainBlock;
@@ -18,6 +20,7 @@ public class BoogieProcedure {
 		parents = new HashSet<>();
 		childrenNames = new HashSet<>();
 		modifies = new HashSet<>();
+		localVariables = new LinkedHashMap<String, String>();
 		mainBlock = new BoogieBlock();
 		implemented = true;
 	}
@@ -32,6 +35,9 @@ public class BoogieProcedure {
 	}
 	public void updateModifies(String var) {
 		modifies.add(var);
+	}
+	public void addLocalVariable(String varName, String declareStatement) {
+		localVariables.put(varName, declareStatement);
 	}
 	public String toBoogie() {
 		String code = "";
@@ -49,6 +55,9 @@ public class BoogieProcedure {
 		}
 		if(implemented) {
 			code += "{\n";
+			for(String localVar:localVariables.keySet()) {
+				code += "	"+localVariables.get(localVar);
+			}
 			code += mainBlock.toBoogie();
 			code += "}\n";
 		}

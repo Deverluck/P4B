@@ -340,7 +340,7 @@ public class Parser {
 		String declare2 = "\nprocedure setInvalid<T>(header:T)\n";
 		String body2 = "{\n";
 		
-		String statement = "	isValid[header]:false;\n";
+		String statement = "	isValid[header]:=false;\n";
 		addBoogieStatement(statement);
 		
 		body2 += statement;
@@ -407,7 +407,10 @@ public class Parser {
 				incIndent();
 				int size = ts.size.value;
 				for(int i = 0; i < size; i++) {
-					String condition = addIndent()+"if(stack.index[stack] == "+i+"){\n";
+					String condition = addIndent();
+					if(i != 0)
+						condition += "else ";
+					condition += "if(stack.index[stack] == "+i+"){\n";
 					String end = addIndent()+"}\n";
 					BoogieIfStatement ifStatement = new BoogieIfStatement(condition, end);
 					addBoogieBlock(ifStatement);
@@ -432,7 +435,8 @@ public class Parser {
 					for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
 						addModifiedGlobalVariable(ts.elementType.getTypeName()+"."+field.name);
 					}
-					String childDeclare = "\nprocedure "+childProcedureName+"(header:"+name+")\n";
+					String childDeclare = "\nprocedure "+childProcedureName+"(header:"+
+							ts.elementType.getTypeName()+")\n";
 					childProcedure.declare = childDeclare;
 					String childBody = "";
 					childBody += "{\n";
@@ -485,6 +489,14 @@ public class Parser {
 		}
 		code += "\ntype packet_in = bv"+totalLen+";\n";
 		code += "const packet:packet_in;\n";
+		
+		// TODO header variables name may not be hdr
+		code += "\nvar hdr:headers;\n";
+		code += "\nvar meta:metadata;\n";
+		code += "\nvar standard_metadata:standard_metadata_t;\n";
+		addBoogieGlobalVariable("hdr");
+		addBoogieGlobalVariable("meta");
+		addBoogieGlobalVariable("standard_metadata");
 		return code;
 	}
 	
@@ -526,7 +538,7 @@ public class Parser {
 						if(start+field.len != totalLen) {
 							statement += packetoutName+"["+totalLen+":"+end+"]++";
 						}
-						statement += name+"."+field.name+"[header]";
+						statement += ts.getTypeName()+"."+field.name+"[stack["+i+"]]";
 						if(start!=0) {
 							statement += "++"+packetoutName+"["+start+":"+"0"+"]";
 						}
@@ -598,7 +610,8 @@ public class Parser {
 		String [] handledTypes = {"Path", "Type_Name", "StructField", "Type_Struct",
 				"MethodCallStatement", "Constant", "MethodCallExpression", "Type_Header",
 				"P4Program", "Type_Typedef", "BlockStatement", "AssignmentStatement",
-				"LNot", "LAnd", "Add", "Sub", "Mul", "Shl", "BAnd", "BOr", "BXor"};
+				"LNot", "LAnd", "Add", "Sub", "Mul", "Shl", "BAnd", "BOr", "BXor",
+				"Declaration_Instance", "Type_Specialized", "IfStatement"};
 		HashSet<String> mytypes = new HashSet<>();
 		mytypes.addAll(types);
 		for(String str : handledTypes){
@@ -694,6 +707,10 @@ public class Parser {
 
 	BoogieProcedure getCurrentProcedure() {
 		return this.currentProcedure;
+	}
+	
+	BoogieProcedure getMainProcedure() {
+		return this.mainProcedure;
 	}
 
 	void addModifiedGlobalVariable(String var) {

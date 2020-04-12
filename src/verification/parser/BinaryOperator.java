@@ -195,6 +195,10 @@ class Neq extends BinaryOperator {
 
 class ArrayIndex extends BinaryOperator {
 	@Override
+	String getTypeName() {
+		return type.getTypeName();
+	}
+	@Override
 	String p4_to_Boogie() {
 		String code = left.p4_to_Boogie()+"["+right.p4_to_Boogie()+"]";
 		return code;

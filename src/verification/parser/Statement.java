@@ -140,8 +140,16 @@ class MethodCallStatement extends Statement {
 	}
 	@Override
 	String p4_to_Boogie() {
-		String code = addIndent()+"call ";
-		code = code+methodCall.p4_to_Boogie()+";\n";
+//		String code = addIndent()+"call ";
+//		code = code+methodCall.p4_to_Boogie()+";\n";
+		
+		//TODO support checksum
+		String code = methodCall.p4_to_Boogie()+";\n";
+		if(code.contains("update_checksum"))
+			return "";
+		if(!code.contains(":="))
+			code = "call "+code;
+		code = addIndent()+code;
 		Parser.getInstance().addBoogieStatement(code);
 		return code;
 //		return super.p4_to_Boogie();

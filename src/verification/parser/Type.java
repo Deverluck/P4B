@@ -10,6 +10,14 @@ public class Type extends Node {
 	String name;
 	@Override
 	String getTypeName() {
+		if(name==null)
+			return "";
+		return name;
+	}
+	@Override
+	String getName() {
+		if(name==null)
+			return "";
 		return name;
 	}
 }
@@ -149,6 +157,7 @@ class Type_Stack extends Type {
 	String p4_to_Boogie() {
 		String code = "\n// Header Stack: "+getTypeName()+" "+size.value+"\n";
 		code += "type "+name+"=[int]"+getTypeName()+";\n";
+		code += "var "+getTypeName()+".last:["+name+"]"+getTypeName()+";\n";
 		return code;
 	}
 }
@@ -199,6 +208,10 @@ class Type_Bits extends Type {
 	@Override
 	String p4_to_C() {
 		return size+"";
+	}
+	@Override
+	String getTypeName() {
+		return "bv"+size;
 	}
 }
 
