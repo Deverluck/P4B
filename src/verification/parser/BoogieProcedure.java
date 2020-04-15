@@ -13,6 +13,7 @@ public class BoogieProcedure {
 	LinkedHashMap<String, String> localVariables;
 	String declare;
 	String body;
+	BoogieBlock preBlock;
 	BoogieBlock mainBlock;
 	boolean implemented;
 	
@@ -21,6 +22,7 @@ public class BoogieProcedure {
 		childrenNames = new HashSet<>();
 		modifies = new HashSet<>();
 		localVariables = new LinkedHashMap<String, String>();
+		preBlock = new BoogieBlock();
 		mainBlock = new BoogieBlock();
 		implemented = true;
 	}
@@ -58,6 +60,7 @@ public class BoogieProcedure {
 			for(String localVar:localVariables.keySet()) {
 				code += "	var "+localVar+":"+localVariables.get(localVar)+";\n";
 			}
+			code += preBlock.toBoogie();
 			code += mainBlock.toBoogie();
 			code += "}\n";
 		}

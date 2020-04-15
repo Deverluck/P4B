@@ -157,7 +157,7 @@ class Type_Stack extends Type {
 		BoogieProcedure pushFront = new BoogieProcedure(name+".push_front");
 		Parser.getInstance().addProcedure(pushFront);
 		Parser.getInstance().setCurrentProcedure(pushFront);
-		pushFront.declare = "procedure "+pushFront.name+"(stack:"+name+", count:int)\n";
+		pushFront.declare = "procedure {:inline 1} "+pushFront.name+"(stack:"+name+", count:int)\n";
 		pushFront.updateModifies("isValid");
 		pushFront.updateModifies("stack.index");
 		Type_Header th = Parser.getInstance().getHeader(elementType.getTypeName());
@@ -225,7 +225,7 @@ class Type_Stack extends Type {
 		BoogieProcedure popFront = new BoogieProcedure(name+".pop_front");
 		Parser.getInstance().addProcedure(popFront);
 		Parser.getInstance().setCurrentProcedure(popFront);
-		popFront.declare = "procedure "+popFront.name+"(stack:"+name+", count:int)\n";
+		popFront.declare = "procedure {:inline 1} "+popFront.name+"(stack:"+name+", count:int)\n";
 		popFront.updateModifies("isValid");
 		popFront.updateModifies("stack.index");
 		Type_Header th = Parser.getInstance().getHeader(elementType.getTypeName());
@@ -311,7 +311,7 @@ class Type_Stack extends Type {
 			incIndent();
 			String statement = addIndent()+"call "+constrain.name+"();\n";
 			decIndent();
-			Parser.getInstance().addMainBoogieStatement(statement);
+			Parser.getInstance().addMainPreBoogieStatement(statement);
 			mainProcedure.childrenNames.add(constrain.name);
 		}
 	}

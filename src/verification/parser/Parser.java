@@ -335,7 +335,7 @@ public class Parser {
 		}
 //		declare += "	modifies isValid;\n";
 		procedure.declare = declare;
-		addMainBoogieStatement("	call clear_valid();\n");
+		addMainPreBoogieStatement("	call clear_valid();\n");
 		mainProcedure.childrenNames.add(procedure.name);
 		
 		BoogieProcedure procedure2 = new BoogieProcedure("setInvalid");
@@ -366,7 +366,7 @@ public class Parser {
 		initStackIndex.modifies.add("stack.index");
 		declare3 += "ensures (forall <T>s:T::stack.index[s]==0);\n";
 		initStackIndex.declare = declare3;
-		addMainBoogieStatement("	call init.stack.index();\n");
+		addMainPreBoogieStatement("	call init.stack.index();\n");
 		mainProcedure.childrenNames.add(initStackIndex.name);
 		
 		return code;
@@ -734,6 +734,11 @@ public class Parser {
 	void addBoogieStatement(String cont) {
 		BoogieStatement statement = new BoogieStatement(cont);
 		addBoogieStatement(statement);
+	}
+	
+	void addMainPreBoogieStatement(String cont) {
+		BoogieStatement statement = new BoogieStatement(cont);
+		mainProcedure.preBlock.addToFirst(statement);
 	}
 	
 	void addMainBoogieStatement(String cont) {
