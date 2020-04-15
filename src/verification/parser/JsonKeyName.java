@@ -51,4 +51,8 @@ public class JsonKeyName {
 	public static final String DEFAULT_ACTION = "default_action";
 	public static final String ELEMENTTYPE = "elementType";
 	public static final String BASETYPE = "baseType";
+	public static final String E0 = "e0";
+	public static final String E1 = "e1";
+	public static final String E2 = "e2";
+	public static final String DESTTYPE = "destType";
 }

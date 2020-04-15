@@ -82,7 +82,30 @@ class Declaration_Instance extends DataStructure {
 }
 
 class Declaration_Variable extends DataStructure {
-
+	String name;
+	Node type;
+	
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		name = object.get(JsonKeyName.NAME).asText();
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
+	}
+	
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie();
+	}
+	
+	@Override
+	String getName() {
+		return name;
+	}
+	
+	@Override
+	String getTypeName() {
+		return type.getTypeName();
+	}
 }
 
 class Constant extends DataStructure {

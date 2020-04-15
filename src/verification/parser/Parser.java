@@ -26,6 +26,8 @@ public class Parser {
 	private HashMap<String, Type_Stack> stacks;
 	private ArrayList<Type_Typedef> typeDefinitions;
 	private HashMap<String, Integer> typeDefLength;  // Record the length of user-defined type
+	private HashSet<String> parserStates;
+	private HashSet<String> parserLocals;
 	private int indent;
 	private final String INDENT = "	";
 
@@ -47,6 +49,9 @@ public class Parser {
 		stacks = new HashMap<>();
 		typeDefinitions = new ArrayList<>();
 		typeDefLength = new HashMap<>();
+		parserStates = new HashSet<>();
+		parserLocals = new HashSet<>();
+		
 		indent = 0;
 		globalVariables = new HashSet<>();
 		modifiedGlobalVariables = new HashSet<>();
@@ -70,6 +75,10 @@ public class Parser {
 		structs.clear();
 		stacks.clear();
 		typeDefinitions.clear();
+		typeDefLength.clear();
+		parserStates.clear();
+		parserLocals.clear();
+		
 		globalVariables.clear();
 		modifiedGlobalVariables.clear();
 		procedures.clear();
@@ -95,7 +104,7 @@ public class Parser {
 			indent--;
 	}
 
-	public void parse(String filename) {
+	public String parse(String filename) {
 		ObjectMapper mapper = new ObjectMapper();
 		File file = new File(filename);
 		try {
@@ -118,22 +127,18 @@ public class Parser {
 
 
 			String Boogie_code = p4_to_Boogie(program);
-			System.out.println("######## Boogie Program ########");
-//			for(String key:procedures.keySet()) {
-//				System.out.println(key);
-//				System.out.println(procedures.get(key).mainBlock.toBoogie());
-//				System.out.println();
-//			}
-			System.out.println(Boogie_code);
-
+//			System.out.println("######## Boogie Program ########");
+//			System.out.println(Boogie_code);
 			long endTime = System.currentTimeMillis();
 			System.out.println("Time: " + (endTime - startTime) + "ms");
 			clear();
+			return Boogie_code;
 		}catch(JsonProcessingException e) {
 			e.printStackTrace();
 		}catch(IOException e) {
 			e.printStackTrace();
 		}
+		return "";
 	}
 
 	// get all nodes from JSON file and update their attributes
@@ -394,6 +399,7 @@ public class Parser {
 		Type_Struct myheaders = structs.get(headersName);
 		int totalLen = myheaders.length();
 		int start = 0; //for extracting
+		addBoogieGlobalVariable("packet.index");
 		for(StructField headersField:myheaders.fields) {
 			if(headersField.type.Node_Type.equals("Type_Stack")) {
 				Type_Stack ts = (Type_Stack)headersField.type;
@@ -421,6 +427,9 @@ public class Parser {
 					BoogieIfStatement ifStatement = new BoogieIfStatement(condition, end);
 					addBoogieBlock(ifStatement);
 					incIndent();
+					String methodName = "packet_in.extract.headers."
+							+headersField.name+"."+i;
+					getCurrentProcedure().childrenNames.add(methodName);
 					String statement = addIndent()+"call packet_in.extract.headers."
 							+headersField.name+"."+i+"(stack["+i+"]);\n";
 					addBoogieStatement(statement);
@@ -455,8 +464,9 @@ public class Parser {
 						body += statement;
 						start += field.len;
 					}
-					String statement = addIndent()+"isValid[header] := true;\n";
-					addBoogieStatement(statement);
+					addBoogieStatement(addIndent()+"isValid[header] := true;\n");
+					addBoogieStatement(addIndent()+"packet.index := "+start+";\n");
+					addModifiedGlobalVariable("packet.index");
 					decIndent();
 					childBody += "}\n";
 					childProcedure.body = childBody;
@@ -477,6 +487,7 @@ public class Parser {
 				}
 				String body = "";
 				body += "{\n";
+				incIndent();
 				for(StructField field:headers.get(name).fields) {
 					String statement = "	"+name+"."+field.name+"[header] := packet";
 					statement += "["+(start+field.len)+":"+start+"];\n";
@@ -485,10 +496,10 @@ public class Parser {
 					body += statement;
 					start += field.len;
 				}
-				String statement = "	isValid[header] := true;\n";
-				addBoogieStatement(statement);
-				
-				body += statement;
+				addBoogieStatement("	isValid[header] := true;\n");
+				addBoogieStatement(addIndent()+"packet.index := "+start+";\n");
+				addModifiedGlobalVariable("packet.index");
+				decIndent();
 				body += "}\n";
 				getCurrentProcedure().body = body;
 			}
@@ -500,9 +511,25 @@ public class Parser {
 		code += "\nvar hdr:headers;\n";
 		code += "\nvar meta:metadata;\n";
 		code += "\nvar standard_metadata:standard_metadata_t;\n";
+		code += "\nvar packet.map:[int]bv1;\n";
+		code += "\nvar packet.index:int;\n";
 		addBoogieGlobalVariable("hdr");
 		addBoogieGlobalVariable("meta");
 		addBoogieGlobalVariable("standard_metadata");
+		addBoogieGlobalVariable("packet.map");
+		addBoogieGlobalVariable("packet.index");
+		
+		BoogieProcedure procedure = new BoogieProcedure("packetMap");
+		addProcedure(procedure);
+		setCurrentProcedure(procedure);
+		String declare = "\nprocedure {:inline 1} packetMap()\n";
+		procedure.declare = declare;
+		procedure.updateModifies("packet.map");
+		incIndent();
+		for(int i = 0; i < totalLen; i++) {
+			addBoogieStatement(addIndent()+"packet.map["+i+"] := packet["+(i+1)+":"+i+"];\n");
+		}
+		decIndent();
 		return code;
 	}
 	
@@ -524,14 +551,17 @@ public class Parser {
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+name+")\n";
+				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+name+", index:int)\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable(packetoutName);
 				
 				// body starts
 				incIndent();
 				for(int i = 0; i < ts.size.value; i++) {
-					String ifStart = addIndent()+"if(isValid[stack["+i+"]]){\n";
+					String ifStart = addIndent();
+					if(i != 0)
+						ifStart += "else ";
+					ifStart += "if(index=="+i+" && isValid[stack["+i+"]]){\n";
 					String ifEnd = addIndent()+"}\n";
 					BoogieIfStatement boogieIfStatement = new BoogieIfStatement(ifStart, ifEnd);
 					addBoogieBlock(boogieIfStatement);
@@ -744,7 +774,35 @@ public class Parser {
 	void setHeadersName(String headersName) {
 		this.headersName = headersName;
 	}
+	
+	// set current procedure type to parser state
+	void setParserState() {
+		if(currentProcedure!=null) {
+			parserStates.add(currentProcedure.name);
+//			for(String var:parserLocals) {
+//				currentProcedure.updateModifies("parser."+var);
+//			}
+		}
+	}
+	
+	// if current procedure is parser state
+	boolean isParserState() {
+		if(currentProcedure!=null)
+			return parserStates.contains(currentProcedure.name);
+		return false;
+	}
+	
+	void addParserLocal(String var) {
+		parserLocals.add(var);
+	}
+	
+	boolean isParserLocal(String var) {
+		return parserLocals.contains(var);
+	}
 
+	Type_Header getHeader(String name) {
+		return headers.get(name);
+	}
 //
 //	void addModifiedGlobalVariable(String var) {
 //		if(globalVariables.contains(var))

@@ -150,6 +150,11 @@ class MethodCallStatement extends Statement {
 			return "";
 		if(!code.contains(":="))
 			code = "call "+code;
+		if(code.contains("call ") && code.contains("(")) {
+			int start = 5;
+			int end = code.indexOf("(");
+			Parser.getInstance().getCurrentProcedure().childrenNames.add(code.substring(start, end));
+		}
 		code = addIndent()+code;
 		Parser.getInstance().addBoogieStatement(code);
 		return code;
@@ -249,10 +254,17 @@ class SelectExpression extends Statement {
 			cnt1 = 0;
 			for(Node select_node : select) {
 				// TODO deal with argument types (equal width)
-				condition += select_node.p4_to_Boogie()+" == ";
+				//condition += select_node.p4_to_Boogie()+" == ";
 				Node caseValue = cases_value.get(cnt2).get(cnt1);
 				if(caseValue instanceof Constant) {
+					condition += select_node.p4_to_Boogie()+" == ";
 					condition += caseValue.p4_to_Boogie();
+				}
+				else if(caseValue instanceof Mask) {
+					String function = caseValue.p4_to_Boogie();
+					Mask mask = (Mask)caseValue;
+					condition += function+"("+select_node.p4_to_Boogie()+", "+mask.right.p4_to_Boogie()+") == ";
+					condition += function+"("+mask.left.p4_to_Boogie()+", "+mask.right.p4_to_Boogie()+")";
 				}
 				cnt1++;
 				if(cnt1 < select.size())

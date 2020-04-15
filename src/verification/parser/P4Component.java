@@ -37,17 +37,27 @@ class P4Program extends P4Component {
 class P4Parser extends P4Component {
 	String name;
 	Node type;
-	Node parserLocals;  // local variables
+	ArrayList<Node> parserLocals; // local variables
 	Node states;        // parse states
 
+	public P4Parser() {
+		super();
+		parserLocals = new ArrayList<>();
+	}
+	
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
 		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 		addChild(type);
-		parserLocals = Parser.getInstance().jsonParse(object.get(JsonKeyName.PARSERLOCALS));
-		addChild(parserLocals);
+		
+		ArrayNode an = (ArrayNode)object.get(JsonKeyName.PARSERLOCALS).get(JsonKeyName.VEC);
+		for(JsonNode jn:an) {
+			Node node = Parser.getInstance().jsonParse(jn);
+			parserLocals.add(node);
+			Parser.getInstance().addParserLocal(node.getName());
+		}
 		states = Parser.getInstance().jsonParse(object.get(JsonKeyName.STATES));
 		addChild(states);
 	}
@@ -82,7 +92,12 @@ class P4Parser extends P4Component {
 		procedure.declare = declare;
 		procedure.body = body;
 
-		String code = states.p4_to_Boogie();
+		String code = "";
+		for(Node node:parserLocals) {
+			code += "var parser."+node.getName()+":"+node.getTypeName()+";\n";
+			Parser.getInstance().addBoogieGlobalVariable("parser."+node.getName());
+		}
+		code += states.p4_to_Boogie();
 		return code;
 
 //		String code, body, modifies;
@@ -131,6 +146,7 @@ class ParserState extends P4Component {
 		BoogieProcedure procedure = new BoogieProcedure(name);
 		Parser.getInstance().setCurrentProcedure(procedure);
 		Parser.getInstance().addProcedure(procedure);
+		Parser.getInstance().setParserState();
 
 		String declare = "\n//Parser State "+name+"\n";
 		declare += "procedure {:inline 1} "+name+"()\n";
@@ -610,8 +626,4 @@ class Key extends P4Component {
 		// TODO Auto-generated method stub
 		return super.p4_to_C();
 	}
-}
-
-class Mask extends P4Component {
-
 }

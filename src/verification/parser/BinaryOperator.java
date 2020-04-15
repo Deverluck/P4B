@@ -25,7 +25,21 @@ public class BinaryOperator extends Node {
 			String code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+")";
 			return code;
 		}
+		else if(type instanceof Type_Boolean) {
+			String typeName = "bool";
+			String bvName = left.getTypeName();
+			String functionName = op+"."+bvName;
+			String function = "\nfunction {:bvbuiltin \""+opbuiltin+"\"} "+functionName;
+			function += "(left:"+bvName+", right:"+bvName+") returns("+typeName+");";
+			Parser.getInstance().addBoogieFunction(functionName, function);
+			String code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+")";
+			return code;
+		}
 		return "";
+	}
+	@Override
+	String getTypeName() {
+		return type.getTypeName();
 	}
 }
 
@@ -65,19 +79,45 @@ class BXor extends BinaryOperator {
 	}
 }
 
+// >=
 class Geq extends BinaryOperator {
 	@Override
 	String p4_to_C() {
 		String code = left.p4_to_C()+">="+right.p4_to_C();
 		return code;
 	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bsge", "bvsge");
+	}
 }
 
+// <= 
 class Leq extends BinaryOperator {
 	@Override
 	String p4_to_C() {
 		String code = left.p4_to_C()+"<="+right.p4_to_C();
 		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bsle", "bvsle");
+	}
+}
+
+
+// >
+class Grt extends BinaryOperator {
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bugt", "bvugt");
+	}
+}
+
+class Lss extends BinaryOperator {
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bult", "bvult");
 	}
 }
 
@@ -89,7 +129,7 @@ class LAnd extends BinaryOperator {
 	}
 	@Override
 	String p4_to_Boogie() {
-		String code = left.p4_to_Boogie()+"&&"+right.p4_to_Boogie();
+		String code = left.p4_to_Boogie()+" && "+right.p4_to_Boogie();
 		return code;
 	}
 }
@@ -102,7 +142,7 @@ class LOr extends BinaryOperator {
 	}
 	@Override
 	String p4_to_Boogie() {
-		String code = "("+left.p4_to_Boogie()+"||"+right.p4_to_Boogie()+")";
+		String code = "("+left.p4_to_Boogie()+")||("+right.p4_to_Boogie()+")";
 		return code;
 	}
 }
@@ -127,7 +167,7 @@ class Shr extends BinaryOperator {
 	}
 	@Override
 	String p4_to_Boogie() {
-		return super.p4_to_Boogie("shr", "bvshr");
+		return super.p4_to_Boogie("shr", "bvlshr");
 	}
 }
 
@@ -195,6 +235,10 @@ class Neq extends BinaryOperator {
 
 class ArrayIndex extends BinaryOperator {
 	@Override
+	String getName() {
+		return left.getName();
+	}
+	@Override
 	String getTypeName() {
 		return type.getTypeName();
 	}
@@ -202,6 +246,14 @@ class ArrayIndex extends BinaryOperator {
 	String p4_to_Boogie() {
 		String code = left.p4_to_Boogie()+"["+right.p4_to_Boogie()+"]";
 		return code;
+	}
+	@Override
+	String p4_to_Boogie(String arg) {
+		if(arg.equals("emit")) {
+			String code = left.p4_to_Boogie()+", "+right.p4_to_Boogie();
+			return code;
+		}
+		return super.p4_to_Boogie(arg);
 	}
 	@Override
 	String addAssertStatement() {
@@ -214,6 +266,22 @@ class ArrayIndex extends BinaryOperator {
 	}
 }
 
-class Grt extends BinaryOperator {
-
+class Mask extends BinaryOperator {
+	@Override
+	String p4_to_Boogie() {
+		if(type instanceof Type_Set) {
+			Type_Set ts = (Type_Set)type;
+			if(ts.elementType instanceof Type_Bits) {
+				Type_Bits tb = (Type_Bits)ts.elementType;
+				String typeName = "bv"+tb.size;
+				String functionName = "band."+typeName;
+				String opbuiltin = "bvand";
+				String function = "\nfunction {:bvbuiltin \""+opbuiltin+"\"} "+functionName;
+				function += "(left:"+typeName+", right:"+typeName+") returns("+typeName+");";
+				Parser.getInstance().addBoogieFunction(functionName, function);
+				return functionName;
+			}
+		}
+		return super.p4_to_Boogie();
+	}
 }

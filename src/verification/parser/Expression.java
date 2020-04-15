@@ -98,23 +98,43 @@ class MethodCallExpression extends Expression {
 			Parser.getInstance().getCurrentProcedure().updateModifies("isValid");
 			return methodName;
 		}
+		else if(methodName.length()>10 && methodName.substring(0, 9).equals("setValid(")) {
+			methodName = "isValid["+methodName.substring(9, methodName.length()-1)+"] := true";
+			Parser.getInstance().getCurrentProcedure().updateModifies("isValid");
+			return methodName;
+		}
+		else if(methodName.equals("lookahead")) {
+			String body = "";
+			if(typeArguments.get(0) instanceof Type_Bits) {
+				Type_Bits tb = (Type_Bits)typeArguments.get(0);
+				int size = tb.size;
+				for(int i = 0; i < size; i++) {
+					body += "packet.map[packet.index+"+i+"]";
+					if(i != size-1)
+						body += "++";
+				}
+			}
+			return body;
+		}
 		// deal with isValid()
 		else if(methodName.length()>8 && methodName.substring(0, 8).equals("isValid[")) {
 			return methodName;
 		}
-//		System.out.println(Parser.getInstance().getCurrentProcedure().name+":"+methodName);
-		Parser.getInstance().getCurrentProcedure().childrenNames.add(methodName);
 		code = methodName+"(";
 		int cnt = 0;
 		if(!arguments.isEmpty()) {
 			for(Node node : arguments) {
 				cnt++;
-				code += node.p4_to_Boogie();
+				if(methodName.contains(".emit"))
+					code += node.p4_to_Boogie("emit");
+				else
+					code += node.p4_to_Boogie();
 				if(cnt < arguments.size())
 					code += ", ";
 			}
 		}
 		code = code + ")";
+		code = code.replace(")(", ", ");
 		return code;
 	}
 }
@@ -146,7 +166,12 @@ class PathExpression extends Expression {
 
 	@Override
 	String p4_to_Boogie() {
-		return path.p4_to_Boogie();
+		String code = path.p4_to_Boogie();
+		if(Parser.getInstance().isParserState() && Parser.getInstance().isParserLocal(code)) {
+			code = "parser."+code;
+			Parser.getInstance().addModifiedGlobalVariable(code);
+		}
+		return code;
 	}
 	@Override
 	String p4_to_Boogie(String arg) {
@@ -188,11 +213,52 @@ class ExpressionValue extends Expression {
 }
 
 class Slice extends Expression {
-
+	Node e0, e1, e2;
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		e0 = Parser.getInstance().jsonParse(object.get(JsonKeyName.E0));
+		e1 = Parser.getInstance().jsonParse(object.get(JsonKeyName.E1));
+		e2 = Parser.getInstance().jsonParse(object.get(JsonKeyName.E2));
+	}
+	@Override
+	String p4_to_Boogie() {
+		String code = e0.p4_to_Boogie();
+		int end = Integer.parseInt(e1.p4_to_Boogie());
+		end++;
+		code += "["+end+":"+e2.p4_to_Boogie()+"]";
+		return code;
+	}
 }
 
 class Cast extends Expression {
-
+	Node destType;
+	Node expr;
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		destType = Parser.getInstance().jsonParse(object.get(JsonKeyName.DESTTYPE));
+		expr = Parser.getInstance().jsonParse(object.get(JsonKeyName.EXPR));
+	}
+	@Override
+	String p4_to_Boogie() {
+		if(destType instanceof Type_Bits) {
+			Type_Bits tb = (Type_Bits)destType;
+			int dstSize = tb.size, srcSize = 0;
+			String tb2 = expr.getTypeName();
+			if(tb2.contains("bv")) {
+				srcSize = Integer.parseInt(tb2.substring(2));
+				if(dstSize < srcSize) {
+					return expr.p4_to_Boogie()+"["+dstSize+":0]";
+				}
+				else {
+					return "0bv"+(dstSize-srcSize)+"++"+expr.p4_to_Boogie();
+				}
+			}
+			return super.p4_to_Boogie();
+		}
+		return super.p4_to_Boogie();
+	}
 }
 
 class Member extends Expression {
@@ -229,12 +295,42 @@ class Member extends Expression {
 			code += ")";
 			return code;
 		}
+		else if(type.Node_Type.equals("Type_Method") && member.equals("setValid")) {
+			String code = "setValid";
+			code += "(";
+			code += expr.p4_to_Boogie();
+			code += ")";
+			return code;
+		}
 		else if(type.Node_Type.equals("Type_Method") && member.equals("isValid")) {
 			String code = "isValid";
 			code += "[";
 			code += expr.p4_to_Boogie();
 			code += "]";
 			return code;
+		}
+		else if(type.Node_Type.equals("Type_Method") && member.equals("lookahead")) {
+			return member;
+		}
+		else if(type.Node_Type.equals("Type_Method") && member.equals("push_front")) {
+			if(expr.Node_Type.equals("Member")) {
+				Member m = (Member)expr;
+				String code = m.type.getName()+"."+member;
+				code += "(";
+				code += expr.p4_to_Boogie();
+				code += ")";
+				return code;
+			}
+		}
+		else if(type.Node_Type.equals("Type_Method") && (member.equals("push_front")||member.equals("pop_front"))) {
+			if(expr.Node_Type.equals("Member")) {
+				Member m = (Member)expr;
+				String code = m.type.getName()+"."+member;
+				code += "(";
+				code += expr.p4_to_Boogie();
+				code += ")";
+				return code;
+			}
 		}
 		else if(member.equals("apply")) {
 			return expr.p4_to_Boogie()+"."+member;

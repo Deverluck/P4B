@@ -153,8 +153,175 @@ class Type_Stack extends Type {
 		return elementType.getTypeName();
 	}
 	
+	void addPushFront() {
+		BoogieProcedure pushFront = new BoogieProcedure(name+".push_front");
+		Parser.getInstance().addProcedure(pushFront);
+		Parser.getInstance().setCurrentProcedure(pushFront);
+		pushFront.declare = "procedure "+pushFront.name+"(stack:"+name+", count:int)\n";
+		pushFront.updateModifies("isValid");
+		pushFront.updateModifies("stack.index");
+		Type_Header th = Parser.getInstance().getHeader(elementType.getTypeName());
+		for(StructField field:th.fields) {
+			pushFront.updateModifies(th.name+"."+field.name);
+		}
+		pushFront.localVariables.put("i", "int");
+		incIndent();
+		Parser.getInstance().addBoogieStatement(addIndent()+"i := size[stack]-1;\n");
+		
+		String whileStart = addIndent()+"while(i>=0)\n";
+		incIndent();
+		whileStart += addIndent()+"invariant i>=-1;\n";
+		decIndent();
+		whileStart += addIndent()+"{\n";
+		String whileEnd = addIndent()+"}\n";
+		BoogieIfStatement whileBlock = new BoogieIfStatement(whileStart, whileEnd);
+		Parser.getInstance().addBoogieBlock(whileBlock);
+		
+		// ***while loop body***
+		incIndent();
+		
+		// ***if statement***
+		BoogieIfStatement ifBlock = new BoogieIfStatement(addIndent()+"if(i >= count){\n", addIndent()+"}\n");
+		Parser.getInstance().addBoogieBlock(ifBlock);
+		incIndent();
+		for(StructField field:th.fields) {
+			String statement = addIndent();
+			String mapName = th.name+"."+field.name;
+			statement += mapName+"[stack[i]] := "+mapName+"[stack[i-count]];\n";
+			Parser.getInstance().addBoogieStatement(statement);
+		}
+		decIndent();
+		Parser.getInstance().popBoogieBlock();
+		// *** if ends***
+		
+		// ***else statement***
+		BoogieIfStatement elseBlock = new BoogieIfStatement(addIndent()+"else{\n", addIndent()+"}\n");
+		Parser.getInstance().addBoogieBlock(elseBlock);
+		incIndent();
+		Parser.getInstance().addBoogieStatement(addIndent()+"isValid[stack[i]] := false;\n");
+		decIndent();
+		Parser.getInstance().popBoogieBlock();
+		// ***else ends***
+		
+		Parser.getInstance().addBoogieStatement(addIndent()+"i := i-1;\n");
+		decIndent();
+		Parser.getInstance().popBoogieBlock();
+		//***while loop ends***
+		
+		Parser.getInstance().addBoogieStatement(addIndent()+"stack.index[stack] := stack.index[stack]+count;\n");
+		
+		// *** if starts***
+		BoogieIfStatement ifBlock2 = new BoogieIfStatement(addIndent()+"if(stack.index[stack]>size[stack]){\n", addIndent()+"}\n");
+		Parser.getInstance().addBoogieBlock(ifBlock2);
+		incIndent();
+		Parser.getInstance().addBoogieStatement(addIndent()+"stack.index[stack] := size[stack];\n");
+		decIndent();
+		Parser.getInstance().popBoogieBlock();
+		// *** if ends***
+		decIndent();
+	}
+	
+	void addPopFront() {
+		BoogieProcedure popFront = new BoogieProcedure(name+".pop_front");
+		Parser.getInstance().addProcedure(popFront);
+		Parser.getInstance().setCurrentProcedure(popFront);
+		popFront.declare = "procedure "+popFront.name+"(stack:"+name+", count:int)\n";
+		popFront.updateModifies("isValid");
+		popFront.updateModifies("stack.index");
+		Type_Header th = Parser.getInstance().getHeader(elementType.getTypeName());
+		for(StructField field:th.fields) {
+			popFront.updateModifies(th.name+"."+field.name);
+		}
+		popFront.localVariables.put("i", "int");
+		incIndent();
+		Parser.getInstance().addBoogieStatement(addIndent()+"i := 0;\n");
+		
+		String whileStart = addIndent()+"while(i<size[stack])\n";
+		incIndent();
+		whileStart += addIndent()+"invariant i<=size[stack];\n";
+		decIndent();
+		whileStart += addIndent()+"{\n";
+		String whileEnd = addIndent()+"}\n";
+		BoogieIfStatement whileBlock = new BoogieIfStatement(whileStart, whileEnd);
+		Parser.getInstance().addBoogieBlock(whileBlock);
+		
+		// ***while loop body***
+		incIndent();
+		
+		// ***if statement***
+		BoogieIfStatement ifBlock = new BoogieIfStatement(addIndent()+"if(i+count < size[stack]){\n", addIndent()+"}\n");
+		Parser.getInstance().addBoogieBlock(ifBlock);
+		incIndent();
+		for(StructField field:th.fields) {
+			String statement = addIndent();
+			String mapName = th.name+"."+field.name;
+			statement += mapName+"[stack[i]] := "+mapName+"[stack[i+count]];\n";
+			Parser.getInstance().addBoogieStatement(statement);
+		}
+		decIndent();
+		Parser.getInstance().popBoogieBlock();
+		// *** if ends***
+		
+		// ***else statement***
+		BoogieIfStatement elseBlock = new BoogieIfStatement(addIndent()+"else{\n", addIndent()+"}\n");
+		Parser.getInstance().addBoogieBlock(elseBlock);
+		incIndent();
+		Parser.getInstance().addBoogieStatement(addIndent()+"isValid[stack[i]] := false;\n");
+		decIndent();
+		Parser.getInstance().popBoogieBlock();
+		// ***else ends***
+		
+		Parser.getInstance().addBoogieStatement(addIndent()+"i := i+1;\n");
+		decIndent();
+		Parser.getInstance().popBoogieBlock();
+		//***while loop ends***
+		
+		// *** if starts***
+		BoogieIfStatement ifBlock2 = new BoogieIfStatement(addIndent()+"if(stack.index[stack]>count){\n", addIndent()+"}\n");
+		Parser.getInstance().addBoogieBlock(ifBlock2);
+		incIndent();
+		Parser.getInstance().addBoogieStatement(addIndent()+"stack.index[stack] := stack.index[stack]-count;\n");
+		decIndent();
+		Parser.getInstance().popBoogieBlock();
+		// *** if ends***
+		
+		// ***else starts***
+		BoogieIfStatement elseBlock2 = new BoogieIfStatement(addIndent()+"else{\n", addIndent()+"}\n");
+		Parser.getInstance().addBoogieBlock(elseBlock2);
+		incIndent();
+		Parser.getInstance().addBoogieStatement(addIndent()+"stack.index[stack] := 0;\n");
+		decIndent();
+		Parser.getInstance().popBoogieBlock();
+		// ***else ends***
+		decIndent();
+	}
+	
+	void addSizeConstrain() {
+		BoogieProcedure constrain = new BoogieProcedure(name+".constrain");
+		Parser.getInstance().addProcedure(constrain);
+		Parser.getInstance().setCurrentProcedure(constrain);
+		incIndent();
+		constrain.declare = "procedure "+name+".constrain();\n";
+		constrain.declare += addIndent()+"ensures (forall stack:"+name+"::size[stack]=="+size.value+");\n";
+		constrain.implemented = false;
+		decIndent();
+		
+		BoogieProcedure mainProcedure = Parser.getInstance().getMainProcedure();
+		if(!mainProcedure.childrenNames.contains(constrain.name)) {
+			incIndent();
+			String statement = addIndent()+"call "+constrain.name+"();\n";
+			decIndent();
+			Parser.getInstance().addMainBoogieStatement(statement);
+			mainProcedure.childrenNames.add(constrain.name);
+		}
+	}
+	
 	@Override
 	String p4_to_Boogie() {
+		addPushFront();
+		addPopFront();
+		addSizeConstrain();
+		
 		String code = "\n// Header Stack: "+getTypeName()+" "+size.value+"\n";
 		code += "type "+name+"=[int]"+getTypeName()+";\n";
 		code += "var "+getTypeName()+".last:["+name+"]"+getTypeName()+";\n";
@@ -208,6 +375,10 @@ class Type_Bits extends Type {
 	@Override
 	String p4_to_C() {
 		return size+"";
+	}
+	@Override
+	String p4_to_Boogie() {
+		return "bv"+size;
 	}
 	@Override
 	String getTypeName() {
@@ -385,4 +556,17 @@ class Type_InfInt extends Type {
 
 class Type_Boolean extends Type {
 
+}
+
+class Type_SpecializedCanonical extends Type {
+	
+}
+
+class Type_Set extends Type{
+	Node elementType;
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		elementType = Parser.getInstance().jsonParse(object.get(JsonKeyName.ELEMENTTYPE));
+	}
 }
