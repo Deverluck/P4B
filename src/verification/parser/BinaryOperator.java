@@ -23,6 +23,9 @@ public class BinaryOperator extends Node {
 			function += "(left:"+typeName+", right:"+typeName+") returns("+typeName+");";
 			Parser.getInstance().addBoogieFunction(functionName, function);
 			String code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+")";
+			if(!right.p4_to_Boogie().contains(typeName)) {
+				code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+typeName+")";
+			}
 			return code;
 		}
 		else if(type instanceof Type_Boolean) {
@@ -129,7 +132,7 @@ class LAnd extends BinaryOperator {
 	}
 	@Override
 	String p4_to_Boogie() {
-		String code = left.p4_to_Boogie()+" && "+right.p4_to_Boogie();
+		String code = "("+left.p4_to_Boogie()+") && ("+right.p4_to_Boogie()+")";
 		return code;
 	}
 }

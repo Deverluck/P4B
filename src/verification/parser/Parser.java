@@ -422,10 +422,24 @@ public class Parser {
 				addBoogieStatement(addIndent()+"stack.index[stack] := stack.index[stack]+1;\n");
 				addBoogieStatement(addIndent()+"packet.index := "+start+"+stack.index[stack]*"+
 						headers.get(ts.elementType.getTypeName()).length()+";\n");
-				
 				decIndent();
 				body += "}\n";
 				procedure.body = body;
+				
+				// parser may extract the header in a stack using its index instead of "stack.next"
+				String childProcedureName = "packet_in.extract.headers."+headersField.name;
+				BoogieProcedure childProcedure = new BoogieProcedure(childProcedureName);
+				addProcedure(childProcedure);
+				setCurrentProcedure(childProcedure);
+				childProcedure.declare = "\nprocedure {:inline 1} "+childProcedureName+"(header:"
+						+ts.elementType.getTypeName()+")\n";
+				addModifiedGlobalVariable("isValid");
+				addModifiedGlobalVariable("packet.index");
+				incIndent();
+				addBoogieStatement(addIndent()+"isValid[header] := true;\n");
+				addBoogieStatement(addIndent()+"packet.index := "+"packet.index+"+
+						headers.get(ts.elementType.getTypeName()).length()+";\n");
+				decIndent();
 			}
 			else {
 				String name = headersField.getTypeName();

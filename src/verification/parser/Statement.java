@@ -146,7 +146,7 @@ class MethodCallStatement extends Statement {
 		
 		//TODO support checksum
 		String code = methodCall.p4_to_Boogie()+";\n";
-		if(code.contains("update_checksum"))
+		if(code.contains("update_checksum") || code.contains("verify_checksum"))
 			return "";
 		if(!code.contains(":="))
 			code = "call "+code;
