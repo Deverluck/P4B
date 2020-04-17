@@ -322,36 +322,33 @@ public class Parser {
 	String p4_to_Boogie_Header_isValid() {
 		String code = "\nvar isValid:<T>[T]bool;\n";
 		addBoogieGlobalVariable("isValid");
-//		code += "function isValid<T>(header: T) returns (bool) { valid(header) }";
+		
+		code += "\nvar emit:<T>[T]bool;\n";
+		addBoogieGlobalVariable("emit");
 
-		BoogieProcedure procedure = new BoogieProcedure("clear_valid");
-		procedure.implemented = false;
-		addProcedure(procedure);
-		String declare = "\nprocedure clear_valid();\n";
-		procedure.modifies.add("isValid");
+		BoogieProcedure clear_valid = new BoogieProcedure("clear_valid");
+		clear_valid.implemented = false;
+		addProcedure(clear_valid);
+		clear_valid.declare = "\nprocedure clear_valid();\n";
+		clear_valid.modifies.add("isValid");
 		for(String name:headers.keySet()) {
-			declare += "	ensures (forall header:"+name;
-			declare += ":: isValid[header]==false);\n";
+			clear_valid.declare += "	ensures (forall header:"+name;
+			clear_valid.declare += ":: isValid[header]==false);\n";
 		}
-//		declare += "	modifies isValid;\n";
-		procedure.declare = declare;
 		addMainPreBoogieStatement("	call clear_valid();\n");
-		mainProcedure.childrenNames.add(procedure.name);
+		mainProcedure.childrenNames.add(clear_valid.name);
 		
-		BoogieProcedure procedure2 = new BoogieProcedure("setInvalid");
-		addProcedure(procedure2);
-		setCurrentProcedure(procedure2);
-		procedure2.modifies.add("isValid");
-		String declare2 = "\nprocedure {:inline 1} setInvalid<T>(header:T)\n";
-		String body2 = "{\n";
-		
-		String statement = "	isValid[header]:=false;\n";
-		addBoogieStatement(statement);
-		
-		body2 += statement;
-		body2 += "}\n";
-		procedure2.declare = declare2;
-		procedure2.body = body2;
+		BoogieProcedure clear_emit = new BoogieProcedure("clear_emit");
+		clear_emit.implemented = false;
+		addProcedure(clear_emit);
+		clear_emit.declare = "\nprocedure clear_emit();\n";
+		clear_emit.modifies.add("emit");
+		for(String name:headers.keySet()) {
+			clear_emit.declare += "	ensures (forall header:"+name;
+			clear_emit.declare += ":: emit[header]==false);\n";
+		}
+		addMainPreBoogieStatement("	call clear_emit();\n");
+		mainProcedure.childrenNames.add(clear_emit.name);
 		
 		// support header stack
 		code += "var stack.index:<T>[T]int;\n";
@@ -394,7 +391,6 @@ public class Parser {
 	}
 
 	String p4_to_Boogie_extract() {
-		// TODO support header stack
 		String code = "";
 		Type_Struct myheaders = structs.get(headersName);
 		int totalLen = myheaders.length();
@@ -411,66 +407,25 @@ public class Parser {
 				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+name+")\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable("isValid");
-				for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
-					addModifiedGlobalVariable(ts.elementType.getTypeName()+"."+field.name);
-				}
+				addModifiedGlobalVariable("stack.index");
+				addModifiedGlobalVariable("packet.index");
+				
+				//Useless
+//				for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
+//					addModifiedGlobalVariable(ts.elementType.getTypeName()+"."+field.name);
+//				}
+				
 				String body = "";
 				body += "{\n";
 				incIndent();
-				int size = ts.size.value;
-				for(int i = 0; i < size; i++) {
-					String condition = addIndent();
-					if(i != 0)
-						condition += "else ";
-					condition += "if(stack.index[stack] == "+i+"){\n";
-					String end = addIndent()+"}\n";
-					BoogieIfStatement ifStatement = new BoogieIfStatement(condition, end);
-					addBoogieBlock(ifStatement);
-					incIndent();
-					String methodName = "packet_in.extract.headers."
-							+headersField.name+"."+i;
-					getCurrentProcedure().childrenNames.add(methodName);
-					String statement = addIndent()+"call packet_in.extract.headers."
-							+headersField.name+"."+i+"(stack["+i+"]);\n";
-					addBoogieStatement(statement);
-					decIndent();
-					popBoogieBlock();
-				}
+				addBoogieStatement(addIndent()+"isValid[stack[stack.index[stack]]] := true;\n");
+				addBoogieStatement(addIndent()+"stack.index[stack] := stack.index[stack]+1;\n");
+				addBoogieStatement(addIndent()+"packet.index := "+start+"+stack.index[stack]*"+
+						headers.get(ts.elementType.getTypeName()).length()+";\n");
+				
 				decIndent();
 				body += "}\n";
 				procedure.body = body;
-				
-				for(int i = 0; i < size; i++) {
-					String childProcedureName = "packet_in.extract.headers."
-							+headersField.name+"."+i;
-					BoogieProcedure childProcedure = new BoogieProcedure(childProcedureName);
-					addProcedure(childProcedure);
-					setCurrentProcedure(childProcedure);
-					addModifiedGlobalVariable("isValid");
-					for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
-						addModifiedGlobalVariable(ts.elementType.getTypeName()+"."+field.name);
-					}
-					String childDeclare = "\nprocedure {:inline 1} "+childProcedureName+"(header:"+
-							ts.elementType.getTypeName()+")\n";
-					childProcedure.declare = childDeclare;
-					String childBody = "";
-					childBody += "{\n";
-					incIndent();
-					for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
-						String statement = addIndent()+ts.elementType.getTypeName()+"."+field.name+
-								"[header] := packet";
-						statement += "["+(start+field.len)+":"+start+"];\n";
-						addBoogieStatement(statement);
-						body += statement;
-						start += field.len;
-					}
-					addBoogieStatement(addIndent()+"isValid[header] := true;\n");
-					addBoogieStatement(addIndent()+"packet.index := "+start+";\n");
-					addModifiedGlobalVariable("packet.index");
-					decIndent();
-					childBody += "}\n";
-					childProcedure.body = childBody;
-				}
 			}
 			else {
 				String name = headersField.getTypeName();
@@ -481,22 +436,24 @@ public class Parser {
 				String declare = "\nprocedure {:inline 1} "+procedureName+"(header:"+name+")\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable("isValid");
-
-				for(StructField field:headers.get(name).fields) {
-					addModifiedGlobalVariable(name+"."+field.name);
-				}
+				
+				// Useless
+//				for(StructField field:headers.get(name).fields) {
+//					addModifiedGlobalVariable(name+"."+field.name);
+//				}
+				
 				String body = "";
 				body += "{\n";
 				incIndent();
 				for(StructField field:headers.get(name).fields) {
-					String statement = "	"+name+"."+field.name+"[header] := packet";
+					String statement = addIndent()+"//"+name+"."+field.name+"[header] := packet";
 					statement += "["+(start+field.len)+":"+start+"];\n";
 					addBoogieStatement(statement);
 					
 					body += statement;
 					start += field.len;
 				}
-				addBoogieStatement("	isValid[header] := true;\n");
+				addBoogieStatement(addIndent()+"isValid[header] := true;\n");
 				addBoogieStatement(addIndent()+"packet.index := "+start+";\n");
 				addModifiedGlobalVariable("packet.index");
 				decIndent();
@@ -536,8 +493,8 @@ public class Parser {
 	String p4_to_Boogie_emit() {
 		String packetoutName = "packet_o";
 		String code = "";
-		code += "\ntype packet_out = packet_in;\n";
-		code += "var "+packetoutName+":packet_in;\n";
+		code += "\n//type packet_out = packet_in;\n";
+		code += "//var "+packetoutName+":packet_in;\n";
 		addBoogieGlobalVariable(packetoutName);
 		
 		Type_Struct myheaders = structs.get(headersName);
@@ -553,38 +510,19 @@ public class Parser {
 				setCurrentProcedure(procedure);
 				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+name+", index:int)\n";
 				getCurrentProcedure().declare = declare;
-				addModifiedGlobalVariable(packetoutName);
+				addModifiedGlobalVariable("emit");
 				
 				// body starts
 				incIndent();
-				for(int i = 0; i < ts.size.value; i++) {
-					String ifStart = addIndent();
-					if(i != 0)
-						ifStart += "else ";
-					ifStart += "if(index=="+i+" && isValid[stack["+i+"]]){\n";
-					String ifEnd = addIndent()+"}\n";
-					BoogieIfStatement boogieIfStatement = new BoogieIfStatement(ifStart, ifEnd);
-					addBoogieBlock(boogieIfStatement);
-					incIndent();
-					for(StructField field:headers.get(ts.elementType.getTypeName()).fields) {
-						int end = start+field.len;
-						String statement = "";
-						statement += addIndent();
-						statement += packetoutName+" := ";
-						if(start+field.len != totalLen) {
-							statement += packetoutName+"["+totalLen+":"+end+"]++";
-						}
-						statement += ts.getTypeName()+"."+field.name+"[stack["+i+"]]";
-						if(start!=0) {
-							statement += "++"+packetoutName+"["+start+":"+"0"+"]";
-						}
-						statement += ";\n";
-						addBoogieStatement(statement);
-						start += field.len;
-					}
-					popBoogieBlock();
-					decIndent();
-				}
+				String ifStart = addIndent();
+				ifStart += "if(isValid[stack[index]]) {\n";
+				String ifEnd = addIndent()+"}\n";
+				BoogieIfStatement boogieIfStatement = new BoogieIfStatement(ifStart, ifEnd);
+				addBoogieBlock(boogieIfStatement);
+				incIndent();
+				addBoogieStatement(addIndent()+"emit[stack[index]] := true;\n");
+				decIndent();
+				popBoogieBlock();
 				// body ends
 				decIndent();
 			}
@@ -596,11 +534,7 @@ public class Parser {
 				setCurrentProcedure(procedure);
 				String declare = "\nprocedure {:inline 1} "+procedureName+"(header:"+name+")\n";
 				getCurrentProcedure().declare = declare;
-				addModifiedGlobalVariable(packetoutName);
-
-//				for(StructField field:headers.get(name).fields) {
-//					addModifiedGlobalVariable(name+"."+field.name);
-//				}
+				addModifiedGlobalVariable("emit");
 				String body = "";
 				body += "{\n";
 				incIndent();
@@ -615,8 +549,7 @@ public class Parser {
 				for(StructField field:headers.get(name).fields) {
 					int end = start+field.len;
 					
-					String statement = "";
-					statement += addIndent();
+					String statement = addIndent()+"//";
 					statement += packetoutName+" := ";
 					if(start+field.len != totalLen) {
 						statement += packetoutName+"["+totalLen+":"+end+"]++";
@@ -630,6 +563,7 @@ public class Parser {
 					body += statement;
 					start += field.len;
 				}
+				addBoogieStatement(addIndent()+"emit[header] := true;\n");
 				decIndent();
 				body += ifEnd;
 				popBoogieBlock();

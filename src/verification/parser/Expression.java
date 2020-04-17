@@ -213,10 +213,12 @@ class ExpressionValue extends Expression {
 }
 
 class Slice extends Expression {
+	Node type;
 	Node e0, e1, e2;
 	@Override
 	void parse(ObjectNode object) {
 		super.parse(object);
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
 		e0 = Parser.getInstance().jsonParse(object.get(JsonKeyName.E0));
 		e1 = Parser.getInstance().jsonParse(object.get(JsonKeyName.E1));
 		e2 = Parser.getInstance().jsonParse(object.get(JsonKeyName.E2));
@@ -228,6 +230,10 @@ class Slice extends Expression {
 		end++;
 		code += "["+end+":"+e2.p4_to_Boogie()+"]";
 		return code;
+	}
+	@Override
+	String getTypeName() {
+		return type.getTypeName();
 	}
 }
 

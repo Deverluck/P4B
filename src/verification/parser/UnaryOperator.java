@@ -7,7 +7,29 @@ public class UnaryOperator extends Node {
 }
 
 class Cmpl extends UnaryOperator {
-
+	Node type;
+	Node expr;
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		type = Parser.getInstance().jsonParse(object.get(JsonKeyName.TYPE));
+		expr = Parser.getInstance().jsonParse(object.get(JsonKeyName.EXPR));
+	}
+	@Override
+	String p4_to_Boogie() {
+		if(type instanceof Type_Bits) {
+			Type_Bits tb = (Type_Bits)type;
+			String typeName = "bv"+tb.size;
+			String functionName = "bnot."+typeName;
+			String function = "\nfunction {:bvbuiltin \"bvnot\"} "+functionName;
+			function += "(val:"+typeName+") returns ("+typeName+");";
+			Parser.getInstance().addBoogieFunction(functionName, function);
+			String code = functionName+"("+expr.p4_to_Boogie()+")";
+			return code;
+		}
+		return super.p4_to_Boogie();
+	}
+//	function {:bvbuiltin "bvnot"} $not.bv1(i: bv1) returns (bv1);
 }
 
 class LNot extends UnaryOperator {

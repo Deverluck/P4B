@@ -58,7 +58,8 @@ public class BoogieProcedure {
 		if(implemented) {
 			code += "{\n";
 			for(String localVar:localVariables.keySet()) {
-				code += "	var "+localVar+":"+localVariables.get(localVar)+";\n";
+				code += "	"+localVariables.get(localVar);
+//				code += "	var "+localVar+":"+localVariables.get(localVar)+";\n";
 			}
 			code += preBlock.toBoogie();
 			code += mainBlock.toBoogie();

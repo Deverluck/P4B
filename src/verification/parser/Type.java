@@ -164,7 +164,7 @@ class Type_Stack extends Type {
 		for(StructField field:th.fields) {
 			pushFront.updateModifies(th.name+"."+field.name);
 		}
-		pushFront.localVariables.put("i", "int");
+		pushFront.localVariables.put("i", "var i:int;\n");
 		incIndent();
 		Parser.getInstance().addBoogieStatement(addIndent()+"i := size[stack]-1;\n");
 		
@@ -232,7 +232,7 @@ class Type_Stack extends Type {
 		for(StructField field:th.fields) {
 			popFront.updateModifies(th.name+"."+field.name);
 		}
-		popFront.localVariables.put("i", "int");
+		popFront.localVariables.put("i", "var i:int;\n");
 		incIndent();
 		Parser.getInstance().addBoogieStatement(addIndent()+"i := 0;\n");
 		
