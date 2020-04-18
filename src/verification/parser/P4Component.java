@@ -428,13 +428,24 @@ class P4Table extends P4Component {
 		incIndent();
 		String body = "{\n";
 		if(actions != null) {
+			// duplicated local variable
+			HashMap<String, String> map = new HashMap<>();
+			
 			Property property = (Property)actions;
 			ActionList actionList = (ActionList)property.value;
 			// declare local variables for actions
 			for(String actionName:actionList.actionList) {
 				for(String parameter:actionList.actionParameters.get(actionName).keySet()) {
-					procedure.addLocalVariable(parameter, "var "+parameter+":"+
-							actionList.actionParameters.get(actionName).get(parameter)+";\n");
+					String localVariableDeclaration = "var "+parameter+":"+
+							actionList.actionParameters.get(actionName).get(parameter)+";\n";
+					if(procedure.hasLocalVariable(parameter) && !procedure.localVariables.get(parameter).equals(localVariableDeclaration)) {
+						map.put(actionName, parameter);
+						localVariableDeclaration = "var "+actionName+"."+parameter+":"+
+							actionList.actionParameters.get(actionName).get(parameter)+";\n";
+						procedure.addLocalVariable(actionName+"."+parameter, localVariableDeclaration);
+					}
+					else
+						procedure.addLocalVariable(parameter, localVariableDeclaration);
 				}
 			}
 			int cnt = 0;
@@ -453,7 +464,10 @@ class P4Table extends P4Component {
 				statement += "(";
 				int tmp_cnt = actionList.actionParameters.get(actionName).size();
 				for(String parameter:actionList.actionParameters.get(actionName).keySet()) {
-					statement += parameter;
+					if(map.containsKey(actionName)&&map.get(actionName).equals(parameter))
+						statement += actionName+"."+parameter;
+					else
+						statement += parameter;
 					tmp_cnt--;
 					if(tmp_cnt>0)
 						statement += ", ";

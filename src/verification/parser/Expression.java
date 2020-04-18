@@ -226,6 +226,8 @@ class Slice extends Expression {
 	@Override
 	String p4_to_Boogie() {
 		String code = e0.p4_to_Boogie();
+		if(code.contains("++"))
+			code = "("+code+")";
 		int end = Integer.parseInt(e1.p4_to_Boogie());
 		end++;
 		code += "["+end+":"+e2.p4_to_Boogie()+"]";

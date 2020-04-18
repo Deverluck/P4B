@@ -41,6 +41,9 @@ public class BoogieProcedure {
 	public void addLocalVariable(String varName, String declareStatement) {
 		localVariables.put(varName, declareStatement);
 	}
+	public boolean hasLocalVariable(String varName) {
+		return localVariables.containsKey(varName);
+	}
 	public String toBoogie() {
 		String code = "";
 		code += declare;
