@@ -349,6 +349,11 @@ class Member extends Expression {
 				return expr.p4_to_Boogie();
 			}
 		}
+		else if(member.equals("action_run") && type.Node_Type.equals("Type_ActionEnum")) {
+			MethodCallExpression mce = (MethodCallExpression)expr;
+			Member m = (Member)mce.method;
+			return m.expr.p4_to_Boogie()+"."+member;
+		}
 		else {
 			Parser.getInstance().addModifiedGlobalVariable(expr.getTypeName()+"."+member);
 			String code = expr.getTypeName()+"."+member;
@@ -381,4 +386,8 @@ class Member extends Expression {
 
 class ListExpression extends Expression {
 
+}
+
+class DefaultExpression extends Expression {
+	
 }

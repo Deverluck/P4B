@@ -55,4 +55,7 @@ public class JsonKeyName {
 	public static final String E1 = "e1";
 	public static final String E2 = "e2";
 	public static final String DESTTYPE = "destType";
+	public static final String CASES = "cases";
+	public static final String LABEL = "label";
+	public static final String STATEMENT = "statement";
 }

@@ -153,7 +153,8 @@ class MethodCallStatement extends Statement {
 		if(code.contains("call ") && code.contains("(")) {
 			int start = 5;
 			int end = code.indexOf("(");
-			Parser.getInstance().getCurrentProcedure().childrenNames.add(code.substring(start, end));
+			String methodName = code.substring(start, end);
+			Parser.getInstance().getCurrentProcedure().childrenNames.add(methodName);
 		}
 		code = addIndent()+code;
 		Parser.getInstance().addBoogieStatement(code);
@@ -299,9 +300,73 @@ class SelectExpression extends Statement {
 }
 
 class SwitchStatement extends Statement {
-
+	Node expression;
+	ArrayList<SwitchCase> cases;
+	public SwitchStatement() {
+		cases = new ArrayList<>();
+	}
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		expression = Parser.getInstance().jsonParse(object.get(JsonKeyName.EXPRESSION));
+		ArrayNode array = (ArrayNode)object.get(JsonKeyName.CASES).get(JsonKeyName.VEC);
+		for(JsonNode node:array) {
+			cases.add((SwitchCase)Parser.getInstance().jsonParse(node));
+		}
+	}
+	@Override
+	String p4_to_Boogie() {
+		String expr = expression.p4_to_Boogie();
+		int flag = 0;
+		SwitchCase defaultCase = null;
+		for(SwitchCase sc:cases) {
+			if(sc.isDefault) {
+				defaultCase = sc;
+				continue;
+			}
+			String ifStart = addIndent();
+			String ifEnd = addIndent()+"}\n";
+			if(flag == 0) {
+				flag = 1;
+			}
+			else {
+				ifStart += "else ";
+			}
+			ifStart += "if("+expr+"==";
+			if(expr.contains(".action_run"))
+				ifStart += "action."+sc.label.p4_to_Boogie();
+			ifStart += "){\n";
+			BoogieIfStatement ifBlock = new BoogieIfStatement(ifStart, ifEnd);
+			Parser.getInstance().addBoogieBlock(ifBlock);
+			incIndent();
+			sc.statement.p4_to_Boogie();
+			decIndent();
+			Parser.getInstance().popBoogieBlock();
+		}
+		if(defaultCase!=null && cases.size()>1) {
+			BoogieIfStatement ifBlock = new BoogieIfStatement(addIndent()+"else{\n", addIndent()+"}\n");
+			Parser.getInstance().addBoogieBlock(ifBlock);
+			incIndent();
+			defaultCase.statement.p4_to_Boogie();
+			decIndent();
+			Parser.getInstance().popBoogieBlock();
+		}
+		//System.out.println(expr);
+		return super.p4_to_Boogie();
+	}
 }
 
 class SwitchCase extends Statement {
-
+	Node label;
+	Node statement;
+	boolean isDefault;
+	@Override
+	void parse(ObjectNode object) {
+		super.parse(object);
+		label = Parser.getInstance().jsonParse(object.get(JsonKeyName.LABEL));
+		statement = Parser.getInstance().jsonParse(object.get(JsonKeyName.STATEMENT));
+		isDefault = false;
+		if(label.Node_Type.equals("DefaultExpression"))
+			isDefault = true;
+	}
 }

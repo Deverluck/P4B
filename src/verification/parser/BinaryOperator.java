@@ -23,7 +23,7 @@ public class BinaryOperator extends Node {
 			function += "(left:"+typeName+", right:"+typeName+") returns("+typeName+");";
 			Parser.getInstance().addBoogieFunction(functionName, function);
 			String code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+")";
-			if(!right.p4_to_Boogie().contains(typeName)) {
+			if(!right.p4_to_Boogie().contains(typeName) && !right.p4_to_Boogie().contains("[")) {
 				code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+typeName+")";
 			}
 			return code;

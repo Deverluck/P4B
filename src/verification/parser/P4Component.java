@@ -453,7 +453,7 @@ class P4Table extends P4Component {
 				String condition = addIndent();
 				if(cnt != 0)
 					condition += "else ";
-				condition += "if("+name+".select == "+"action."+actionName+"){\n";
+				condition += "if("+name+".action_run == "+"action."+actionName+"){\n";
 				String end = addIndent()+"}\n";
 				BoogieIfStatement ifStatement = new BoogieIfStatement(condition, end);
 				Parser.getInstance().addBoogieBlock(ifStatement);
@@ -496,7 +496,7 @@ class P4Table extends P4Component {
 			code += "\n// Table "+name+" Actionlist Declaration\n";
 			code += "type "+name+".action;\n";
 			code += actions.p4_to_Boogie(name+".action");
-			code += "var "+name+".select : "+name+".action;\n";
+			code += "var "+name+".action_run : "+name+".action;\n";
 		}
 		return code;
 	}
