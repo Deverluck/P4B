@@ -64,7 +64,7 @@ public class Main {
 //				"/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/axon/p416-axon-ppc.bpl");
 		
 		p4_to_Boogie("/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch.json", 
-		"/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch.bpl");
+		"/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch-optimized.bpl");
 		
 //		p4_to_Boogie("/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/copy-to-cpu/p416-copy_to_cpu-ppc.json",
 //				"/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/copy-to-cpu/p416-copy_to_cpu-ppc.bpl");

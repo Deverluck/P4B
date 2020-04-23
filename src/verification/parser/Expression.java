@@ -355,7 +355,7 @@ class Member extends Expression {
 			return m.expr.p4_to_Boogie()+"."+member;
 		}
 		else {
-			Parser.getInstance().addModifiedGlobalVariable(expr.getTypeName()+"."+member);
+			//Parser.getInstance().addModifiedGlobalVariable(expr.getTypeName()+"."+member);
 			String code = expr.getTypeName()+"."+member;
 			code += "["+expr.p4_to_Boogie()+"]";
 			return code;

@@ -757,11 +757,6 @@ public class Parser {
 		return headers.get(name);
 	}
 //
-//	void addModifiedGlobalVariable(String var) {
-//		if(globalVariables.contains(var))
-//			modifiedGlobalVariables.add(var);
-//	}
-//
 //	HashSet<String> getModifiedGlobalVariables() {
 //		return modifiedGlobalVariables;
 //	}

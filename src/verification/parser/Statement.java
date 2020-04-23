@@ -35,6 +35,7 @@ class BlockStatement extends Statement {
 }
 
 class AssignmentStatement extends Statement {
+	private String string;
 	Node left;
 	Node right;
 	@Override
@@ -51,8 +52,17 @@ class AssignmentStatement extends Statement {
 
 	@Override
 	String p4_to_Boogie() {
+		String leftCode = left.p4_to_Boogie();
+		
+		String modifiedVariable = leftCode;
+		if(leftCode.contains("[")) {
+			int idx = leftCode.indexOf("[");
+			modifiedVariable = leftCode.substring(0, idx);
+		}
+		Parser.getInstance().addModifiedGlobalVariable(modifiedVariable);
+		
 		left.addAssertStatement();
-		String code = addIndent()+left.p4_to_Boogie()+" := "+right.p4_to_Boogie()+";\n";
+		String code = addIndent()+leftCode+" := "+right.p4_to_Boogie()+";\n";
 		Parser.getInstance().addBoogieStatement(code);
 		return code;
 	}
