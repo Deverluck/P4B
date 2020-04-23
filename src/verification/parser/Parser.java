@@ -319,6 +319,18 @@ public class Parser {
 
 
 	// ******************* Boogie **********************
+	String p4_to_Boogie_Main_Declaration() {
+		String code = "";
+		code += "\ntype Ref;\n";
+		code += "type Field T;\n";
+		code += "type HeapType = <T>[Ref, Field T]T;\n";
+		code += "var Heap:HeapType;\n";
+		addBoogieGlobalVariable("Heap");
+		
+//		code += "type HeaderStack = <T>[int]T";
+		return code;
+	}
+	
 	String p4_to_Boogie_Header_isValid() {
 		String code = "\nvar isValid:<T>[T]bool;\n";
 		addBoogieGlobalVariable("isValid");
@@ -331,10 +343,12 @@ public class Parser {
 		addProcedure(clear_valid);
 		clear_valid.declare = "\nprocedure clear_valid();\n";
 		clear_valid.modifies.add("isValid");
-		for(String name:headers.keySet()) {
-			clear_valid.declare += "	ensures (forall header:"+name;
-			clear_valid.declare += ":: isValid[header]==false);\n";
-		}
+		clear_valid.declare += "	ensures (forall header:Ref";
+		clear_valid.declare += ":: isValid[header]==false);\n";
+//		for(String name:headers.keySet()) {
+//			clear_valid.declare += "	ensures (forall header:"+name;
+//			clear_valid.declare += ":: isValid[header]==false);\n";
+//		}
 		addMainPreBoogieStatement("	call clear_valid();\n");
 		mainProcedure.childrenNames.add(clear_valid.name);
 		
@@ -343,10 +357,12 @@ public class Parser {
 		addProcedure(clear_emit);
 		clear_emit.declare = "\nprocedure clear_emit();\n";
 		clear_emit.modifies.add("emit");
-		for(String name:headers.keySet()) {
-			clear_emit.declare += "	ensures (forall header:"+name;
-			clear_emit.declare += ":: emit[header]==false);\n";
-		}
+		clear_emit.declare += "	ensures (forall header:Ref";
+		clear_emit.declare += ":: emit[header]==false);\n";
+//		for(String name:headers.keySet()) {
+//			clear_emit.declare += "	ensures (forall header:"+name;
+//			clear_emit.declare += ":: emit[header]==false);\n";
+//		}
 		addMainPreBoogieStatement("	call clear_emit();\n");
 		mainProcedure.childrenNames.add(clear_emit.name);
 		
@@ -447,7 +463,8 @@ public class Parser {
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure {:inline 1} "+procedureName+"(header:"+name+")\n";
+//				String declare = "\nprocedure {:inline 1} "+procedureName+"(header:"+name+")\n";
+				String declare = "\nprocedure {:inline 1} "+procedureName+"(header:Ref)\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable("isValid");
 				
@@ -479,9 +496,14 @@ public class Parser {
 		code += "const packet:packet_in;\n";
 		
 		// TODO header variables name may not be hdr
-		code += "\nvar hdr:headers;\n";
-		code += "\nvar meta:metadata;\n";
-		code += "\nvar standard_metadata:standard_metadata_t;\n";
+		code += "\nvar hdr:Ref;\n";
+		code += "\nvar meta:Ref;\n";
+		code += "\nvar standard_metadata:Ref;\n";
+		
+//		code += "\nvar hdr:headers;\n";
+//		code += "\nvar meta:metadata;\n";
+//		code += "\nvar standard_metadata:standard_metadata_t;\n";
+		
 		code += "\nvar packet.map:[int]bv1;\n";
 		code += "\nvar packet.index:int;\n";
 		addBoogieGlobalVariable("hdr");
@@ -546,7 +568,8 @@ public class Parser {
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure {:inline 1} "+procedureName+"(header:"+name+")\n";
+//				String declare = "\nprocedure {:inline 1} "+procedureName+"(header:"+name+")\n";
+				String declare = "\nprocedure {:inline 1} "+procedureName+"(header:Ref)\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable("emit");
 				String body = "";
@@ -604,7 +627,8 @@ public class Parser {
 		for(String type : mytypes) {
 			System.out.println(type);
 		}
-		String code = program.p4_to_Boogie();
+		String code = p4_to_Boogie_Main_Declaration();
+		code += program.p4_to_Boogie();
 		// Add global declarations
 		code += globalBoogieDeclarationBlock.toBoogie();
 		// Add SMT built-in functions
@@ -751,6 +775,10 @@ public class Parser {
 	
 	boolean isParserLocal(String var) {
 		return parserLocals.contains(var);
+	}
+	
+	boolean isTypeDef(String var) {
+		return typeDefLength.containsKey(var);
 	}
 
 	Type_Header getHeader(String name) {

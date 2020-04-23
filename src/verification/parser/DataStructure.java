@@ -185,8 +185,14 @@ class StructField extends DataStructure {
 		String code = "";
 		if(type.Node_Type.equals("Type_Bits"))
 			code = "bv"+len;
-		else if(type.Node_Type.equals("Type_Name"))
-			code = type.p4_to_Boogie();
+		else if(type.Node_Type.equals("Type_Name")) {
+			String tmp = type.p4_to_Boogie();
+			if(Parser.getInstance().isTypeDef(tmp))
+				code = tmp;
+			else
+				code = "Ref";
+//			code = type.p4_to_Boogie();
+		}
 		else if(type.Node_Type.equals("Type_Stack")) {
 			Type_Stack ts = (Type_Stack)type;
 			code = ts.name;

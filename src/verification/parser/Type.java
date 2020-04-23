@@ -57,12 +57,13 @@ class Type_Header extends Type {
 	@Override
 	String p4_to_Boogie() {
 		String code = "\n// Header "+name+"\n";
-		code += "type "+name+";\n";
+//		code += "type "+name+";\n";
 		for(StructField field : fields) {
 //			Parser.getInstance().addBoogieGlobalVariable(name+"."+field.name);
 			String var = name+"."+field.name;
-			Parser.getInstance().addBoogieGlobalVariable(var);
-			code += "var "+var+":["+name+"]"+field.p4_to_Boogie()+";\n";
+			code += "const unique "+var+":Field "+field.p4_to_Boogie()+";\n";
+//			Parser.getInstance().addBoogieGlobalVariable(var);
+//			code += "var "+var+":["+name+"]"+field.p4_to_Boogie()+";\n";
 		}
 		return code;
 	}
@@ -116,12 +117,12 @@ class Type_Struct extends Type {
 	String p4_to_Boogie() {
 		// TODO field may be bv, header, typedef
 		String code = "\n// Struct "+name+"\n";
-		code += "type "+name+";\n";
+//		code += "type "+name+";\n";
 		for(StructField field : fields) {
-//			Parser.getInstance().addBoogieGlobalVariable(name+"."+field.name);
 			String var = name+"."+field.name;
 			Parser.getInstance().addBoogieGlobalVariable(var);
-			code += "var "+var+":["+name+"]"+field.p4_to_Boogie()+";\n";
+//			code += "var "+var+":["+name+"]"+field.p4_to_Boogie()+";\n";
+			code += "const unique "+name+"."+field.name+":Field "+field.p4_to_Boogie()+";\n";
 			if(field.type.Node_Type.equals("Type_Stack")) {
 				Parser.getInstance().addBoogieGlobalDeclaration(field.type.p4_to_Boogie());
 			}
