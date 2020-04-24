@@ -122,9 +122,13 @@ class Type_Struct extends Type {
 			String var = name+"."+field.name;
 			Parser.getInstance().addBoogieGlobalVariable(var);
 //			code += "var "+var+":["+name+"]"+field.p4_to_Boogie()+";\n";
-			code += "const unique "+name+"."+field.name+":Field "+field.p4_to_Boogie()+";\n";
+//			code += "const unique "+name+"."+field.name+":Field "+field.p4_to_Boogie()+";\n";
 			if(field.type.Node_Type.equals("Type_Stack")) {
+				code += "const unique "+name+"."+field.name+":Field "+"HeaderStack"+";\n";
 				Parser.getInstance().addBoogieGlobalDeclaration(field.type.p4_to_Boogie());
+			}
+			else {
+				code += "const unique "+name+"."+field.name+":Field "+field.p4_to_Boogie()+";\n";
 			}
 		}
 		return code;
@@ -158,7 +162,8 @@ class Type_Stack extends Type {
 		BoogieProcedure pushFront = new BoogieProcedure(name+".push_front");
 		Parser.getInstance().addProcedure(pushFront);
 		Parser.getInstance().setCurrentProcedure(pushFront);
-		pushFront.declare = "procedure {:inline 1} "+pushFront.name+"(stack:"+name+", count:int)\n";
+		pushFront.declare = "procedure {:inline 1} "+pushFront.name+"(stack:"+"HeaderStack"+", count:int)\n";
+//		pushFront.declare = "procedure {:inline 1} "+pushFront.name+"(stack:"+name+", count:int)\n";
 		pushFront.updateModifies("isValid");
 		pushFront.updateModifies("stack.index");
 		Type_Header th = Parser.getInstance().getHeader(elementType.getTypeName());
@@ -226,7 +231,8 @@ class Type_Stack extends Type {
 		BoogieProcedure popFront = new BoogieProcedure(name+".pop_front");
 		Parser.getInstance().addProcedure(popFront);
 		Parser.getInstance().setCurrentProcedure(popFront);
-		popFront.declare = "procedure {:inline 1} "+popFront.name+"(stack:"+name+", count:int)\n";
+		popFront.declare = "procedure {:inline 1} "+popFront.name+"(stack:"+"HeaderStack"+", count:int)\n";
+//		popFront.declare = "procedure {:inline 1} "+popFront.name+"(stack:"+name+", count:int)\n";
 		popFront.updateModifies("isValid");
 		popFront.updateModifies("stack.index");
 		Type_Header th = Parser.getInstance().getHeader(elementType.getTypeName());
@@ -319,14 +325,15 @@ class Type_Stack extends Type {
 	
 	@Override
 	String p4_to_Boogie() {
-		addPushFront();
-		addPopFront();
-		addSizeConstrain();
-		
-		String code = "\n// Header Stack: "+getTypeName()+" "+size.value+"\n";
-		code += "type "+name+"=[int]"+getTypeName()+";\n";
-		code += "var "+getTypeName()+".last:["+name+"]"+getTypeName()+";\n";
-		return code;
+//		addPushFront();
+//		addPopFront();
+//		addSizeConstrain();
+//		
+//		String code = "\n// Header Stack: "+getTypeName()+" "+size.value+"\n";
+//		code += "type "+name+"=[int]"+getTypeName()+";\n";
+//		code += "var "+getTypeName()+".last:["+name+"]"+getTypeName()+";\n";
+//		return code;
+		return super.p4_to_Boogie();
 	}
 }
 

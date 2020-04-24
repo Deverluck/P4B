@@ -324,7 +324,9 @@ public class Parser {
 		code += "\ntype Ref;\n";
 		code += "type Field T;\n";
 		code += "type HeapType = <T>[Ref, Field T]T;\n";
+		code += "type HeaderStack = [int]Ref;\n";
 		code += "var Heap:HeapType;\n";
+		code += "var last:[HeaderStack]Ref;\n";
 		addBoogieGlobalVariable("Heap");
 		
 //		code += "type HeaderStack = <T>[int]T";
@@ -420,7 +422,8 @@ public class Parser {
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+name+")\n";
+				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+"HeaderStack"+")\n";
+//				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+name+")\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable("isValid");
 				addModifiedGlobalVariable("stack.index");
@@ -448,7 +451,9 @@ public class Parser {
 				addProcedure(childProcedure);
 				setCurrentProcedure(childProcedure);
 				childProcedure.declare = "\nprocedure {:inline 1} "+childProcedureName+"(header:"
-						+ts.elementType.getTypeName()+")\n";
+						+"Ref"+")\n";
+//				childProcedure.declare = "\nprocedure {:inline 1} "+childProcedureName+"(header:"
+//						+ts.elementType.getTypeName()+")\n";
 				addModifiedGlobalVariable("isValid");
 				addModifiedGlobalVariable("packet.index");
 				incIndent();
@@ -511,18 +516,6 @@ public class Parser {
 		addBoogieGlobalVariable("standard_metadata");
 		addBoogieGlobalVariable("packet.map");
 		addBoogieGlobalVariable("packet.index");
-		
-		BoogieProcedure procedure = new BoogieProcedure("packetMap");
-		addProcedure(procedure);
-		setCurrentProcedure(procedure);
-		String declare = "\nprocedure {:inline 1} packetMap()\n";
-		procedure.declare = declare;
-		procedure.updateModifies("packet.map");
-		incIndent();
-		for(int i = 0; i < totalLen; i++) {
-			addBoogieStatement(addIndent()+"packet.map["+i+"] := packet["+(i+1)+":"+i+"];\n");
-		}
-		decIndent();
 		return code;
 	}
 	
@@ -544,7 +537,8 @@ public class Parser {
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+name+", index:int)\n";
+				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+"HeaderStack"+", index:int)\n";
+//				String declare = "\nprocedure {:inline 1} "+procedureName+"(stack:"+name+", index:int)\n";
 				getCurrentProcedure().declare = declare;
 				addModifiedGlobalVariable("emit");
 				

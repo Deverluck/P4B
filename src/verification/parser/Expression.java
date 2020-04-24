@@ -358,6 +358,9 @@ class Member extends Expression {
 			//Parser.getInstance().addModifiedGlobalVariable(expr.getTypeName()+"."+member);
 			Parser.getInstance().addModifiedGlobalVariable("Heap");
 			String code = "Heap["+expr.p4_to_Boogie()+", "+expr.getTypeName()+"."+member+"]";
+			if(member.equals("last")) {
+				code = "last["+expr.p4_to_Boogie()+"]";
+			}
 //			String code = expr.getTypeName()+"."+member;
 //			code += "["+expr.p4_to_Boogie()+"]";
 			return code;
