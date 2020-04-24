@@ -35,7 +35,6 @@ class BlockStatement extends Statement {
 }
 
 class AssignmentStatement extends Statement {
-	private String string;
 	Node left;
 	Node right;
 	@Override
@@ -63,6 +62,9 @@ class AssignmentStatement extends Statement {
 		
 		left.addAssertStatement();
 		String code = addIndent()+leftCode+" := "+right.p4_to_Boogie()+";\n";
+		if(right.p4_to_Boogie().equals("havoc")) {
+			code = addIndent()+"havoc "+leftCode+";\n";
+		}
 		Parser.getInstance().addBoogieStatement(code);
 		return code;
 	}

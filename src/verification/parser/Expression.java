@@ -88,7 +88,11 @@ class MethodCallExpression extends Expression {
 		String methodName = method.p4_to_Boogie();
 		if(methodName.equals("extract")) {
 //			methodName = "packet_in."+methodName+"."+typeArguments.get(0).getTypeName();
-			methodName = "packet_in."+methodName+".headers."+arguments.get(0).getName();
+			String argument = arguments.get(0).getName();
+//			if(argument.contains(".next"))
+				methodName = "packet_in."+methodName+".headers."+arguments.get(0).getName();
+//			else
+//				methodName = "packet_in."+methodName;
 		}
 		else if(methodName.equals("emit")) {
 			methodName = "packet_out."+methodName+".headers."+arguments.get(0).getName();
@@ -104,17 +108,18 @@ class MethodCallExpression extends Expression {
 			return methodName;
 		}
 		else if(methodName.equals("lookahead")) {
-			String body = "";
-			if(typeArguments.get(0) instanceof Type_Bits) {
-				Type_Bits tb = (Type_Bits)typeArguments.get(0);
-				int size = tb.size;
-				for(int i = 0; i < size; i++) {
-					body += "packet.map[packet.index+"+i+"]";
-					if(i != size-1)
-						body += "++";
-				}
-			}
-			return body;
+			return "havoc";
+//			String body = "";
+//			if(typeArguments.get(0) instanceof Type_Bits) {
+//				Type_Bits tb = (Type_Bits)typeArguments.get(0);
+//				int size = tb.size;
+//				for(int i = 0; i < size; i++) {
+//					body += "packet.map[packet.index+"+i+"]";
+//					if(i != size-1)
+//						body += "++";
+//				}
+//			}
+//			return body;
 		}
 		// deal with isValid()
 		else if(methodName.length()>8 && methodName.substring(0, 8).equals("isValid[")) {

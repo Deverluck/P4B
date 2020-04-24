@@ -48,8 +48,12 @@ public class BoogieProcedure {
 		String code = "";
 		code += declare;
 		int tmp = modifies.size();
-		if(tmp!=0)
-			code += "modifies ";
+		if(tmp!=0) {
+			if(implemented)
+				code += "modifies ";
+			else
+				code += "	modifies ";
+		}
 		for(String var:modifies) {
 			code += var;
 			tmp--;
