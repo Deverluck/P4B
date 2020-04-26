@@ -89,10 +89,10 @@ class MethodCallExpression extends Expression {
 		if(methodName.equals("extract")) {
 //			methodName = "packet_in."+methodName+"."+typeArguments.get(0).getTypeName();
 			String argument = arguments.get(0).getName();
-//			if(argument.contains(".next"))
+			if(argument.contains(".next"))
 				methodName = "packet_in."+methodName+".headers."+arguments.get(0).getName();
-//			else
-//				methodName = "packet_in."+methodName;
+			else
+				methodName = "packet_in."+methodName;
 		}
 		else if(methodName.equals("emit")) {
 			methodName = "packet_out."+methodName+".headers."+arguments.get(0).getName();
@@ -264,8 +264,11 @@ class Cast extends Expression {
 				if(dstSize < srcSize) {
 					return expr.p4_to_Boogie()+"["+dstSize+":0]";
 				}
-				else {
+				else if(dstSize > srcSize) {
 					return "0bv"+(dstSize-srcSize)+"++"+expr.p4_to_Boogie();
+				}
+				else {
+					return expr.p4_to_Boogie();
 				}
 			}
 			return super.p4_to_Boogie();
