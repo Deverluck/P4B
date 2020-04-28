@@ -63,6 +63,8 @@ public class Parser {
 		mainProcedure = new BoogieProcedure("mainProcedure");
 		
 		procedures.put(mainProcedure.name, mainProcedure);
+		
+		commands = new Commands();
 	}
 
 	private void clear() {
@@ -637,6 +639,7 @@ public class Parser {
 	private HashMap<String, String> boogieFunctions; //SMT bit-vector
 	private String headersName;
 	private BoogieProcedure mainProcedure;
+	private Commands commands;
 
 	void addProcedure(BoogieProcedure procedure) {
 		procedures.put(procedure.name, procedure);
@@ -740,6 +743,10 @@ public class Parser {
 
 	Type_Header getHeader(String name) {
 		return headers.get(name);
+	}
+	
+	Commands getCommands() {
+		return commands;
 	}
 //
 //	HashSet<String> getModifiedGlobalVariables() {
