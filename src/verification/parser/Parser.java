@@ -65,6 +65,9 @@ public class Parser {
 		procedures.put(mainProcedure.name, mainProcedure);
 		
 		commands = new Commands();
+		ifStatements = new ArrayList<>();
+		assignmentStatements = new ArrayList<>();
+		switchStatements = new ArrayList<>();
 	}
 
 	private void clear() {
@@ -570,8 +573,20 @@ public class Parser {
 		}
 		return code;
 	}
+	
+	void analyzeControlFlow() {
+		HashSet<String> branchVariables = new HashSet<>();
+		for(IfStatement ifStatement:ifStatements) {
+			HashSet<String> tmp = ifStatement.getBranchVariables();
+			if(tmp != null)
+				branchVariables.addAll(tmp);
+		}
+		System.out.println(branchVariables.size());
+		System.out.println(assignmentStatements.size());
+	}
 
 	String p4_to_Boogie(Node program) {
+		analyzeControlFlow();
 		System.out.println("######## Unhandled Types ########");
 		String [] handledTypes = {"Path", "Type_Name", "StructField", "Type_Struct",
 				"MethodCallStatement", "Constant", "MethodCallExpression", "Type_Header",
@@ -640,6 +655,11 @@ public class Parser {
 	private String headersName;
 	private BoogieProcedure mainProcedure;
 	private Commands commands;
+	
+	// For analyzing control flow
+	private ArrayList<AssignmentStatement> assignmentStatements;
+	private ArrayList<IfStatement> ifStatements;
+	private ArrayList<SwitchStatement> switchStatements;
 
 	void addProcedure(BoogieProcedure procedure) {
 		procedures.put(procedure.name, procedure);
@@ -747,6 +767,18 @@ public class Parser {
 	
 	Commands getCommands() {
 		return commands;
+	}
+	
+	void addIfStatement(IfStatement ifStatement) {
+		ifStatements.add(ifStatement);
+	}
+	
+	void addAssignmentStatement(AssignmentStatement assignmentStatement) {
+		assignmentStatements.add(assignmentStatement);
+	}
+	
+	void addSwitchStatement(SwitchStatement switchStatement) {
+		switchStatements.add(switchStatement);
 	}
 //
 //	HashSet<String> getModifiedGlobalVariables() {

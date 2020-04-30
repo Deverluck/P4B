@@ -1,6 +1,7 @@
 package verification.parser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -394,6 +395,12 @@ class Member extends Expression {
 			return statement;
 		}
 		return expr.addAssertStatement();
+	}
+	@Override
+	HashSet<String> getBranchVariables() {
+		HashSet<String> variables = new HashSet<>();
+		variables.add(p4_to_Boogie());
+		return variables;
 	}
 }
 

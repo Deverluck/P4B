@@ -1,5 +1,8 @@
 package verification.parser;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class BinaryOperator extends Node {
@@ -44,109 +47,17 @@ public class BinaryOperator extends Node {
 	String getTypeName() {
 		return type.getTypeName();
 	}
-}
-
-class BAnd extends BinaryOperator {
 	@Override
-	String p4_to_C() {
-		String code = left.p4_to_C()+"&"+right.p4_to_C();
-		return code;
-	}
-	@Override
-	String p4_to_Boogie() {
-		return super.p4_to_Boogie("band", "bvand");
-	}
-}
-
-class BOr extends BinaryOperator {
-	@Override
-	String p4_to_C() {
-		String code = left.p4_to_C()+"|"+right.p4_to_C();
-		return code;
-	}
-	@Override
-	String p4_to_Boogie() {
-		return super.p4_to_Boogie("bor", "bvor");
-	}
-}
-
-class BXor extends BinaryOperator {
-	@Override
-	String p4_to_C() {
-		String code = left.p4_to_C()+"^"+right.p4_to_C();
-		return code;
-	}
-	@Override
-	String p4_to_Boogie() {
-		return super.p4_to_Boogie("bxor", "bvxor");
-	}
-}
-
-// >=
-class Geq extends BinaryOperator {
-	@Override
-	String p4_to_C() {
-		String code = left.p4_to_C()+">="+right.p4_to_C();
-		return code;
-	}
-	@Override
-	String p4_to_Boogie() {
-		return super.p4_to_Boogie("bsge", "bvsge");
-	}
-}
-
-// <= 
-class Leq extends BinaryOperator {
-	@Override
-	String p4_to_C() {
-		String code = left.p4_to_C()+"<="+right.p4_to_C();
-		return code;
-	}
-	@Override
-	String p4_to_Boogie() {
-		return super.p4_to_Boogie("bsle", "bvsle");
-	}
-}
-
-
-// >
-class Grt extends BinaryOperator {
-	@Override
-	String p4_to_Boogie() {
-		return super.p4_to_Boogie("bugt", "bvugt");
-	}
-}
-
-class Lss extends BinaryOperator {
-	@Override
-	String p4_to_Boogie() {
-		return super.p4_to_Boogie("bult", "bvult");
-	}
-}
-
-class LAnd extends BinaryOperator {
-	@Override
-	String p4_to_C() {
-		String code = left.p4_to_C()+"&&"+right.p4_to_C();
-		return code;
-	}
-	@Override
-	String p4_to_Boogie() {
-		String code = "("+left.p4_to_Boogie()+") && ("+right.p4_to_Boogie()+")";
-		return code;
-	}
-}
-
-class LOr extends BinaryOperator {
-	@Override
-	String p4_to_C() {
-		String code = left.p4_to_C()+"||"+right.p4_to_C();
-		return code;
-	}
-	@Override
-	String p4_to_Boogie() {
-		String code = "("+left.p4_to_Boogie()+")||("+right.p4_to_Boogie()+")";
-		return code;
+	HashSet<String> getBranchVariables() {
+		HashSet<String> list1, list2;
+		list1 = left.getBranchVariables();
+		list2 = right.getBranchVariables();
+		HashSet<String> res = new HashSet<>();
+		if(list1 != null)
+			res.addAll(list1);
+		if(list2 != null)
+			res.addAll(list2);
+		return res;
 	}
 }
 
@@ -210,6 +121,119 @@ class Sub extends BinaryOperator {
 	}
 }
 
+class BAnd extends BinaryOperator {
+	@Override
+	String p4_to_C() {
+		String code = left.p4_to_C()+"&"+right.p4_to_C();
+		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("band", "bvand");
+	}
+}
+
+class BOr extends BinaryOperator {
+	@Override
+	String p4_to_C() {
+		String code = left.p4_to_C()+"|"+right.p4_to_C();
+		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bor", "bvor");
+	}
+}
+
+class BXor extends BinaryOperator {
+	@Override
+	String p4_to_C() {
+		String code = left.p4_to_C()+"^"+right.p4_to_C();
+		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bxor", "bvxor");
+	}
+}
+
+
+/* 
+ *  Logic Operations
+ */
+
+// >=
+class Geq extends BinaryOperator {
+	@Override
+	String p4_to_C() {
+		String code = left.p4_to_C()+">="+right.p4_to_C();
+		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bsge", "bvsge");
+	}
+}
+
+// <= 
+class Leq extends BinaryOperator {
+	@Override
+	String p4_to_C() {
+		String code = left.p4_to_C()+"<="+right.p4_to_C();
+		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bsle", "bvsle");
+	}
+}
+
+
+// >
+class Grt extends BinaryOperator {
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bugt", "bvugt");
+	}
+}
+
+// <
+class Lss extends BinaryOperator {
+	@Override
+	String p4_to_Boogie() {
+		return super.p4_to_Boogie("bult", "bvult");
+	}
+}
+
+// &&
+class LAnd extends BinaryOperator {
+	@Override
+	String p4_to_C() {
+		String code = left.p4_to_C()+"&&"+right.p4_to_C();
+		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		String code = "("+left.p4_to_Boogie()+") && ("+right.p4_to_Boogie()+")";
+		return code;
+	}
+}
+
+// ||
+class LOr extends BinaryOperator {
+	@Override
+	String p4_to_C() {
+		String code = left.p4_to_C()+"||"+right.p4_to_C();
+		return code;
+	}
+	@Override
+	String p4_to_Boogie() {
+		String code = "("+left.p4_to_Boogie()+")||("+right.p4_to_Boogie()+")";
+		return code;
+	}
+}
+
+// ==
 class Equ extends BinaryOperator {
 	@Override
 	String p4_to_C() {
@@ -223,6 +247,7 @@ class Equ extends BinaryOperator {
 	}
 }
 
+// !=
 class Neq extends BinaryOperator {
 	@Override
 	String p4_to_C() {

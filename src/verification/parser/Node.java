@@ -1,6 +1,7 @@
 package verification.parser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -92,5 +93,16 @@ public class Node {
 	
 	String addAssertStatement() {
 		return "";
+	}
+	
+	/** 
+	 * For some particular properties, useless statements can be deleted.
+	 * Useful statements are those that may be related to branches.
+	 * The parser should analyze the control flow to find useful statements 
+	 * by the variables they may change.
+	 * @return the variables related to branches
+	 */
+	HashSet<String> getBranchVariables() {
+		return null;
 	}
 }

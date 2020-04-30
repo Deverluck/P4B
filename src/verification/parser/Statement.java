@@ -1,6 +1,7 @@
 package verification.parser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -42,6 +43,7 @@ class AssignmentStatement extends Statement {
 		super.parse(object);
 		left = Parser.getInstance().jsonParse(object.get(JsonKeyName.LEFT));
 		right = Parser.getInstance().jsonParse(object.get(JsonKeyName.RIGHT));
+		Parser.getInstance().addAssignmentStatement(this);
 	}
 	@Override
 	String p4_to_C() {
@@ -60,11 +62,14 @@ class AssignmentStatement extends Statement {
 		}
 		Parser.getInstance().addModifiedGlobalVariable(modifiedVariable);
 		
-		left.addAssertStatement();
+		
 		String code = addIndent()+leftCode+" := "+right.p4_to_Boogie()+";\n";
 		if(right.p4_to_Boogie().equals("havoc")) {
 			code = addIndent()+"havoc "+leftCode+";\n";
 		}
+		
+		// Add assert statement
+		left.addAssertStatement();
 		Parser.getInstance().addBoogieStatement(code);
 		return code;
 	}
@@ -89,7 +94,9 @@ class IfStatement extends Statement {
 		else {
 			ifFalse = null;
 		}
+		Parser.getInstance().addIfStatement(this);
 	}
+	
 	@Override
 	String p4_to_C() {
 		String code = "if(";
@@ -137,6 +144,13 @@ class IfStatement extends Statement {
 		}
 //		return super.p4_to_Boogie();
 		return code;
+	}
+	@Override
+	HashSet<String> getBranchVariables() {
+		System.out.println(this.Node_ID);
+		System.out.println(condition.getBranchVariables());
+		System.out.println();
+		return condition.getBranchVariables();
 	}
 }
 
@@ -325,6 +339,7 @@ class SwitchStatement extends Statement {
 		for(JsonNode node:array) {
 			cases.add((SwitchCase)Parser.getInstance().jsonParse(node));
 		}
+		Parser.getInstance().addSwitchStatement(this);
 	}
 	@Override
 	String p4_to_Boogie() {
@@ -365,6 +380,12 @@ class SwitchStatement extends Statement {
 		}
 		//System.out.println(expr);
 		return super.p4_to_Boogie();
+	}
+	@Override
+	HashSet<String> getBranchVariables() {
+		HashSet<String> variables = new HashSet<>();
+		variables.add(expression.p4_to_Boogie());
+		return variables;
 	}
 }
 
