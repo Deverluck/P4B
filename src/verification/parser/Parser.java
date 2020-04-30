@@ -581,8 +581,74 @@ public class Parser {
 			if(tmp != null)
 				branchVariables.addAll(tmp);
 		}
+		for(SwitchStatement switchStatement:switchStatements) {
+			HashSet<String> tmp = switchStatement.getBranchVariables();
+			if(tmp != null)
+				branchVariables.addAll(tmp);
+		}
 		System.out.println(branchVariables.size());
 		System.out.println(assignmentStatements.size());
+		
+		// store the variables dependency graph
+		HashMap<String, HashSet<String>> variableDependency = new HashMap<>();
+		
+		// store all variables in a statement
+		HashMap<Integer, HashSet<String>> assignment = new HashMap<>();
+		
+		for(AssignmentStatement assignmentStatement:assignmentStatements) {
+			HashSet<String> left, right;
+			left = assignmentStatement.left.getBranchVariables();
+			right = assignmentStatement.right.getBranchVariables();
+			if(left!=null && right!=null) {
+				// all variables that the assignment statement contains
+				HashSet<String> all = new HashSet<>();
+				all.addAll(left);
+				all.addAll(right);
+				assignment.put(assignmentStatement.Node_ID, all);
+				
+				for(String key:left) {
+					if(!variableDependency.containsKey(key)) {
+						HashSet<String> set = new HashSet<>();
+						variableDependency.put(key, set);
+					}
+					variableDependency.get(key).addAll(right);
+				}
+			}
+		}
+		
+		// update branchVariables
+		ArrayList<String> queue = new ArrayList<>();
+		HashMap<String, Boolean> inQueue = new HashMap<>();
+		queue.addAll(branchVariables);
+		for(String var:branchVariables)
+			inQueue.put(var, true);
+		System.out.println("Here");
+		while(!queue.isEmpty()) {
+			String var = queue.get(0);
+			queue.remove(0);
+			inQueue.put(var, false);
+			if(!variableDependency.containsKey(var))
+				continue;
+			for(String dependencyVar:variableDependency.get(var)) {
+				if(!branchVariables.contains(dependencyVar)) {
+					branchVariables.add(dependencyVar);
+					queue.add(dependencyVar);
+					inQueue.put(dependencyVar, true);
+				}
+			}
+		}
+		System.out.println(branchVariables.size());
+		
+		HashSet<Integer> usefulAssignment = new HashSet<>();
+		for(int id:assignment.keySet()) {
+			HashSet<String> tmp = new HashSet<>();
+			tmp.addAll(assignment.get(id));
+			tmp.retainAll(branchVariables);
+			if(tmp.isEmpty())
+				usefulAssignment.add(id);
+		}
+		System.out.println("useful assign: "+usefulAssignment.size());
+		System.out.println("useless assign: "+(assignmentStatements.size()-usefulAssignment.size()));
 	}
 
 	String p4_to_Boogie(Node program) {
