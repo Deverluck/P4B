@@ -11,11 +11,13 @@ public class Node {
 	ArrayList<Node> children;
 	boolean enable;
 	String T;
+	boolean inParserState;
 
 	public Node() {
 		children = new ArrayList<>();
 		enable = false;
 		T = "";
+		inParserState = false;
 	}
 
 	public void addChild(Node child) {
@@ -26,6 +28,13 @@ public class Node {
 //		System.out.println(object);
 		Node_ID = object.get(JsonKeyName.NODE_ID).asInt();
 		Node_Type = object.get(JsonKeyName.NODE_TYPE).asText();
+	}
+	
+	// mark the assignment statement in parser state
+	void markParserStateAssignmentStatement() {
+		for(Node child:children) {
+			child.setInParserState();
+		}
 	}
 
 	String p4_to_Boogie() {
@@ -64,6 +73,14 @@ public class Node {
 
 	boolean isEnable() {
 		return enable;
+	}
+	
+	void setInParserState() {
+		inParserState = true;
+	}
+	
+	boolean isInParserState() {
+		return inParserState;
 	}
 
 	void setVectorType(String type) {

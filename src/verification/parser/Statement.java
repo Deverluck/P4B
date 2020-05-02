@@ -70,7 +70,12 @@ class AssignmentStatement extends Statement {
 		
 		// Add assert statement
 		left.addAssertStatement();
-		Parser.getInstance().addBoogieStatement(code);
+		right.addAssertStatement();
+		
+		if(Parser.getInstance().isParserState()||Parser.getInstance().isUsefulAssignmentStatement(Node_ID)) {
+//			if(code.contains(":= true") || code.contains(":= false"))
+				Parser.getInstance().addBoogieStatement(code);
+		}
 		return code;
 	}
 }

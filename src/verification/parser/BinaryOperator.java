@@ -27,7 +27,16 @@ public class BinaryOperator extends Node {
 			Parser.getInstance().addBoogieFunction(functionName, function);
 			String code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+")";
 			if(!right.p4_to_Boogie().contains(typeName) && !right.p4_to_Boogie().contains("[")) {
-				code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+typeName+")";
+				String str = right.p4_to_Boogie();
+				boolean isDigit = true;
+				for(int i = 0; i < str.length(); i++) {
+					if(!Character.isDigit(str.charAt(i))) {
+						isDigit = false;
+						break;
+					}
+				}
+				if(isDigit)
+					code = functionName+"("+left.p4_to_Boogie()+", "+right.p4_to_Boogie()+typeName+")";
 			}
 			return code;
 		}
@@ -58,6 +67,12 @@ public class BinaryOperator extends Node {
 		if(list2 != null)
 			res.addAll(list2);
 		return res;
+	}
+	@Override
+	String addAssertStatement() {
+		left.addAssertStatement();
+		right.addAssertStatement();
+		return super.addAssertStatement();
 	}
 }
 

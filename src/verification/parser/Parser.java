@@ -574,7 +574,14 @@ public class Parser {
 		return code;
 	}
 	
-	void analyzeControlFlow() {
+	HashSet<Integer> analyzeControlFlow() {
+//		int cnt = 0;
+//		for(AssignmentStatement assignmentStatement:assignmentStatements) {
+//			if(assignmentStatement.isInParserState())
+//				cnt++;
+//		}
+//		System.out.println("in parser state: "+cnt);
+		
 		HashSet<String> branchVariables = new HashSet<>();
 		for(IfStatement ifStatement:ifStatements) {
 			HashSet<String> tmp = ifStatement.getBranchVariables();
@@ -596,6 +603,8 @@ public class Parser {
 		HashMap<Integer, HashSet<String>> assignment = new HashMap<>();
 		
 		for(AssignmentStatement assignmentStatement:assignmentStatements) {
+			if(assignmentStatement.isInParserState())
+				continue;
 			HashSet<String> left, right;
 			left = assignmentStatement.left.getBranchVariables();
 			right = assignmentStatement.right.getBranchVariables();
@@ -649,10 +658,17 @@ public class Parser {
 		}
 		System.out.println("useful assign: "+usefulAssignment.size());
 		System.out.println("useless assign: "+(assignmentStatements.size()-usefulAssignment.size()));
+		return usefulAssignment;
+	}
+	
+	boolean isUsefulAssignmentStatement(int id) {
+		if(usefulAssignmentStatements!=null)
+			return usefulAssignmentStatements.contains(id);
+		return false;
 	}
 
 	String p4_to_Boogie(Node program) {
-		analyzeControlFlow();
+		usefulAssignmentStatements = analyzeControlFlow();
 		System.out.println("######## Unhandled Types ########");
 		String [] handledTypes = {"Path", "Type_Name", "StructField", "Type_Struct",
 				"MethodCallStatement", "Constant", "MethodCallExpression", "Type_Header",
@@ -726,6 +742,7 @@ public class Parser {
 	private ArrayList<AssignmentStatement> assignmentStatements;
 	private ArrayList<IfStatement> ifStatements;
 	private ArrayList<SwitchStatement> switchStatements;
+	private HashSet<Integer> usefulAssignmentStatements;
 
 	void addProcedure(BoogieProcedure procedure) {
 		procedures.put(procedure.name, procedure);
@@ -750,6 +767,10 @@ public class Parser {
 	}
 	
 	void addBoogieStatement(String cont) {
+		if(cont.contains("](") || cont.contains("clone3") || cont.contains(", ,") || cont.contains(" .") ||
+				cont.contains(", )") || cont.contains(".push_front(") || cont.contains(".pop_front(") ||
+				cont.contains("random"))
+			return;
 		BoogieStatement statement = new BoogieStatement(cont);
 		addBoogieStatement(statement);
 	}

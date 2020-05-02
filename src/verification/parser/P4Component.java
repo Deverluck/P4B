@@ -122,7 +122,9 @@ class ParserState extends P4Component {
 		super.parse(object);
 		name = object.get(JsonKeyName.NAME).asText();
 		components = Parser.getInstance().jsonParse(object.get(JsonKeyName.COMPONENTS));
+		components.markParserStateAssignmentStatement();
 		addChild(components);
+		
 		if(object.has(JsonKeyName.SELECTEXPRESSION)) {
 			selectExpression = Parser.getInstance().jsonParse(object.get(JsonKeyName.SELECTEXPRESSION));
 			addChild(selectExpression);
