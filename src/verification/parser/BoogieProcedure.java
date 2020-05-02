@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Stack;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
 
 public class BoogieProcedure {
 	String name;
@@ -17,6 +21,11 @@ public class BoogieProcedure {
 	BoogieBlock mainBlock;
 	boolean implemented;
 	
+	// for analyze assert statements
+	ArrayList<BoolExpr> preConditions;     // (disjunction) the procedure may be called by different execution path
+	BoolExpr postCondition;
+	Stack<BoolExpr> conditions; // (conjunction) a stack updating with if statements and switch statements
+	
 	private BoogieProcedure() {
 		parents = new HashSet<>();
 		childrenNames = new HashSet<>();
@@ -25,6 +34,9 @@ public class BoogieProcedure {
 		preBlock = new BoogieBlock();
 		mainBlock = new BoogieBlock();
 		implemented = true;
+		
+		preConditions = new ArrayList<>();
+		conditions = new Stack<>();
 	}
 	public BoogieProcedure(String name, String declare, String body) {
 		this();
@@ -34,6 +46,9 @@ public class BoogieProcedure {
 	}
 	public BoogieProcedure(String name) {
 		this(name, "\nprocedure "+name+"()\n", "");
+	}
+	void initPreCondition(Context ctx) {
+		
 	}
 	public void updateModifies(String var) {
 		modifies.add(var);
@@ -74,6 +89,15 @@ public class BoogieProcedure {
 		}
 //		code += body;
 		return code;
+	}
+	void addCondition(BoolExpr expr) {
+		conditions.push(expr);
+	}
+	void popCondition() {
+		conditions.pop();
+	}
+	Stack<BoolExpr> getConditions() {
+		return conditions;
 	}
 }
 

@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.microsoft.z3.ArithExpr;
+import com.microsoft.z3.BitVecExpr;
+import com.microsoft.z3.IntExpr;
 
 public class DataStructure extends Node{
 
@@ -134,6 +137,17 @@ class Constant extends DataStructure {
 			code += "bv"+tb.size;
 		}
 		return code;
+	}
+	
+	@Override
+	BitVecExpr getBitVecExpr() {
+		String typeName = type.getTypeName();
+		if(typeName.contains("bv")) {
+			int size = Integer.valueOf(typeName.substring(2));
+			BitVecExpr bv = Parser.getInstance().getContext().mkBV(value, size);
+			return bv;
+		}
+		return null;
 	}
 }
 

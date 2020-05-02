@@ -6,6 +6,7 @@ import java.util.HashSet;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.microsoft.z3.BoolExpr;
 
 public class Statement extends Node {
 
@@ -116,8 +117,22 @@ class IfStatement extends Statement {
 		}
 		return code;
 	}
+	
+	@Override
+	BoolExpr getCondition() {
+		System.out.println(condition.p4_to_Boogie());
+		System.out.println(condition.getCondition());
+		return condition.getCondition();
+//		BoolExpr expr = Parser.getInstance().getContext().mk
+	}
+	
+	BoolExpr getNegCondition() {
+		return Parser.getInstance().getContext().mkNot(condition.getCondition());
+	}
+	
 	@Override
 	String p4_to_Boogie() {
+		getCondition();
 		String code = addIndent()+"if(";
 		code += condition.p4_to_Boogie();
 		code += "){\n";
@@ -125,6 +140,7 @@ class IfStatement extends Statement {
 		String start = code;
 		String end = addIndent()+"}\n";
 		BoogieIfStatement blockIfTrue = new BoogieIfStatement(start, end);
+		Parser.getInstance().updateCondition(getCondition());
 		Parser.getInstance().addBoogieBlock(blockIfTrue);
 		
 		incIndent();
@@ -133,10 +149,12 @@ class IfStatement extends Statement {
 		code += addIndent()+"}\n";
 		
 		Parser.getInstance().popBoogieBlock();
+		Parser.getInstance().popCondition();
 		
 		if(ifFalse != null) {
 			BoogieIfStatement blockIfFalse = new BoogieIfStatement(addIndent()+"else {\n",
 					addIndent()+"}\n");
+			Parser.getInstance().updateCondition(getNegCondition());
 			Parser.getInstance().addBoogieBlock(blockIfFalse);
 			
 			code += addIndent()+"else {\n";
@@ -146,6 +164,7 @@ class IfStatement extends Statement {
 			code += addIndent()+"}\n";
 			
 			Parser.getInstance().popBoogieBlock();
+			Parser.getInstance().popCondition();
 		}
 //		return super.p4_to_Boogie();
 		return code;

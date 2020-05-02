@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.microsoft.z3.ArithExpr;
+import com.microsoft.z3.BitVecExpr;
+import com.microsoft.z3.BoolExpr;
 
 public class Node {
 	int Node_ID;
@@ -120,6 +123,17 @@ public class Node {
 	 * @return the variables related to branches
 	 */
 	HashSet<String> getBranchVariables() {
+		return null;
+	}
+	
+	/*
+	 * Use Z3 to record conditions of execution paths.
+	 * Purpose: remove useless assert statements
+	 */
+	BoolExpr getCondition() {
+		return null;
+	}
+	BitVecExpr getBitVecExpr() {
 		return null;
 	}
 }

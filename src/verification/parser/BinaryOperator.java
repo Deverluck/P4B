@@ -1,9 +1,10 @@
 package verification.parser;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.microsoft.z3.BitVecExpr;
+import com.microsoft.z3.BoolExpr;
 
 public class BinaryOperator extends Node {
 	Node left;
@@ -86,6 +87,11 @@ class Shl extends BinaryOperator {
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("shl", "bvshl");
 	}
+	@Override
+	BitVecExpr getBitVecExpr() {
+		BitVecExpr bv = Parser.getInstance().getContext().mkBVSHL(left.getBitVecExpr(), right.getBitVecExpr());
+		return bv;
+	}
 }
 
 class Shr extends BinaryOperator {
@@ -97,6 +103,11 @@ class Shr extends BinaryOperator {
 	@Override
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("shr", "bvlshr");
+	}
+	@Override
+	BitVecExpr getBitVecExpr() {
+		BitVecExpr bv = Parser.getInstance().getContext().mkBVLSHR(left.getBitVecExpr(), right.getBitVecExpr());
+		return bv;
 	}
 }
 
@@ -110,6 +121,11 @@ class Mul extends BinaryOperator {
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("mul", "bvmul");
 	}
+	@Override
+	BitVecExpr getBitVecExpr() {
+		BitVecExpr bv = Parser.getInstance().getContext().mkBVMul(left.getBitVecExpr(), right.getBitVecExpr());
+		return bv;
+	}
 }
 
 class Add extends BinaryOperator {
@@ -121,6 +137,11 @@ class Add extends BinaryOperator {
 	@Override
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("add", "bvadd");
+	}
+	@Override
+	BitVecExpr getBitVecExpr() {
+		BitVecExpr bv = Parser.getInstance().getContext().mkBVAdd(left.getBitVecExpr(), right.getBitVecExpr());
+		return bv;
 	}
 }
 
@@ -134,6 +155,11 @@ class Sub extends BinaryOperator {
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("sub", "bvsub");
 	}
+	@Override
+	BitVecExpr getBitVecExpr() {
+		BitVecExpr bv = Parser.getInstance().getContext().mkBVSub(left.getBitVecExpr(), right.getBitVecExpr());
+		return bv;
+	}
 }
 
 class BAnd extends BinaryOperator {
@@ -145,6 +171,11 @@ class BAnd extends BinaryOperator {
 	@Override
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("band", "bvand");
+	}
+	@Override
+	BitVecExpr getBitVecExpr() {
+		BitVecExpr bv = Parser.getInstance().getContext().mkBVAND(left.getBitVecExpr(), right.getBitVecExpr());
+		return bv;
 	}
 }
 
@@ -158,6 +189,11 @@ class BOr extends BinaryOperator {
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("bor", "bvor");
 	}
+	@Override
+	BitVecExpr getBitVecExpr() {
+		BitVecExpr bv = Parser.getInstance().getContext().mkBVOR(left.getBitVecExpr(), right.getBitVecExpr());
+		return bv;
+	}
 }
 
 class BXor extends BinaryOperator {
@@ -169,6 +205,11 @@ class BXor extends BinaryOperator {
 	@Override
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("bxor", "bvxor");
+	}
+	@Override
+	BitVecExpr getBitVecExpr() {
+		BitVecExpr bv = Parser.getInstance().getContext().mkBVXOR(left.getBitVecExpr(), right.getBitVecExpr());
+		return bv;
 	}
 }
 
@@ -188,6 +229,11 @@ class Geq extends BinaryOperator {
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("bsge", "bvsge");
 	}
+	@Override
+	BoolExpr getCondition() {
+		BoolExpr expr = Parser.getInstance().getContext().mkBVUGE(left.getBitVecExpr(), right.getBitVecExpr());
+		return expr;
+	}
 }
 
 // <= 
@@ -201,6 +247,11 @@ class Leq extends BinaryOperator {
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("bsle", "bvsle");
 	}
+	@Override
+	BoolExpr getCondition() {
+		BoolExpr expr = Parser.getInstance().getContext().mkBVULE(left.getBitVecExpr(), right.getBitVecExpr());
+		return expr;
+	}
 }
 
 
@@ -210,6 +261,11 @@ class Grt extends BinaryOperator {
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("bugt", "bvugt");
 	}
+	@Override
+	BoolExpr getCondition() {
+		BoolExpr expr = Parser.getInstance().getContext().mkBVUGT(left.getBitVecExpr(), right.getBitVecExpr());
+		return expr;
+	}
 }
 
 // <
@@ -217,6 +273,11 @@ class Lss extends BinaryOperator {
 	@Override
 	String p4_to_Boogie() {
 		return super.p4_to_Boogie("bult", "bvult");
+	}
+	@Override
+	BoolExpr getCondition() {
+		BoolExpr expr = Parser.getInstance().getContext().mkBVULT(left.getBitVecExpr(), right.getBitVecExpr());
+		return expr;
 	}
 }
 
@@ -232,6 +293,11 @@ class LAnd extends BinaryOperator {
 		String code = "("+left.p4_to_Boogie()+") && ("+right.p4_to_Boogie()+")";
 		return code;
 	}
+	@Override
+	BoolExpr getCondition() {
+		BoolExpr expr = Parser.getInstance().getContext().mkAnd(left.getCondition(), right.getCondition());
+		return expr;
+	}
 }
 
 // ||
@@ -245,6 +311,11 @@ class LOr extends BinaryOperator {
 	String p4_to_Boogie() {
 		String code = "("+left.p4_to_Boogie()+")||("+right.p4_to_Boogie()+")";
 		return code;
+	}
+	@Override
+	BoolExpr getCondition() {
+		BoolExpr expr = Parser.getInstance().getContext().mkOr(left.getCondition(), right.getCondition());
+		return expr;
 	}
 }
 
@@ -260,6 +331,12 @@ class Equ extends BinaryOperator {
 		String code = left.p4_to_Boogie()+"=="+right.p4_to_Boogie();
 		return code;
 	}
+	@Override
+	BoolExpr getCondition() {
+//		BoolExpr expr = Parser.getInstance().getContext().mkEq(left.getCondition(), right.getCondition());
+		BoolExpr expr = Parser.getInstance().getContext().mkEq(left.getBitVecExpr(), right.getBitVecExpr());
+		return expr;
+	}
 }
 
 // !=
@@ -273,6 +350,12 @@ class Neq extends BinaryOperator {
 	String p4_to_Boogie() {
 		String code = left.p4_to_Boogie()+"!="+right.p4_to_Boogie();
 		return code;
+	}
+	@Override
+	BoolExpr getCondition() {
+		BoolExpr expr = Parser.getInstance().getContext().mkNot(Parser.getInstance().getContext()
+				.mkEq(left.getBitVecExpr(), right.getBitVecExpr()));
+		return expr;
 	}
 }
 

@@ -3,6 +3,8 @@ package verification.parser;
 import java.util.ArrayList;
 import java.util.Stack;
 
+import com.microsoft.z3.BoolExpr;
+
 public class BoogieStatement {
 	String cont;
 	public BoogieStatement(String cont) {
@@ -10,6 +12,13 @@ public class BoogieStatement {
 	}
 	String toBoogie(){
 		return cont;
+	}
+}
+
+class BoogieAssignmentStatement {
+	BoolExpr condition;
+	void setCondition(BoolExpr c) {
+		condition = c;
 	}
 }
 

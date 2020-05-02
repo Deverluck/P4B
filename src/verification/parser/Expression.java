@@ -6,6 +6,10 @@ import java.util.HashSet;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.microsoft.z3.ArithExpr;
+import com.microsoft.z3.BitVecExpr;
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.IntExpr;
 
 public class Expression extends Node {
 
@@ -142,6 +146,10 @@ class MethodCallExpression extends Expression {
 		code = code + ")";
 		code = code.replace(")(", ", ");
 		return code;
+	}
+	@Override
+	BoolExpr getCondition() {
+		return method.getCondition();
 	}
 }
 
@@ -401,6 +409,34 @@ class Member extends Expression {
 		HashSet<String> variables = new HashSet<>();
 		variables.add(p4_to_Boogie());
 		return variables;
+	}
+	@Override
+	BitVecExpr getBitVecExpr() {
+		String exprName = p4_to_Boogie();
+		exprName = exprName.replace('[', '_');
+		exprName = exprName.replace("], ", "_");
+		exprName = exprName.replace(", ", "_");
+		exprName = exprName.replace(']', '_');
+		exprName = exprName.replace('.', '_');
+		String typeName = type.getTypeName();
+		if(typeName.contains("bv")) {
+			int size = Integer.valueOf(typeName.substring(2));
+			BitVecExpr bv = Parser.getInstance().getContext().mkBVConst(exprName, size);
+			return bv;
+		}
+		return null;
+	}
+	@Override
+	BoolExpr getCondition() {
+		String exprName = p4_to_Boogie();
+		exprName = exprName.replace('[', '_');
+		exprName = exprName.replace("], ", "_");
+		exprName = exprName.replace(", ", "_");
+		exprName = exprName.replace(']', '_');
+		exprName = exprName.replace('.', '_');
+		BoolExpr expr = Parser.getInstance().getContext().mkBoolConst(exprName);
+		System.out.println("******"+exprName);
+		return expr;
 	}
 }
 

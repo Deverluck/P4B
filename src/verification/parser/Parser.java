@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
 
 public class Parser {
 	private static Parser instance;
@@ -68,6 +70,7 @@ public class Parser {
 		ifStatements = new ArrayList<>();
 		assignmentStatements = new ArrayList<>();
 		switchStatements = new ArrayList<>();
+		initContext();
 	}
 
 	private void clear() {
@@ -743,7 +746,14 @@ public class Parser {
 	private ArrayList<IfStatement> ifStatements;
 	private ArrayList<SwitchStatement> switchStatements;
 	private HashSet<Integer> usefulAssignmentStatements;
+	private Context ctx;
 
+	private void initContext() {
+		HashMap<String, String> cfg = new HashMap<String, String>();
+        cfg.put("model", "true");
+        ctx = new Context(cfg);
+	}
+	
 	void addProcedure(BoogieProcedure procedure) {
 		procedures.put(procedure.name, procedure);
 	}
@@ -866,6 +876,18 @@ public class Parser {
 	
 	void addSwitchStatement(SwitchStatement switchStatement) {
 		switchStatements.add(switchStatement);
+	}
+	
+	void updateCondition(BoolExpr expr) {
+		getCurrentProcedure().addCondition(expr);
+	}
+	
+	void popCondition() {
+		getCurrentProcedure().popCondition();
+	}
+	
+	Context getContext() {
+		return ctx;
 	}
 //
 //	HashSet<String> getModifiedGlobalVariables() {
