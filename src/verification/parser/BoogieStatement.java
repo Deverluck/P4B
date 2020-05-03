@@ -15,8 +15,11 @@ public class BoogieStatement {
 	}
 }
 
-class BoogieAssignmentStatement {
+class BoogieAssertStatement extends BoogieStatement{
 	BoolExpr condition;
+	public BoogieAssertStatement(String cont) {
+		super(cont);
+	}
 	void setCondition(BoolExpr c) {
 		condition = c;
 	}

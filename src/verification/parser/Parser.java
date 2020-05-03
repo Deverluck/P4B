@@ -28,7 +28,7 @@ public class Parser {
 	private HashMap<String, Type_Stack> stacks;
 	private ArrayList<Type_Typedef> typeDefinitions;
 	private HashMap<String, Integer> typeDefLength;  // Record the length of user-defined type
-	private HashSet<String> parserStates;
+	private HashMap<String, BoogieProcedure> parserStates;
 	private HashSet<String> parserLocals;
 	private int indent;
 	private final String INDENT = "	";
@@ -51,7 +51,7 @@ public class Parser {
 		stacks = new HashMap<>();
 		typeDefinitions = new ArrayList<>();
 		typeDefLength = new HashMap<>();
-		parserStates = new HashSet<>();
+		parserStates = new HashMap<>();
 		parserLocals = new HashSet<>();
 		
 		indent = 0;
@@ -71,6 +71,9 @@ public class Parser {
 		assignmentStatements = new ArrayList<>();
 		switchStatements = new ArrayList<>();
 		initContext();
+		headerValidConditions = new HashMap<>();
+		headerToParserStates = new HashMap<>();
+		procedurePreconditions = new HashMap<>();
 	}
 
 	private void clear() {
@@ -746,7 +749,12 @@ public class Parser {
 	private ArrayList<IfStatement> ifStatements;
 	private ArrayList<SwitchStatement> switchStatements;
 	private HashSet<Integer> usefulAssignmentStatements;
+	
+	// For analyzing conditions
 	private Context ctx;
+	private HashMap<String, ArrayList<BoogieProcedure>> headerToParserStates;
+	private HashMap<String, ArrayList<BoolExpr>> headerValidConditions;
+	private HashMap<String, ArrayList<BoolExpr>> procedurePreconditions;
 
 	private void initContext() {
 		HashMap<String, String> cfg = new HashMap<String, String>();
@@ -782,6 +790,16 @@ public class Parser {
 				cont.contains("random"))
 			return;
 		BoogieStatement statement = new BoogieStatement(cont);
+		addBoogieStatement(statement);
+	}
+	
+	void addBoogieAssertStatement(String cont) {
+		BoogieAssertStatement statement = new BoogieAssertStatement(cont);
+		BoolExpr condition = getContext().mkBool(true);
+		for(BoolExpr expr:getCurrentProcedure().getConditions()) {
+			condition = getContext().mkAnd(condition, expr);
+		}
+		statement.setCondition(condition);
 		addBoogieStatement(statement);
 	}
 	
@@ -832,7 +850,7 @@ public class Parser {
 	// set current procedure type to parser state
 	void setParserState() {
 		if(currentProcedure!=null) {
-			parserStates.add(currentProcedure.name);
+			parserStates.put(currentProcedure.name, currentProcedure);
 //			for(String var:parserLocals) {
 //				currentProcedure.updateModifies("parser."+var);
 //			}
@@ -842,7 +860,7 @@ public class Parser {
 	// if current procedure is parser state
 	boolean isParserState() {
 		if(currentProcedure!=null)
-			return parserStates.contains(currentProcedure.name);
+			return parserStates.containsKey(currentProcedure.name);
 		return false;
 	}
 	
@@ -889,6 +907,68 @@ public class Parser {
 	Context getContext() {
 		return ctx;
 	}
+	
+	void addHeaderValidParserState(String headerName) {
+		if(isParserState()) {
+			if(!headerToParserStates.containsKey(headerName)) {
+				ArrayList<BoogieProcedure> procedures = new ArrayList<>();
+				headerToParserStates.put(headerName, procedures);
+			}
+			headerToParserStates.get(headerName).add(currentProcedure);
+		}
+	}
+	
+	void updateProcedureCondition() {
+		BoogieProcedureOperator bpo = new BoogieProcedureOperator();
+		for(String name:procedures.keySet()) {
+//			System.out.println(name);
+			procedures.get(name).setPreCondition(getProcedurePrecondition(name));
+			bpo.addProcedure(procedures.get(name));
+		}
+//		for(String key:headerToParserStates.keySet()) {
+//			System.out.println(key+":");
+//			for(BoogieProcedure procedure:headerToParserStates.get(key))
+//				System.out.println("	"+procedure.name);
+//		}
+		System.out.println(headerToParserStates.size());
+		System.out.println(procedurePreconditions);
+	}
+	
+	BoolExpr getCurrentCondition() {
+		if(currentProcedure==null)
+			return null;
+		BoolExpr expr = ctx.mkBool(true);
+		for(BoolExpr e:currentProcedure.getConditions()) {
+			expr = ctx.mkAnd(expr, e);
+		}
+		return expr;
+	}
+	
+	void addProcedurePrecondition(String procedureName) {
+		if(procedureName.contains("](") || procedureName.contains("clone3") || procedureName.contains(", ,") || procedureName.contains(" .") ||
+				procedureName.contains(", )") || procedureName.contains(".push_front(") || procedureName.contains(".pop_front(") ||
+				procedureName.contains("random") || procedureName.contains("["))
+			return;
+		System.out.println("***"+procedureName);
+		if(!procedurePreconditions.containsKey(procedureName)) {
+			ArrayList<BoolExpr> list = new ArrayList<>();
+			procedurePreconditions.put(procedureName, list);
+		}
+		if(currentProcedure!=null)
+			procedurePreconditions.get(procedureName).add(getCurrentCondition());
+//		System.out.println()
+	}
+	
+	BoolExpr getProcedurePrecondition(String procedureName) {
+		if(!procedurePreconditions.containsKey(procedureName))
+			return null;
+		BoolExpr expr = ctx.mkBool(false);
+		for(BoolExpr e:procedurePreconditions.get(procedureName)) {
+			expr = ctx.mkOr(expr, e);
+		}
+		return expr;
+	}
+	
 //
 //	HashSet<String> getModifiedGlobalVariables() {
 //		return modifiedGlobalVariables;

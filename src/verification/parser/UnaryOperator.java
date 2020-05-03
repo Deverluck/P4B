@@ -1,6 +1,7 @@
 package verification.parser;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.microsoft.z3.BoolExpr;
 
 public class UnaryOperator extends Node {
 
@@ -49,6 +50,11 @@ class LNot extends UnaryOperator {
 	String p4_to_Boogie() {
 		String code = "!"+expr.p4_to_Boogie();
 		return code;
+	}
+	@Override
+	BoolExpr getCondition() {
+		BoolExpr e = Parser.getInstance().getContext().mkNot(expr.getCondition());
+		return e;
 	}
 }
 

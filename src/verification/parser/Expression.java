@@ -94,6 +94,7 @@ class MethodCallExpression extends Expression {
 		if(methodName.equals("extract")) {
 //			methodName = "packet_in."+methodName+"."+typeArguments.get(0).getTypeName();
 			String argument = arguments.get(0).getName();
+			Parser.getInstance().addHeaderValidParserState(arguments.get(0).p4_to_Boogie());
 			if(argument.contains(".next"))
 				methodName = "packet_in."+methodName+".headers."+arguments.get(0).getName();
 			else
@@ -129,6 +130,9 @@ class MethodCallExpression extends Expression {
 		// deal with isValid()
 		else if(methodName.length()>8 && methodName.substring(0, 8).equals("isValid[")) {
 			return methodName;
+		}
+		else {
+			Parser.getInstance().addProcedurePrecondition(methodName);
 		}
 		code = methodName+"(";
 		int cnt = 0;
@@ -250,6 +254,23 @@ class Slice extends Expression {
 	@Override
 	String getTypeName() {
 		return type.getTypeName();
+	}
+	@Override
+	BitVecExpr getBitVecExpr() {
+		String exprName = p4_to_Boogie();
+		exprName = exprName.replace('[', '_');
+		exprName = exprName.replace("], ", "_");
+		exprName = exprName.replace(", ", "_");
+		exprName = exprName.replace(']', '_');
+		exprName = exprName.replace('.', '_');
+		exprName = exprName.replace(':', '_');
+		String typeName = type.getTypeName();
+		if(typeName.contains("bv")) {
+			int size = Integer.valueOf(typeName.substring(2));
+			BitVecExpr bv = Parser.getInstance().getContext().mkBVConst(exprName, size);
+			return bv;
+		}
+		return null;
 	}
 }
 
@@ -435,7 +456,6 @@ class Member extends Expression {
 		exprName = exprName.replace(']', '_');
 		exprName = exprName.replace('.', '_');
 		BoolExpr expr = Parser.getInstance().getContext().mkBoolConst(exprName);
-		System.out.println("******"+exprName);
 		return expr;
 	}
 }

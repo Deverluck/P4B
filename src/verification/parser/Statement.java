@@ -6,7 +6,9 @@ import java.util.HashSet;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
 
 public class Statement extends Node {
 
@@ -120,8 +122,8 @@ class IfStatement extends Statement {
 	
 	@Override
 	BoolExpr getCondition() {
-		System.out.println(condition.p4_to_Boogie());
-		System.out.println(condition.getCondition());
+//		System.out.println(condition.p4_to_Boogie());
+//		System.out.println(condition.getCondition());
 		return condition.getCondition();
 //		BoolExpr expr = Parser.getInstance().getContext().mk
 	}
@@ -293,7 +295,7 @@ class SelectExpression extends Statement {
 
 	@Override
 	String p4_to_Boogie() {
-		// TODO Add support for Mask
+		Context ctx = Parser.getInstance().getContext();
 		String code = "";
 		int cnt1 = 0; // counter for keys (&&)
 		int cnt2 = 0; // counter for cases (else if{})
@@ -302,7 +304,10 @@ class SelectExpression extends Statement {
 			if(cnt2 != 0)
 				condition = "	else if(";
 			
+			
+			BoolExpr expr = Parser.getInstance().getContext().mkBool(true);
 			cnt1 = 0;
+			
 			for(Node select_node : select) {
 				// TODO deal with argument types (equal width)
 				//condition += select_node.p4_to_Boogie()+" == ";
@@ -310,12 +315,19 @@ class SelectExpression extends Statement {
 				if(caseValue instanceof Constant) {
 					condition += select_node.p4_to_Boogie()+" == ";
 					condition += caseValue.p4_to_Boogie();
+					
+					BoolExpr e = ctx.mkEq(select_node.getBitVecExpr(), caseValue.getBitVecExpr());
+					expr = ctx.mkAnd(expr, e);
 				}
 				else if(caseValue instanceof Mask) {
 					String function = caseValue.p4_to_Boogie();
 					Mask mask = (Mask)caseValue;
 					condition += function+"("+select_node.p4_to_Boogie()+", "+mask.right.p4_to_Boogie()+") == ";
 					condition += function+"("+mask.left.p4_to_Boogie()+", "+mask.right.p4_to_Boogie()+")";
+					
+					BoolExpr e = ctx.mkAnd(ctx.mkEq(ctx.mkBVAND(select_node.getBitVecExpr(), mask.right.getBitVecExpr()),
+							ctx.mkBVAND(mask.left.getBitVecExpr(), mask.right.getBitVecExpr())));
+					expr = ctx.mkAnd(expr, e);
 				}
 				cnt1++;
 				if(cnt1 < select.size())
@@ -324,14 +336,17 @@ class SelectExpression extends Statement {
 			condition += "){\n";
 			
 			BoogieIfStatement ifStatement = new BoogieIfStatement(condition, "	}\n");
+			Parser.getInstance().updateCondition(expr);
 			Parser.getInstance().addBoogieBlock(ifStatement);
 			
 			code += condition;
 			incIndent();
+			Parser.getInstance().addProcedurePrecondition(case_node.p4_to_Boogie());
 			code += case_node.p4_to_Boogie(JsonKeyName.PARSERSTATE)+"	}\n";
 			decIndent();
 
 			Parser.getInstance().popBoogieBlock();
+			Parser.getInstance().popCondition();
 			cnt2++;
 		}
 
@@ -365,11 +380,28 @@ class SwitchStatement extends Statement {
 		}
 		Parser.getInstance().addSwitchStatement(this);
 	}
+	
+	// may be "action_run", so it's a little hard to deal with
+	@Override
+	BitVecExpr getBitVecExpr() {
+		return expression.getBitVecExpr();
+	}
+	@Override
+	BoolExpr getCondition() {
+		System.out.println(expression.p4_to_Boogie());
+		System.out.println(expression.getCondition());
+		return expression.getCondition();
+	}
+	BoolExpr getNegCondition() {
+		return Parser.getInstance().getContext().mkNot(getCondition());
+	}
 	@Override
 	String p4_to_Boogie() {
 		String expr = expression.p4_to_Boogie();
 		int flag = 0;
 		SwitchCase defaultCase = null;
+		
+		BoolExpr defaultExpr = Parser.getInstance().getContext().mkBool(true);
 		for(SwitchCase sc:cases) {
 			if(sc.isDefault) {
 				defaultCase = sc;
@@ -389,18 +421,23 @@ class SwitchStatement extends Statement {
 			ifStart += "){\n";
 			BoogieIfStatement ifBlock = new BoogieIfStatement(ifStart, ifEnd);
 			Parser.getInstance().addBoogieBlock(ifBlock);
+//			Parser.getInstance().updateCondition(Parser.getInstance().getContext().mkEq(, arg1));
 			incIndent();
 			sc.statement.p4_to_Boogie();
 			decIndent();
 			Parser.getInstance().popBoogieBlock();
+//			Parser.getInstance().popCondition();
+//			defaultExpr = Parser.getInstance().getContext().mkAnd(defaultExpr, getNegCondition());
 		}
 		if(defaultCase!=null && cases.size()>1) {
 			BoogieIfStatement ifBlock = new BoogieIfStatement(addIndent()+"else{\n", addIndent()+"}\n");
 			Parser.getInstance().addBoogieBlock(ifBlock);
+//			Parser.getInstance().updateCondition(defaultExpr);
 			incIndent();
 			defaultCase.statement.p4_to_Boogie();
 			decIndent();
 			Parser.getInstance().popBoogieBlock();
+//			Parser.getInstance().popCondition();
 		}
 		//System.out.println(expr);
 		return super.p4_to_Boogie();

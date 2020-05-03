@@ -22,9 +22,10 @@ public class BoogieProcedure {
 	boolean implemented;
 	
 	// for analyze assert statements
-	ArrayList<BoolExpr> preConditions;     // (disjunction) the procedure may be called by different execution path
+	BoolExpr preCondition;     // (disjunction) the procedure may be called by different execution path
 	BoolExpr postCondition;
 	Stack<BoolExpr> conditions; // (conjunction) a stack updating with if statements and switch statements
+//	ArrayList<BoogieAssertStatement> assertStatements;
 	
 	private BoogieProcedure() {
 		parents = new HashSet<>();
@@ -35,8 +36,9 @@ public class BoogieProcedure {
 		mainBlock = new BoogieBlock();
 		implemented = true;
 		
-		preConditions = new ArrayList<>();
+		preCondition = null;
 		conditions = new Stack<>();
+//		assertStatements = new ArrayList<>();
 	}
 	public BoogieProcedure(String name, String declare, String body) {
 		this();
@@ -99,6 +101,9 @@ public class BoogieProcedure {
 	Stack<BoolExpr> getConditions() {
 		return conditions;
 	}
+	void setPreCondition(BoolExpr pre) {
+		preCondition = pre;
+	}
 }
 
 // update modifies
@@ -110,7 +115,7 @@ class BoogieProcedureOperator {
 	void addProcedure(BoogieProcedure procedure) {
 		procedures.add(procedure);
 	}
-	void update() {
+	void updateModify() {
 		ArrayList<BoogieProcedure> tmp = new ArrayList<>();
 		HashMap<String, Boolean> isVisited = new HashMap<>();
 		for(BoogieProcedure procedure:procedures) {
@@ -145,5 +150,12 @@ class BoogieProcedureOperator {
 				}
 			}
 		}
+	}
+	void updateCondition() {
+		
+	}
+	void update() {
+		updateModify();
+		updateCondition();
 	}
 }

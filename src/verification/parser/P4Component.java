@@ -98,6 +98,9 @@ class P4Parser extends P4Component {
 			Parser.getInstance().addBoogieGlobalVariable("parser."+node.getName());
 		}
 		code += states.p4_to_Boogie();
+		
+		// update parser condition
+		Parser.getInstance().updateProcedureCondition();
 		return code;
 
 //		String code, body, modifies;
@@ -462,6 +465,7 @@ class P4Table extends P4Component {
 				
 				body += condition;
 				incIndent();
+				Parser.getInstance().addProcedurePrecondition(actionName);
 				String statement = addIndent()+"call "+actionName;
 				statement += "(";
 				int tmp_cnt = actionList.actionParameters.get(actionName).size();
