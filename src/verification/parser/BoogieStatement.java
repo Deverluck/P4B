@@ -4,14 +4,40 @@ import java.util.ArrayList;
 import java.util.Stack;
 
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.Status;
 
 public class BoogieStatement {
 	String cont;
 	public BoogieStatement(String cont) {
 		this.cont = cont;
 	}
-	String toBoogie(){
+	String toBoogie() {
 		return cont;
+	}
+	String toBoogie(BoolExpr condition){
+		if(this instanceof BoogieAssertStatement) {
+			BoogieAssertStatement bas = (BoogieAssertStatement)this;
+			Solver solver = Parser.getInstance().createSolver();
+			solver.add(bas.condition);
+			if(condition!=null)
+				solver.add(condition);
+//			if(cont.contains("Heap[hdr, headers.fabric_header_sflow]")) {
+//				System.out.println("***test Heap[hdr, headers.fabric_header_sflow]***");
+//				System.out.println(condition);
+//				System.out.println(bas.condition);
+//			}
+			Parser.getInstance().count();
+			if(solver.check()==Status.UNSATISFIABLE) {
+				Parser.getInstance().decCount();
+				System.out.println(Status.UNSATISFIABLE);
+			}
+			else {
+//				System.out.println(cont);
+//				System.out.println(Status.SATISFIABLE);
+			}
+		}
+		return toBoogie();
 	}
 }
 
@@ -22,6 +48,17 @@ class BoogieAssertStatement extends BoogieStatement{
 	}
 	void setCondition(BoolExpr c) {
 		condition = c;
+	}
+}
+
+class BoogieHeaderValidityAssertStatement extends BoogieAssertStatement {
+	String headerName;
+	public BoogieHeaderValidityAssertStatement(String cont, String headerName) {
+		super(cont);
+		this.headerName = headerName;
+	}
+	String getHeaderName() {
+		return headerName;
 	}
 }
 
@@ -41,6 +78,15 @@ class BoogieBlock extends BoogieStatement {
 		String code = "";
 		for(BoogieStatement bs:conts) {
 			code += bs.toBoogie();
+		}
+		return code;
+	}
+	String toBoogie(BoolExpr condition) {
+		if(condition==null)
+			return toBoogie();
+		String code = "";
+		for(BoogieStatement bs:conts) {
+			code += bs.toBoogie(condition);
 		}
 		return code;
 	}
@@ -66,6 +112,15 @@ class BoogieIfStatement extends BoogieBlock {
 		String code = start;
 		for(BoogieStatement bs:conts) {
 			code += bs.toBoogie();
+		}
+		code += end;
+		return code;
+	}
+	@Override
+	String toBoogie(BoolExpr condition) {
+		String code = start;
+		for(BoogieStatement bs:conts) {
+			code += bs.toBoogie(condition);
 		}
 		code += end;
 		return code;

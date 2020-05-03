@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
 
 public class Parser {
 	private static Parser instance;
@@ -71,9 +72,12 @@ public class Parser {
 		assignmentStatements = new ArrayList<>();
 		switchStatements = new ArrayList<>();
 		initContext();
-		headerValidConditions = new HashMap<>();
+
 		headerToParserStates = new HashMap<>();
 		procedurePreconditions = new HashMap<>();
+		assertStatements = new ArrayList<>();
+		procedureSetValidHeaders = new HashMap<>();
+		cnt = 0;
 	}
 
 	private void clear() {
@@ -705,6 +709,7 @@ public class Parser {
 		code += p4_to_Boogie_emit();
 		// Add support for extern methods
 		code += p4_to_Boogie_extern();
+		
 
 //		for(String name:procedures.keySet()) {
 //			BoogieProcedure procedure = procedures.get(name);
@@ -722,13 +727,16 @@ public class Parser {
 		}
 		BoogieProcedureOperator bpo = new BoogieProcedureOperator();
 		for(String name:procedures.keySet()) {
+			procedures.get(name).setPreCondition(getProcedurePrecondition(name));
 			bpo.addProcedure(procedures.get(name));
 		}
-		bpo.update();
+		bpo.update(ctx);
+		updateBoogieAssertStatementCondition();
 		for(BoogieProcedure procedure:bpo.procedures) {
 			code += procedure.toBoogie();
 //			System.out.println(procedure.toBoogie());
 		}
+		System.out.println(cnt);
 		return code;
 	}
 
@@ -753,8 +761,10 @@ public class Parser {
 	// For analyzing conditions
 	private Context ctx;
 	private HashMap<String, ArrayList<BoogieProcedure>> headerToParserStates;
-	private HashMap<String, ArrayList<BoolExpr>> headerValidConditions;
+//	private HashMap<String, ArrayList<BoolExpr>> headerValidConditions;
 	private HashMap<String, ArrayList<BoolExpr>> procedurePreconditions;
+	private ArrayList<BoogieAssertStatement> assertStatements;
+	private HashMap<BoogieProcedure, HashMap<String, BoolExpr>> procedureSetValidHeaders;
 
 	private void initContext() {
 		HashMap<String, String> cfg = new HashMap<String, String>();
@@ -793,14 +803,77 @@ public class Parser {
 		addBoogieStatement(statement);
 	}
 	
-	void addBoogieAssertStatement(String cont) {
+	void addBoogieAssertStatement(String cont, BoolExpr expr) {
 		BoogieAssertStatement statement = new BoogieAssertStatement(cont);
+		BoolExpr condition = expr;
+		for(BoolExpr e:getCurrentProcedure().getConditions()) {
+			condition = getContext().mkAnd(condition, e);
+		}
+		statement.setCondition(condition);
+		addBoogieStatement(statement);
+		assertStatements.add(statement);
+	}
+	
+	void addBoogieAssertStatement(String cont, String headerName) {
+		BoogieHeaderValidityAssertStatement statement = new BoogieHeaderValidityAssertStatement(cont, headerName);
 		BoolExpr condition = getContext().mkBool(true);
 		for(BoolExpr expr:getCurrentProcedure().getConditions()) {
 			condition = getContext().mkAnd(condition, expr);
 		}
 		statement.setCondition(condition);
 		addBoogieStatement(statement);
+		assertStatements.add(statement);
+	}
+	
+	void addBoogieAssertStatement(String cont, String headerName, BoolExpr c) {
+		BoogieHeaderValidityAssertStatement statement = new BoogieHeaderValidityAssertStatement(cont, headerName);
+		BoolExpr condition = c;
+		for(BoolExpr expr:getCurrentProcedure().getConditions()) {
+			condition = getContext().mkAnd(condition, expr);
+		}
+		statement.setCondition(condition);
+		addBoogieStatement(statement);
+		assertStatements.add(statement);
+	}
+	
+	void updateBoogieAssertStatementCondition() {
+		for(BoogieAssertStatement statement:assertStatements) {
+			if(statement instanceof BoogieHeaderValidityAssertStatement) {
+				
+				BoogieHeaderValidityAssertStatement bhvas = (BoogieHeaderValidityAssertStatement)statement;
+				BoolExpr expr = statement.condition;
+				ArrayList<BoogieProcedure> states = fromHeaderToParserStates(bhvas.headerName); 
+				if(states!=null) {
+					BoolExpr expr2 = null;
+					for(BoogieProcedure procedure:states) {
+						BoolExpr preCondition = procedure.getPreCondition();
+						if(preCondition!=null) {
+							if(expr2 == null)
+								expr2 = preCondition;
+							else
+								expr2 = ctx.mkOr(expr2, preCondition);
+						}
+						else {
+							expr2 = ctx.mkBool(true);
+							break;
+						}
+					}
+					if(expr2!=null) {
+//						if(states.get(0).name.equals("parse_fabric_header_cpu")) {
+//							System.out.println("before updating:");
+//							System.out.println(expr);
+//							System.out.println(expr2);
+//						}
+						expr = ctx.mkAnd(expr, ctx.mkNot(expr2));
+						statement.setCondition(expr);
+//						if(states.get(0).name.equals("parse_fabric_header_cpu")) {
+//							System.out.println("after updating:");
+//							System.out.println(expr);
+//						}
+					}
+				}
+			}
+		}
 	}
 	
 	void addMainPreBoogieStatement(String cont) {
@@ -918,21 +991,28 @@ public class Parser {
 		}
 	}
 	
-	void updateProcedureCondition() {
-		BoogieProcedureOperator bpo = new BoogieProcedureOperator();
-		for(String name:procedures.keySet()) {
-//			System.out.println(name);
-			procedures.get(name).setPreCondition(getProcedurePrecondition(name));
-			bpo.addProcedure(procedures.get(name));
-		}
-//		for(String key:headerToParserStates.keySet()) {
-//			System.out.println(key+":");
-//			for(BoogieProcedure procedure:headerToParserStates.get(key))
-//				System.out.println("	"+procedure.name);
-//		}
-		System.out.println(headerToParserStates.size());
-		System.out.println(procedurePreconditions);
+	ArrayList<BoogieProcedure> fromHeaderToParserStates(String headerName) {
+		if(!headerToParserStates.containsKey(headerName))
+			return null;
+		return headerToParserStates.get(headerName);
 	}
+	
+//	void updateProcedureCondition() {
+//		BoogieProcedureOperator bpo = new BoogieProcedureOperator();
+//		for(String name:procedures.keySet()) {
+////			System.out.println(name);
+//			procedures.get(name).setPreCondition(getProcedurePrecondition(name));
+//			bpo.addProcedure(procedures.get(name));
+//		}
+//		bpo.updateCondition(ctx);
+////		for(String key:headerToParserStates.keySet()) {
+////			System.out.println(key+":");
+////			for(BoogieProcedure procedure:headerToParserStates.get(key))
+////				System.out.println("	"+procedure.name);
+////		}
+////		System.out.println(headerToParserStates.size());
+////		System.out.println(procedurePreconditions);
+//	}
 	
 	BoolExpr getCurrentCondition() {
 		if(currentProcedure==null)
@@ -949,7 +1029,6 @@ public class Parser {
 				procedureName.contains(", )") || procedureName.contains(".push_front(") || procedureName.contains(".pop_front(") ||
 				procedureName.contains("random") || procedureName.contains("["))
 			return;
-		System.out.println("***"+procedureName);
 		if(!procedurePreconditions.containsKey(procedureName)) {
 			ArrayList<BoolExpr> list = new ArrayList<>();
 			procedurePreconditions.put(procedureName, list);
@@ -969,6 +1048,46 @@ public class Parser {
 		return expr;
 	}
 	
+	BoogieProcedure getProcedrue(String procedureName) {
+		if(!procedures.containsKey(procedureName))
+			return null;
+		return procedures.get(procedureName);
+	}
+	
+	Solver createSolver() {
+		return ctx.mkSolver();
+	}
+	
+	int cnt;
+	void count() {
+		cnt++;
+	}
+	void decCount() {
+		if(cnt>0)
+			cnt--;
+	}
+	int getCount() {
+		return cnt;
+	}
+	
+	void addProcedureSetValidHeader(String headerName) {
+		if(!procedureSetValidHeaders.containsKey(currentProcedure)) {
+			HashMap<String, BoolExpr> map = new HashMap<>();
+			procedureSetValidHeaders.put(currentProcedure, map);
+		}
+		BoolExpr condition = getContext().mkBool(true);
+		for(BoolExpr expr:getCurrentProcedure().getConditions()) {
+			condition = getContext().mkAnd(condition, expr);
+		}
+		procedureSetValidHeaders.get(currentProcedure).put(headerName, condition);
+//		procedureSetValidHeaders.put(currentProcedure, hea)
+	}
+	
+	BoolExpr getSetValidHeaderCondition(String headerName) {
+		if(!procedureSetValidHeaders.containsKey(currentProcedure))
+			return null;
+		return procedureSetValidHeaders.get(currentProcedure).get(headerName);
+	}
 //
 //	HashSet<String> getModifiedGlobalVariables() {
 //		return modifiedGlobalVariables;

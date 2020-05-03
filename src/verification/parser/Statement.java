@@ -347,6 +347,7 @@ class SelectExpression extends Statement {
 
 			Parser.getInstance().popBoogieBlock();
 			Parser.getInstance().popCondition();
+//			System.out.println(ifStatement.toBoogie());
 			cnt2++;
 		}
 

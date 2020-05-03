@@ -100,7 +100,7 @@ class P4Parser extends P4Component {
 		code += states.p4_to_Boogie();
 		
 		// update parser condition
-		Parser.getInstance().updateProcedureCondition();
+//		Parser.getInstance().updateProcedureCondition();
 		return code;
 
 //		String code, body, modifies;

@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Queue;
 import java.util.Stack;
 
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
 
 public class BoogieProcedure {
 	String name;
@@ -25,6 +27,7 @@ public class BoogieProcedure {
 	BoolExpr preCondition;     // (disjunction) the procedure may be called by different execution path
 	BoolExpr postCondition;
 	Stack<BoolExpr> conditions; // (conjunction) a stack updating with if statements and switch statements
+	Solver solver;
 //	ArrayList<BoogieAssertStatement> assertStatements;
 	
 	private BoogieProcedure() {
@@ -86,7 +89,11 @@ public class BoogieProcedure {
 //				code += "	var "+localVar+":"+localVariables.get(localVar)+";\n";
 			}
 			code += preBlock.toBoogie();
-			code += mainBlock.toBoogie();
+//			if(name.equals("parse_fabric_header_cpu")) {
+//				System.out.println("***test***");
+//				System.out.println(preCondition);
+//			}
+			code += mainBlock.toBoogie(preCondition);
 			code += "}\n";
 		}
 //		code += body;
@@ -103,6 +110,15 @@ public class BoogieProcedure {
 	}
 	void setPreCondition(BoolExpr pre) {
 		preCondition = pre;
+	}
+	BoolExpr getPreCondition() {
+//		if(preCondition==null) {
+//			return Parser.getInstance().getContext().mkBool(true);
+//		}
+		return preCondition;
+	}
+	void setSolver(Solver solver) {
+		this.solver = solver;
 	}
 }
 
@@ -151,11 +167,47 @@ class BoogieProcedureOperator {
 			}
 		}
 	}
-	void updateCondition() {
-		
+	void updateCondition(Context ctx) {
+		HashMap<String, BoogieProcedure> procedureMap = new HashMap<>();
+		HashMap<String, Boolean> inQueue = new HashMap<>();
+		ArrayList<BoogieProcedure> queue = new ArrayList<>();
+		for(BoogieProcedure procedure:procedures) {
+			procedureMap.put(procedure.name, procedure);
+			inQueue.put(procedure.name, true);
+			queue.add(procedure);
+		}
+		while(!queue.isEmpty()) {
+			BoogieProcedure procedure = queue.get(0);
+			queue.remove(0);
+			inQueue.put(procedure.name, false);
+			for(String child:procedure.childrenNames) {
+				if(child.equals(procedure.name))
+					continue;
+				if(procedureMap.containsKey(child)) {
+					BoolExpr expr1 = procedure.getPreCondition();
+					BoolExpr expr2 = procedureMap.get(child).getPreCondition();
+					if(expr1==null)
+						continue;
+					if(inQueue.get(child)==false) {
+						inQueue.put(child, true);
+						queue.add(procedureMap.get(child));
+					}
+					if(expr2==null) {
+//						expr2 = expr1;
+						expr2 = ctx.mkAnd(ctx.mkBool(true), expr1);
+						continue;
+					}
+					expr2 = ctx.mkAnd(expr1, expr2);
+					procedureMap.get(child).setPreCondition(expr2);
+				}
+			}
+		}
+		System.out.println("*******_sflow_pkt_to_cpu*******");
+		System.out.println(procedureMap.get("_sflow_pkt_to_cpu").preCondition);
+		System.out.println("*******end*******");
 	}
-	void update() {
+	void update(Context ctx) {
 		updateModify();
-		updateCondition();
+		updateCondition(ctx);
 	}
 }

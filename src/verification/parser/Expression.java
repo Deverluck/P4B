@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.z3.ArithExpr;
 import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
 import com.microsoft.z3.IntExpr;
 
 public class Expression extends Node {
@@ -342,6 +343,7 @@ class Member extends Expression {
 			return code;
 		}
 		else if(type.Node_Type.equals("Type_Method") && member.equals("setValid")) {
+			Parser.getInstance().addProcedureSetValidHeader(expr.p4_to_Boogie());
 			String code = "setValid";
 			code += "(";
 			code += expr.p4_to_Boogie();
@@ -419,8 +421,29 @@ class Member extends Expression {
 	@Override
 	String addAssertStatement() {
 		if(type.Node_Type.equals("Type_Header")) {
+			Context ctx = Parser.getInstance().getContext();
+//			BoolExpr expr = ctx.mkBool(false);
+//			ArrayList<BoogieProcedure> states = Parser.getInstance().fromHeaderToParserStates(this.p4_to_Boogie()); 
+//			if(states!=null) {
+//				for(BoogieProcedure procedure:states) {
+//					BoolExpr preCondition = procedure.getPreCondition();
+//					if(preCondition!=null)
+//						expr = ctx.mkOr(expr, preCondition);
+//				}
+//			}
+			BoolExpr condition = Parser.getInstance().getSetValidHeaderCondition(this.p4_to_Boogie());
+			
 			String statement = addIndent()+"assert(isValid["+this.p4_to_Boogie()+"]);\n";
-			Parser.getInstance().addBoogieStatement(statement);
+//			if(states!=null)
+			if(condition!=null) {
+//				System.out.println("****setValid****");
+//				System.out.println(condition);
+				Parser.getInstance().addBoogieAssertStatement(statement, this.p4_to_Boogie(), ctx.mkNot(condition));
+			}
+			else
+				Parser.getInstance().addBoogieAssertStatement(statement, this.p4_to_Boogie());
+//			else
+//				Parser.getInstance().addBoogieStatement(statement);
 			return statement;
 		}
 		return expr.addAssertStatement();
