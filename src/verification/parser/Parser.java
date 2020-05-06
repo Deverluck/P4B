@@ -482,12 +482,17 @@ public class Parser {
 				String name = headersField.getTypeName();
 				String procedureName = "packet_in.extract";
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
-				procedure.implemented = false;
+//				procedure.implemented = false;
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure "+procedureName+"(header:Ref);\n";
-				declare += "	ensures (isValid[header] == true);\n";
+				String declare = "\nprocedure "+procedureName+"(header:Ref)\n";
+//				declare += "	ensures (isValid[header] == true);\n";
 				getCurrentProcedure().declare = declare;
+				incIndent();
+				addBoogieStatement(addIndent()+"isValid[header] := true;\n");
+				decIndent();
+				addModifiedGlobalVariable("isValid");
+				
 //				String name = headersField.getTypeName();
 //				String procedureName = "packet_in.extract.headers."+headersField.name;
 //				BoogieProcedure procedure = new BoogieProcedure(procedureName);

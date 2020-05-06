@@ -93,6 +93,7 @@ public class BoogieProcedure {
 //				System.out.println("***test***");
 //				System.out.println(preCondition);
 //			}
+			System.out.println(name);
 			code += mainBlock.toBoogie(preCondition);
 			code += "}\n";
 		}
@@ -170,10 +171,12 @@ class BoogieProcedureOperator {
 	void updateCondition(Context ctx) {
 		HashMap<String, BoogieProcedure> procedureMap = new HashMap<>();
 		HashMap<String, Boolean> inQueue = new HashMap<>();
+		HashMap<String, Boolean> isVisited = new HashMap<>();
 		ArrayList<BoogieProcedure> queue = new ArrayList<>();
 		for(BoogieProcedure procedure:procedures) {
 			procedureMap.put(procedure.name, procedure);
 			inQueue.put(procedure.name, true);
+			isVisited.put(procedure.name, false);
 			queue.add(procedure);
 		}
 		while(!queue.isEmpty()) {
@@ -202,9 +205,6 @@ class BoogieProcedureOperator {
 				}
 			}
 		}
-		System.out.println("*******_sflow_pkt_to_cpu*******");
-		System.out.println(procedureMap.get("_sflow_pkt_to_cpu").preCondition);
-		System.out.println("*******end*******");
 	}
 	void update(Context ctx) {
 		updateModify();
