@@ -349,10 +349,10 @@ public class Parser {
 	}
 	
 	String p4_to_Boogie_Header_isValid() {
-		String code = "\nvar isValid:<T>[T]bool;\n";
+		String code = "\nvar isValid:[Ref]bool;\n";
 		addBoogieGlobalVariable("isValid");
 		
-		code += "\nvar emit:<T>[T]bool;\n";
+		code += "\nvar emit:[Ref]bool;\n";
 		addBoogieGlobalVariable("emit");
 
 		BoogieProcedure clear_valid = new BoogieProcedure("clear_valid");
@@ -384,9 +384,9 @@ public class Parser {
 		mainProcedure.childrenNames.add(clear_emit.name);
 		
 		// support header stack
-		code += "var stack.index:<T>[T]int;\n";
+		code += "var stack.index:[HeaderStack]int;\n";
 		addBoogieGlobalVariable("stack.index");
-		code += "var size:<T>[T]int;\n";
+		code += "var size:[HeaderStack]int;\n";
 		addBoogieGlobalVariable("size");
 		
 		BoogieProcedure initStackIndex = new BoogieProcedure("init.stack.index");
@@ -394,7 +394,7 @@ public class Parser {
 		addProcedure(initStackIndex);
 		String declare3 = "\nprocedure init.stack.index();\n";
 		initStackIndex.modifies.add("stack.index");
-		declare3 += "ensures (forall <T>s:T::stack.index[s]==0);\n";
+		declare3 += "ensures (forall s:HeaderStack::stack.index[s]==0);\n";
 		initStackIndex.declare = declare3;
 		addMainPreBoogieStatement("	call init.stack.index();\n");
 		mainProcedure.childrenNames.add(initStackIndex.name);
