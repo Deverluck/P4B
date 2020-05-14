@@ -61,8 +61,9 @@ class Type_Header extends Type {
 		for(StructField field : fields) {
 //			Parser.getInstance().addBoogieGlobalVariable(name+"."+field.name);
 			String var = name+"."+field.name;
-			code += "const unique "+var+":Field "+field.p4_to_Boogie()+";\n";
-//			Parser.getInstance().addBoogieGlobalVariable(var);
+//			code += "const unique "+var+":Field "+field.p4_to_Boogie()+";\n";
+			code += "var "+var+":[Ref]"+field.p4_to_Boogie()+";\n";
+			Parser.getInstance().addBoogieGlobalVariable(var);
 //			code += "var "+var+":["+name+"]"+field.p4_to_Boogie()+";\n";
 		}
 		return code;
@@ -124,11 +125,13 @@ class Type_Struct extends Type {
 //			code += "var "+var+":["+name+"]"+field.p4_to_Boogie()+";\n";
 //			code += "const unique "+name+"."+field.name+":Field "+field.p4_to_Boogie()+";\n";
 			if(field.type.Node_Type.equals("Type_Stack")) {
-				code += "const unique "+name+"."+field.name+":Field "+"HeaderStack"+";\n";
+				code += "var "+name+"."+field.name+":[Ref]HeaderStack;\n";
+//				code += "const unique "+name+"."+field.name+":Field "+"HeaderStack"+";\n";
 				Parser.getInstance().addBoogieGlobalDeclaration(field.type.p4_to_Boogie());
 			}
 			else {
-				code += "const unique "+name+"."+field.name+":Field "+field.p4_to_Boogie()+";\n";
+				code += "var "+name+"."+field.name+":[Ref]"+field.p4_to_Boogie()+";\n";
+//				code += "const unique "+name+"."+field.name+":Field "+field.p4_to_Boogie()+";\n";
 			}
 		}
 		return code;

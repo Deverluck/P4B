@@ -31,7 +31,7 @@ public class BoogieStatement {
 			if(solver.check()==Status.UNSATISFIABLE) {
 				Parser.getInstance().decCount();
 				System.out.println(Status.UNSATISFIABLE);
-				return "";
+//				return "";
 			}
 			else {
 				System.out.println(cont);

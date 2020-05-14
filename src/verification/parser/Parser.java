@@ -337,10 +337,10 @@ public class Parser {
 	String p4_to_Boogie_Main_Declaration() {
 		String code = "";
 		code += "\ntype Ref;\n";
-		code += "type Field T;\n";
-		code += "type HeapType = <T>[Ref, Field T]T;\n";
+//		code += "type Field T;\n";
+//		code += "type HeapType = <T>[Ref, Field T]T;\n";
 		code += "type HeaderStack = [int]Ref;\n";
-		code += "var Heap:HeapType;\n";
+//		code += "var Heap:HeapType;\n";
 		code += "var last:[HeaderStack]Ref;\n";
 		addBoogieGlobalVariable("Heap");
 		
@@ -482,15 +482,15 @@ public class Parser {
 				String name = headersField.getTypeName();
 				String procedureName = "packet_in.extract";
 				BoogieProcedure procedure = new BoogieProcedure(procedureName);
-//				procedure.implemented = false;
+				procedure.implemented = false;
 				addProcedure(procedure);
 				setCurrentProcedure(procedure);
-				String declare = "\nprocedure "+procedureName+"(header:Ref)\n";
-//				declare += "	ensures (isValid[header] == true);\n";
+				String declare = "\nprocedure "+procedureName+"(header:Ref);\n";
+				declare += "	ensures (isValid[header] == true);\n";
 				getCurrentProcedure().declare = declare;
-				incIndent();
-				addBoogieStatement(addIndent()+"isValid[header] := true;\n");
-				decIndent();
+//				incIndent();
+//				addBoogieStatement(addIndent()+"isValid[header] := true;\n");
+//				decIndent();
 				addModifiedGlobalVariable("isValid");
 				
 //				String name = headersField.getTypeName();
