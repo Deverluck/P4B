@@ -421,6 +421,56 @@ class P4Table extends P4Component {
 		String code = "void "+name+"_method();\n";
 		return code;
 	}
+	
+	// For Control Plane
+	void addAssumeStatement() {
+		BoogieProcedure procedure = Parser.getInstance().getProcedrue(name+".apply");
+		if(actions != null) {
+			Property property = (Property)actions;
+			ActionList actionList = (ActionList)property.value;
+			for(String actionName:actionList.actionList) {
+				BoogieProcedure action = Parser.getInstance().getProcedrue(actionName);
+				if(action != null) {
+					boolean firstHeader = true;
+					String ifCondition = addIndent()+"if(";
+					String ifEnd = addIndent()+"}\n";
+					for(String header:action.refHeaders) {
+						if(!Parser.getInstance().isSetValidInProcedure(header, action)) {
+							if(!firstHeader) {
+								ifCondition += " || ";
+							}
+							firstHeader = false;
+							ifCondition += "!isValid["+header+"]";
+						}
+					}
+					ifCondition += "){\n";
+					
+					if(!firstHeader) {
+						BoogieIfStatement ifStatement = new BoogieIfStatement(ifCondition, ifEnd);
+						incIndent();
+						BoogieStatement statement = new BoogieStatement(addIndent()+
+								"assume("+name+".action_run!=action."+actionName+");\n");
+						decIndent();
+						ifStatement.add(statement);
+						
+						BoogieIfStatement elseStatement = new BoogieIfStatement(addIndent()+"else{\n", addIndent()+"}\n");
+						incIndent();
+						BoogieStatement statement2 = new BoogieStatement(addIndent()+
+								"assume("+name+".action_run!="+name+".action.null);\n");
+						decIndent();
+						elseStatement.add(statement2);
+						procedure.mainBlock.addToFirst(elseStatement);
+						procedure.mainBlock.addToFirst(ifStatement);
+					}
+					else {
+						BoogieStatement statement = new BoogieStatement(addIndent()+
+								"assume("+name+".action_run!="+name+".action.null);\n");
+						procedure.mainBlock.addToFirst(statement);
+					}
+				}
+			}
+		}
+	}
 
 	@Override
 	String p4_to_Boogie() {
@@ -438,7 +488,8 @@ class P4Table extends P4Component {
 			
 			Property property = (Property)actions;
 			ActionList actionList = (ActionList)property.value;
-			// declare local variables for actions
+			
+			// declare local variables for action parameters
 			for(String actionName:actionList.actionList) {
 				for(String parameter:actionList.actionParameters.get(actionName).keySet()) {
 					String localVariableDeclaration = "var "+parameter+":"+
@@ -481,15 +532,22 @@ class P4Table extends P4Component {
 				statement += ");\n";
 				Parser.getInstance().addBoogieStatement(statement);
 				body += statement;
-				// TODO deal with action arguments
 				Parser.getInstance().getCurrentProcedure().childrenNames.add(actionName);
 				decIndent();
 				body += end;
 				cnt++;
 				
 				Parser.getInstance().popBoogieBlock();
-//				if(cnt != 0)
-//					body += addIndent()+"else";
+			}
+			if(cnt != 0 && Parser.getInstance().getCommands().ifConstrainControlPlane()) {
+				String condition = addIndent()+"else if("+name+".action_run=="+name+".action.null){\n";
+				String end = addIndent()+"}\n";
+				BoogieIfStatement ifStatement = new BoogieIfStatement(condition, end);
+				Parser.getInstance().addBoogieBlock(ifStatement);
+				incIndent();
+				Parser.getInstance().addBoogieStatement(addIndent()+"assert{:actionNUll}(false);\n");
+				decIndent();
+				Parser.getInstance().popBoogieBlock();
 			}
 		}
 		body += "}\n";
@@ -596,8 +654,28 @@ class ActionList extends P4Component {
 		for(String actionName:actionList) {
 			code += "const unique action."+actionName+" : "+arg+";\n";
 		}
-		int cnt = actionList.size();
-		if(cnt != 0) {
+		if(Parser.getInstance().getCommands().ifConstrainControlPlane()) {
+			code += "const unique "+arg+".null : "+arg+";\n";
+			int cnt = actionList.size();
+			if(cnt != 0) {
+				code += "axiom(forall action:"+arg+" :: ";
+				for(String actionName:actionList) {
+					code += "action==action."+actionName;
+//					cnt--;
+//					if(cnt!=0)
+					code += " || ";
+				}
+				code += "action=="+arg+".null";
+				code += ");\n";
+			}
+			else {
+				code += "axiom(forall action:"+arg+" :: ";
+				code += "action=="+arg+".null";
+				code += ");\n";
+			}
+		}
+		else {
+			int cnt = actionList.size();
 			code += "axiom(forall action:"+arg+" :: ";
 			for(String actionName:actionList) {
 				code += "action==action."+actionName;

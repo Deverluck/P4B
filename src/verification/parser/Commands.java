@@ -1,15 +1,25 @@
 package verification.parser;
 
 public class Commands {
+	boolean addControlPlaneConstrain;
 	boolean checkHeaderValidity;
 	boolean checkHeaderStackBound;
 	boolean checkForwardOrDrop;
 	boolean checkReadOnlyMetadata;
 	public Commands() {
+		addControlPlaneConstrain = false;
 		checkHeaderValidity = false;
 		checkHeaderStackBound = false;
 		checkForwardOrDrop = false;
 		checkReadOnlyMetadata = false;
+	}
+	
+	boolean ifConstrainControlPlane() {
+		return addControlPlaneConstrain;
+	}
+	
+	void setControlPlaneConstrain() {
+		addControlPlaneConstrain = true;
 	}
 	
 	// Header Validity

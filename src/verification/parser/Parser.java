@@ -715,6 +715,12 @@ public class Parser {
 		// Add support for extern methods
 		code += p4_to_Boogie_extern();
 		
+		if(commands.ifConstrainControlPlane()) {
+			for(P4Table table:tables) {
+				table.addAssumeStatement();
+			}
+		}
+		
 
 //		for(String name:procedures.keySet()) {
 //			BoogieProcedure procedure = procedures.get(name);
@@ -1092,6 +1098,12 @@ public class Parser {
 		if(!procedureSetValidHeaders.containsKey(currentProcedure))
 			return null;
 		return procedureSetValidHeaders.get(currentProcedure).get(headerName);
+	}
+	
+	boolean isSetValidInProcedure(String header, BoogieProcedure procedure) {
+		if(!procedureSetValidHeaders.containsKey(procedure))
+			return false;
+		return procedureSetValidHeaders.get(procedure).containsKey(header);
 	}
 //
 //	HashSet<String> getModifiedGlobalVariables() {

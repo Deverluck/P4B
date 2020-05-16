@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 public class Main {
-	public static File create_file(String path) throws IOException {
+	public File create_file(String path) throws IOException {
 		File file = new File(path);
 		// File dir = new File("./");
 		// listAll(dir);
@@ -18,7 +18,7 @@ public class Main {
 		}
 		return file;
 	}
-	public static void create_file(String path, String text) throws IOException {
+	public void create_file(String path, String text) throws IOException {
 		File file = create_file(path);
 		FileOutputStream fileOutputStream = new FileOutputStream(file);
 		BufferedWriter bufferedWriter = new BufferedWriter(
@@ -26,7 +26,7 @@ public class Main {
 		bufferedWriter.write(text);
 		bufferedWriter.close();
 	}
-	public static void p4_to_Boogie(String input, String output) {
+	public void p4_to_Boogie(String input, String output) {
 		Parser myParser = Parser.getInstance();
 		String code = myParser.parse(input);
 		try {
@@ -35,7 +35,13 @@ public class Main {
 			e.printStackTrace();
 		}
 	}
+	public void setCommands() {
+		Parser myParser = Parser.getInstance();
+		Commands commands = myParser.getCommands();
+		commands.setControlPlaneConstrain();
+	}
 	public static void main(String args[]) {
+		Main m = new Main();
 //		if(args.length<2) {
 //			System.out.println("Usage: java -jar p2b.jar <inputFile> <outputFile>");
 //			return;
@@ -62,11 +68,12 @@ public class Main {
 //		p4_to_Boogie("/media/invincible/WORK/Programs/P4-verification/sharedir/test/switch-16-toJSON.json", 
 //				"/media/invincible/WORK/Programs/P4-verification/sharedir/test/switch-16-toJSON.bpl");
 		
-//		p4_to_Boogie("/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/axon/p416-axon-ppc.json", 
-//				"/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/axon/p416-axon-ppc-optimized2.bpl");
+		m.p4_to_Boogie("/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/axon/p416-axon-ppc.json", 
+				"/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/axon/p416-axon-ppc-with-control.bpl");
 		
-		p4_to_Boogie("/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch.json", 
-		"/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch-corral.bpl");
+//		m.p4_to_Boogie("/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch.json", 
+//		"/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch-corral.bpl");
+		
 //		p4_to_Boogie("E:\\Programs\\P4-verification\\p4toBoogie\\benchmark\\vera-testcases\\big-switch\\p416-switch.json", 
 //				"E:\\Programs\\P4-verification\\p4toBoogie\\benchmark\\vera-testcases\\big-switch\\p416-switch-full-assert.bpl");
 		

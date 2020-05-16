@@ -23,6 +23,8 @@ public class BoogieProcedure {
 	BoogieBlock mainBlock;
 	boolean implemented;
 	
+	HashSet<String> refHeaders;
+	
 	// for analyze assert statements
 	BoolExpr preCondition;     // (disjunction) the procedure may be called by different execution path
 	BoolExpr postCondition;
@@ -38,6 +40,8 @@ public class BoogieProcedure {
 		preBlock = new BoogieBlock();
 		mainBlock = new BoogieBlock();
 		implemented = true;
+		
+		refHeaders = new HashSet<>();
 		
 		preCondition = null;
 		conditions = new Stack<>();
@@ -63,6 +67,9 @@ public class BoogieProcedure {
 	}
 	public boolean hasLocalVariable(String varName) {
 		return localVariables.containsKey(varName);
+	}
+	public void addHeaderRef(String header) {
+		refHeaders.add(header);
 	}
 	public String toBoogie() {
 		String code = "";

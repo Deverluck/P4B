@@ -325,6 +325,17 @@ class Member extends Expression {
 		code = expr.p4_to_C()+"."+code;
 		return code;
 	}
+	void addRef(String code) {
+		BoogieProcedure procedure = Parser.getInstance().getCurrentProcedure();
+		if(procedure != null) {
+			if(type.Node_Type.equals("Type_Header")) {
+				procedure.addHeaderRef(code);
+			}
+			else if(expr.Node_Type.equals("ArrayIndex")) {
+				procedure.addHeaderRef(expr.p4_to_Boogie());
+			}
+		}
+	}
 	@Override
 	String p4_to_Boogie() {
 //		if(type instanceof Type_Method) {
@@ -404,6 +415,10 @@ class Member extends Expression {
 			}
 //			String code = expr.getTypeName()+"."+member;
 //			code += "["+expr.p4_to_Boogie()+"]";
+			
+			// Add reference header to procedure
+			addRef(code);
+			
 			return code;
 		}
 		return super.p4_to_Boogie();
