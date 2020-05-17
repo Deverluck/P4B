@@ -5,6 +5,7 @@ import java.util.HashSet;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
 
 public class BinaryOperator extends Node {
 	Node left;
@@ -384,8 +385,17 @@ class ArrayIndex extends BinaryOperator {
 	@Override
 	String addAssertStatement() {
 		if(type.Node_Type.equals("Type_Header")) {
+			Context ctx = Parser.getInstance().getContext();
+			BoolExpr condition = Parser.getInstance().getSetValidHeaderCondition(this.p4_to_Boogie());
 			String statement = addIndent()+"assert(isValid["+this.p4_to_Boogie()+"]);\n";
-			Parser.getInstance().addBoogieStatement(statement);
+			if(condition!=null) {
+				Parser.getInstance().addBoogieAssertStatement(statement, this.p4_to_Boogie(), ctx.mkNot(condition));
+			}
+			else
+				Parser.getInstance().addBoogieAssertStatement(statement, this.p4_to_Boogie());
+			
+//			String statement = addIndent()+"assert(isValid["+this.p4_to_Boogie()+"]);\n";
+//			Parser.getInstance().addBoogieStatement(statement);
 			return statement;
 		}
 		return super.addAssertStatement();

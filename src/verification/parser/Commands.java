@@ -6,12 +6,17 @@ public class Commands {
 	boolean checkHeaderStackBound;
 	boolean checkForwardOrDrop;
 	boolean checkReadOnlyMetadata;
+	
+	// check assignment statements
+	boolean checkAssignmentCondition; 
+	
 	public Commands() {
 		addControlPlaneConstrain = false;
 		checkHeaderValidity = false;
 		checkHeaderStackBound = false;
 		checkForwardOrDrop = false;
 		checkReadOnlyMetadata = false;
+		checkAssignmentCondition = false;
 	}
 	
 	boolean ifConstrainControlPlane() {
@@ -53,5 +58,12 @@ public class Commands {
 	}
 	void setCheckReadOnlyMetadata() {
 		checkReadOnlyMetadata = true;
+	}
+	
+	boolean ifCheckAssignmentCondition() {
+		return checkAssignmentCondition;
+	}
+	void setCheckAssignmentCondition() {
+		checkAssignmentCondition = false;
 	}
 }

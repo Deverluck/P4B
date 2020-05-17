@@ -54,8 +54,29 @@ class AssignmentStatement extends Statement {
 		return code;
 	}
 
+//  Need SSA format
+//	@Override
+//	BoolExpr getCondition() {
+//		Context ctx = Parser.getInstance().getContext();
+//		return ctx.mkEq(left.getBitVecExpr(), right.getBitVecExpr());
+////		return super.getCondition();
+//	}
+
 	@Override
 	String p4_to_Boogie() {
+//		if(left.getBitVecExpr()!=null&&right.getBitVecExpr()!=null) {
+//			Context ctx = Parser.getInstance().getContext();
+//			BoolExpr expr = getCondition();
+//			if(Parser.getInstance().getCurrentProcedure().getConditions().isEmpty()) {
+//				Parser.getInstance().updateCondition(expr);
+//			}
+//			else {
+//				BoolExpr oldExpr = Parser.getInstance().getCurrentProcedure().getConditions().peek();
+//				Parser.getInstance().popCondition();
+//				Parser.getInstance().updateCondition(ctx.mkAnd(expr, oldExpr));
+//			}
+//		}
+		
 		String leftCode = left.p4_to_Boogie();
 		
 		String modifiedVariable = leftCode;

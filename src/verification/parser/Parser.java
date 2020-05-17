@@ -834,6 +834,7 @@ public class Parser {
 		statement.setCondition(condition);
 		addBoogieStatement(statement);
 		assertStatements.add(statement);
+		System.out.println("wry "+condition);
 	}
 	
 	void addBoogieAssertStatement(String cont, String headerName, BoolExpr c) {
@@ -845,6 +846,7 @@ public class Parser {
 		statement.setCondition(condition);
 		addBoogieStatement(statement);
 		assertStatements.add(statement);
+		System.out.println("wryyyyy "+condition);
 	}
 	
 	void updateBoogieAssertStatementCondition() {
@@ -984,8 +986,8 @@ public class Parser {
 		getCurrentProcedure().addCondition(expr);
 	}
 	
-	void popCondition() {
-		getCurrentProcedure().popCondition();
+	boolean popCondition() {
+		return getCurrentProcedure().popCondition();
 	}
 	
 	Context getContext() {

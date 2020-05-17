@@ -28,6 +28,10 @@ public class BoogieStatement {
 //				System.out.println(bas.condition);
 //			}
 			Parser.getInstance().count();
+			
+			System.out.println("verifying:");
+			System.out.println(toBoogie());
+			System.out.println(solver.toString());
 			if(solver.check()==Status.UNSATISFIABLE) {
 				Parser.getInstance().decCount();
 				System.out.println(Status.UNSATISFIABLE);
@@ -37,6 +41,7 @@ public class BoogieStatement {
 				System.out.println(cont);
 //				System.out.println(Status.SATISFIABLE);
 			}
+			System.out.println("verification ends\n");
 		}
 		return toBoogie();
 	}

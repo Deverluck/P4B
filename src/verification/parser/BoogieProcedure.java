@@ -110,8 +110,11 @@ public class BoogieProcedure {
 	void addCondition(BoolExpr expr) {
 		conditions.push(expr);
 	}
-	void popCondition() {
+	boolean popCondition() {
+		if(conditions.empty())
+			return false;
 		conditions.pop();
+		return true;
 	}
 	Stack<BoolExpr> getConditions() {
 		return conditions;
