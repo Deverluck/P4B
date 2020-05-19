@@ -1,9 +1,11 @@
 package verification.parser;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Stack;
 
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
 import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
 
@@ -35,7 +37,7 @@ public class BoogieStatement {
 			if(solver.check()==Status.UNSATISFIABLE) {
 				Parser.getInstance().decCount();
 				System.out.println(Status.UNSATISFIABLE);
-//				return "";
+				return "";
 			}
 			else {
 				System.out.println(cont);
@@ -49,18 +51,84 @@ public class BoogieStatement {
 
 class BoogieAssertStatement extends BoogieStatement{
 	BoolExpr condition;
-	public BoogieAssertStatement(String cont) {
+	String procedureName;
+	public BoogieAssertStatement(String cont, String procedureName) {
 		super(cont);
+		this.procedureName = procedureName;
 	}
 	void setCondition(BoolExpr c) {
 		condition = c;
+	}
+	
+	boolean removeDuplicate() {
+		ArrayList<String> names = new ArrayList<>();
+		
+		int cnt = -1;
+		boolean duplicate = false;
+		Iterator<BoogieAssertStatement> it = Parser.getInstance().getAssertStatements().iterator();
+//		for(BoogieAssertStatement statement:Parser.getInstance().getAssertStatements()) {
+		while(it.hasNext()) {
+			BoogieAssertStatement statement = it.next();
+			if(!statement.cont.equals(this.cont))
+				continue;
+			BoogieProcedure p1 = Parser.getInstance().getProcedrue(procedureName);
+			BoogieProcedure p2 = Parser.getInstance().getProcedrue(statement.procedureName);
+			Context ctx = Parser.getInstance().getContext();
+			BoolExpr c1 = ctx.mkAnd(condition, p1.getPreCondition());
+			BoolExpr c2 = ctx.mkAnd(statement.condition, p2.getPreCondition());
+			if(c1.toString().equals(c2.toString())) {
+				names.add(statement.procedureName);
+				
+				duplicate = true;
+				it.remove();
+//				Parser.getInstance().getAssertStatements().remove(statement);
+				cnt++;
+			}
+		}
+		if(cnt>0) {
+			System.out.println("\n****** Remove Duplicate ******");
+			System.out.println("procedure "+procedureName+":");
+			System.out.println(names);
+			System.out.println(cont);
+			System.out.println("Remove duplicate assert statements num: "+cnt);
+			System.out.println("****** Remove Duplicate ENDS ******\n");
+		}
+		return duplicate;
+	}
+	
+	String toBoogie(BoolExpr condition){
+		if(!Parser.getInstance().getAssertStatements().contains(this)) {
+			return "";
+		}
+		removeDuplicate();
+		
+		BoogieAssertStatement bas = (BoogieAssertStatement)this;
+		Solver solver = Parser.getInstance().createSolver();
+		solver.add(bas.condition);
+		if(condition!=null)
+			solver.add(condition);
+		Parser.getInstance().count();
+			
+		System.out.println("verifying:");
+		System.out.println(toBoogie());
+		System.out.println(solver.toString());
+		if(solver.check()==Status.UNSATISFIABLE) {
+			Parser.getInstance().decCount();
+			System.out.println(Status.UNSATISFIABLE);
+			return "";
+		}
+		else {
+			System.out.println(cont);
+		}
+		System.out.println("verification ends\n");
+		return toBoogie();
 	}
 }
 
 class BoogieHeaderValidityAssertStatement extends BoogieAssertStatement {
 	String headerName;
-	public BoogieHeaderValidityAssertStatement(String cont, String headerName) {
-		super(cont);
+	public BoogieHeaderValidityAssertStatement(String cont, String headerName, String procedureName) {
+		super(cont, procedureName);
 		this.headerName = headerName;
 	}
 	String getHeaderName() {

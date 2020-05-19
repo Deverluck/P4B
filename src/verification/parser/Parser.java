@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -75,7 +76,7 @@ public class Parser {
 
 		headerToParserStates = new HashMap<>();
 		procedurePreconditions = new HashMap<>();
-		assertStatements = new ArrayList<>();
+		assertStatements = new LinkedHashSet<>();
 		procedureSetValidHeaders = new HashMap<>();
 		cnt = 0;
 	}
@@ -584,8 +585,28 @@ public class Parser {
 				String declare = "\nprocedure "+procedureName+"(header:Ref);\n";
 				declare += "	ensures isValid[header]!=true || emit[header]==true;\n";
 				getCurrentProcedure().declare = declare;
+				addModifiedGlobalVariable("emit");
 			}
 		}
+		return code;
+	}
+	
+	/******** Implicit Drop ********/
+	String implicitDrop() {
+		String code = "";
+		code += "var forward:bool;\n";
+		addBoogieGlobalVariable("forward");
+		
+		String procedureName = "clear_forward";
+		BoogieProcedure procedure = new BoogieProcedure(procedureName);
+		procedure.implemented = false;
+		addProcedure(procedure);
+		setCurrentProcedure(procedure);
+		String declare = "\nprocedure "+procedureName+"();\n";
+		declare += "	ensures forward==false;\n";
+		procedure.declare = declare;
+		addModifiedGlobalVariable("forward");
+		addMainPreBoogieStatement("	call clear_forward();\n");
 		return code;
 	}
 	
@@ -699,6 +720,9 @@ public class Parser {
 			System.out.println(type);
 		}
 		String code = p4_to_Boogie_Main_Declaration();
+		
+		code += implicitDrop();
+		
 		code += program.p4_to_Boogie();
 		// Add global declarations
 		code += globalBoogieDeclarationBlock.toBoogie();
@@ -720,7 +744,6 @@ public class Parser {
 				table.addAssumeStatement();
 			}
 		}
-		
 
 //		for(String name:procedures.keySet()) {
 //			BoogieProcedure procedure = procedures.get(name);
@@ -738,7 +761,7 @@ public class Parser {
 		}
 		BoogieProcedureOperator bpo = new BoogieProcedureOperator();
 		for(String name:procedures.keySet()) {
-			procedures.get(name).setPreCondition(getProcedurePrecondition(name));
+//			procedures.get(name).setPreCondition(getProcedurePrecondition(name));
 			bpo.addProcedure(procedures.get(name));
 		}
 		bpo.update(ctx);
@@ -773,8 +796,9 @@ public class Parser {
 	private Context ctx;
 	private HashMap<String, ArrayList<BoogieProcedure>> headerToParserStates;
 //	private HashMap<String, ArrayList<BoolExpr>> headerValidConditions;
-	private HashMap<String, ArrayList<BoolExpr>> procedurePreconditions;
-	private ArrayList<BoogieAssertStatement> assertStatements;
+	private HashMap<String, HashMap<String, BoolExpr>> procedurePreconditions;
+//	private ArrayList<BoogieAssertStatement> assertStatements;
+	private LinkedHashSet<BoogieAssertStatement> assertStatements;
 	private HashMap<BoogieProcedure, HashMap<String, BoolExpr>> procedureSetValidHeaders;
 
 	private void initContext() {
@@ -814,39 +838,58 @@ public class Parser {
 		addBoogieStatement(statement);
 	}
 	
+	LinkedHashSet<BoogieAssertStatement> getAssertStatements(){
+		return assertStatements;
+	}
+	
+	// Used when inserting assert statements
+	boolean isAssertStatementDuplicate(String cont, BoolExpr condition, String procedureName) {
+		for(BoogieAssertStatement statement:assertStatements) {
+			if(statement.procedureName.equals(procedureName)&&
+					statement.cont.equals(cont)&&statement.condition.toString().equals(condition.toString())) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	void addBoogieAssertStatement(String cont, BoolExpr expr) {
-		BoogieAssertStatement statement = new BoogieAssertStatement(cont);
+		BoogieAssertStatement statement = new BoogieAssertStatement(cont, currentProcedure.name);
 		BoolExpr condition = expr;
 		for(BoolExpr e:getCurrentProcedure().getConditions()) {
 			condition = getContext().mkAnd(condition, e);
 		}
+		if(isAssertStatementDuplicate(cont, condition, statement.procedureName))
+			return;
 		statement.setCondition(condition);
 		addBoogieStatement(statement);
 		assertStatements.add(statement);
 	}
 	
 	void addBoogieAssertStatement(String cont, String headerName) {
-		BoogieHeaderValidityAssertStatement statement = new BoogieHeaderValidityAssertStatement(cont, headerName);
+		BoogieHeaderValidityAssertStatement statement = new BoogieHeaderValidityAssertStatement(cont, headerName, currentProcedure.name);
 		BoolExpr condition = getContext().mkBool(true);
 		for(BoolExpr expr:getCurrentProcedure().getConditions()) {
 			condition = getContext().mkAnd(condition, expr);
 		}
+		if(isAssertStatementDuplicate(cont, condition, statement.procedureName))
+			return;
 		statement.setCondition(condition);
 		addBoogieStatement(statement);
 		assertStatements.add(statement);
-		System.out.println("wry "+condition);
 	}
 	
 	void addBoogieAssertStatement(String cont, String headerName, BoolExpr c) {
-		BoogieHeaderValidityAssertStatement statement = new BoogieHeaderValidityAssertStatement(cont, headerName);
+		BoogieHeaderValidityAssertStatement statement = new BoogieHeaderValidityAssertStatement(cont, headerName, currentProcedure.name);
 		BoolExpr condition = c;
 		for(BoolExpr expr:getCurrentProcedure().getConditions()) {
 			condition = getContext().mkAnd(condition, expr);
 		}
+		if(isAssertStatementDuplicate(cont, condition, statement.procedureName))
+			return;
 		statement.setCondition(condition);
 		addBoogieStatement(statement);
 		assertStatements.add(statement);
-		System.out.println("wryyyyy "+condition);
 	}
 	
 	void updateBoogieAssertStatementCondition() {
@@ -1043,22 +1086,35 @@ public class Parser {
 				procedureName.contains("random") || procedureName.contains("["))
 			return;
 		if(!procedurePreconditions.containsKey(procedureName)) {
-			ArrayList<BoolExpr> list = new ArrayList<>();
-			procedurePreconditions.put(procedureName, list);
+			HashMap<String, BoolExpr> map = new HashMap<>();
+			procedurePreconditions.put(procedureName, map);
 		}
-		if(currentProcedure!=null)
-			procedurePreconditions.get(procedureName).add(getCurrentCondition());
+		if(currentProcedure!=null) {
+			// Or
+			if(!procedurePreconditions.get(procedureName).containsKey(currentProcedure.name)) {
+				procedurePreconditions.get(procedureName).put(currentProcedure.name, getCurrentCondition());
+			}
+			else {
+				BoolExpr condition = procedurePreconditions.get(procedureName).get(currentProcedure.name);
+				procedurePreconditions.get(procedureName).put(currentProcedure.name, ctx.mkOr(condition, getCurrentCondition()));
+			}
+		}
 //		System.out.println()
 	}
 	
-	BoolExpr getProcedurePrecondition(String procedureName) {
+	
+	
+	BoolExpr getProcedurePrecondition(String procedureName, String caller) {
 		if(!procedurePreconditions.containsKey(procedureName))
 			return null;
-		BoolExpr expr = ctx.mkBool(false);
-		for(BoolExpr e:procedurePreconditions.get(procedureName)) {
-			expr = ctx.mkOr(expr, e);
-		}
-		return expr;
+		if(!procedurePreconditions.get(procedureName).containsKey(caller))
+			return null;
+		return procedurePreconditions.get(procedureName).get(caller);
+//		BoolExpr expr = ctx.mkBool(false);
+//		for(BoolExpr e:procedurePreconditions.get(procedureName)) {
+//			expr = ctx.mkOr(expr, e);
+//		}
+//		return expr;
 	}
 	
 	BoogieProcedure getProcedrue(String procedureName) {

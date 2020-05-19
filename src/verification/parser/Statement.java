@@ -78,6 +78,10 @@ class AssignmentStatement extends Statement {
 //		}
 		
 		String leftCode = left.p4_to_Boogie();
+		if(leftCode.startsWith("standard_metadata_t.egress_spec[")) {
+			Parser.getInstance().addBoogieStatement(addIndent()+"forward := true;\n");
+			Parser.getInstance().addModifiedGlobalVariable("forward");
+		}
 		
 		String modifiedVariable = leftCode;
 		if(leftCode.contains("[")) {

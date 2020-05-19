@@ -10,6 +10,7 @@ import java.util.Stack;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Solver;
+import com.microsoft.z3.Status;
 
 public class BoogieProcedure {
 	String name;
@@ -181,12 +182,10 @@ class BoogieProcedureOperator {
 	void updateCondition(Context ctx) {
 		HashMap<String, BoogieProcedure> procedureMap = new HashMap<>();
 		HashMap<String, Boolean> inQueue = new HashMap<>();
-		HashMap<String, Boolean> isVisited = new HashMap<>();
 		ArrayList<BoogieProcedure> queue = new ArrayList<>();
 		for(BoogieProcedure procedure:procedures) {
 			procedureMap.put(procedure.name, procedure);
 			inQueue.put(procedure.name, true);
-			isVisited.put(procedure.name, false);
 			queue.add(procedure);
 		}
 		while(!queue.isEmpty()) {
@@ -197,27 +196,87 @@ class BoogieProcedureOperator {
 				if(child.equals(procedure.name))
 					continue;
 				if(procedureMap.containsKey(child)) {
-					BoolExpr expr1 = procedure.getPreCondition();
-					BoolExpr expr2 = procedureMap.get(child).getPreCondition();
-					if(expr1==null)
+					BoolExpr parentToChild = Parser.getInstance().getProcedurePrecondition(child, procedure.name);
+					BoolExpr parentCondition = procedure.getPreCondition();
+					BoolExpr childCondition = procedureMap.get(child).getPreCondition();
+					if(parentCondition==null&&parentToChild==null)
 						continue;
-					if(inQueue.get(child)==false) {
+					if(childCondition==null) {
 						inQueue.put(child, true);
 						queue.add(procedureMap.get(child));
+						if(parentCondition==null) {
+							procedureMap.get(child).setPreCondition(parentToChild);
+						}
+						else if(parentToChild==null) {
+							procedureMap.get(child).setPreCondition(parentCondition);
+						}
+						else {
+							procedureMap.get(child).setPreCondition(ctx.mkAnd(parentToChild, parentCondition));
+						}
 					}
-					if(expr2==null) {
-//						expr2 = expr1;
-						expr2 = ctx.mkAnd(ctx.mkBool(true), expr1);
-						continue;
+					else {
+						BoolExpr newChildCondition;
+						if(parentToChild==null)
+							newChildCondition=parentCondition;
+						else if(parentCondition==null)
+							newChildCondition=parentToChild;
+						else
+							newChildCondition=ctx.mkAnd(parentToChild, parentCondition);
+						newChildCondition=ctx.mkOr(newChildCondition, childCondition);
+						Solver solver = ctx.mkSolver();
+						solver.add(ctx.mkNot(ctx.mkIff(childCondition, newChildCondition)));
+						if(solver.check()==Status.SATISFIABLE) {
+							inQueue.put(child, true);
+							queue.add(procedureMap.get(child));
+							procedureMap.get(child).setPreCondition(newChildCondition);
+						}
 					}
-					expr2 = ctx.mkAnd(expr1, expr2);
-					procedureMap.get(child).setPreCondition(expr2);
 				}
 			}
 		}
 	}
+//	void updateCondition(Context ctx) {
+//		HashMap<String, BoogieProcedure> procedureMap = new HashMap<>();
+//		HashMap<String, Boolean> inQueue = new HashMap<>();
+//		HashMap<String, Boolean> isVisited = new HashMap<>();
+//		ArrayList<BoogieProcedure> queue = new ArrayList<>();
+//		for(BoogieProcedure procedure:procedures) {
+//			procedureMap.put(procedure.name, procedure);
+//			inQueue.put(procedure.name, true);
+//			isVisited.put(procedure.name, false);
+//			queue.add(procedure);
+//		}
+//		while(!queue.isEmpty()) {
+//			BoogieProcedure procedure = queue.get(0);
+//			System.out.println(procedure.name);
+//			queue.remove(0);
+//			inQueue.put(procedure.name, false);
+//			for(String child:procedure.childrenNames) {
+//				if(child.equals(procedure.name))
+//					continue;
+//				if(procedureMap.containsKey(child)) {
+//					BoolExpr expr1 = procedure.getPreCondition();
+//					BoolExpr expr2 = procedureMap.get(child).getPreCondition();
+//					if(expr1==null)
+//						continue;
+//					if(inQueue.get(child)==false) {
+//						inQueue.put(child, true);
+//						queue.add(procedureMap.get(child));
+//					}
+//					if(expr2==null) {
+////						expr2 = expr1;
+//						expr2 = ctx.mkAnd(ctx.mkBool(true), expr1);
+//						continue;
+//					}
+//					expr2 = ctx.mkAnd(expr1, expr2);
+//					procedureMap.get(child).setPreCondition(expr2);
+//				}
+//			}
+//		}
+//	}
 	void update(Context ctx) {
 		updateModify();
+		System.out.println("wryyyyyyyy");
 		updateCondition(ctx);
 	}
 }
