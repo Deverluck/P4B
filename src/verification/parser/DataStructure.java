@@ -214,6 +214,36 @@ class StructField extends DataStructure {
 		return code;
 	}
 	@Override
+	String p4_to_Boogie(String arg) {
+		String code = "";
+		if(type.Node_Type.equals("Type_Bits")) {
+			code = "var "+arg+"."+name+":bv"+len+";\n";
+			Parser.getInstance().addBoogieGlobalVariable(arg+"."+name);
+		}
+		else if(type.Node_Type.equals("Type_Name")) {
+			String tmp = type.p4_to_Boogie();
+			
+			// header
+			Type_Header header = Parser.getInstance().getHeader(tmp);
+			Type_Struct struct = Parser.getInstance().getStruct(tmp);
+			if(header!=null) {
+				code += header.p4_to_Boogie(arg+"."+name);
+			}
+			else if(struct!=null) {
+				code += struct.p4_to_Boogie(arg+"."+name);
+			}
+			else if(Parser.getInstance().isTypeDef(tmp)) {
+				code += "var "+arg+"."+name+":"+tmp+";\n";
+				Parser.getInstance().addBoogieGlobalVariable(arg+"."+name);
+			}
+		}
+		else if(type.Node_Type.equals("Type_Stack")) {
+			code += "const "+arg+"."+name+":HeaderStack;\n";
+			code += type.p4_to_Boogie(arg+"."+name);
+		}
+		return code;
+	}
+	@Override
 	String getTypeName() {
 		return type.getTypeName();
 	}

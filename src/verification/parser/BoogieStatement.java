@@ -22,8 +22,9 @@ public class BoogieStatement {
 			BoogieAssertStatement bas = (BoogieAssertStatement)this;
 			Solver solver = Parser.getInstance().createSolver();
 			solver.add(bas.condition);
-			if(condition!=null)
-				solver.add(condition);
+//			if(condition!=null)
+//				solver.add(condition);
+			
 //			if(cont.contains("Heap[hdr, headers.fabric_header_sflow]")) {
 //				System.out.println("***test Heap[hdr, headers.fabric_header_sflow]***");
 //				System.out.println(condition);

@@ -520,9 +520,9 @@ public class Parser {
 		code += "const packet:packet_in;\n";
 		
 		// TODO header variables name may not be hdr
-		code += "\nvar hdr:Ref;\n";
-		code += "\nvar meta:Ref;\n";
-		code += "\nvar standard_metadata:Ref;\n";
+		code += "\nconst hdr:Ref;\n";
+		code += "\nconst meta:Ref;\n";
+		code += "\nconst standard_metadata:Ref;\n";
 		
 //		code += "\nvar hdr:headers;\n";
 //		code += "\nvar meta:metadata;\n";
@@ -530,9 +530,9 @@ public class Parser {
 		
 //		code += "\nvar packet.map:[int]bv1;\n";
 //		code += "\nvar packet.index:int;\n";
-		addBoogieGlobalVariable("hdr");
-		addBoogieGlobalVariable("meta");
-		addBoogieGlobalVariable("standard_metadata");
+//		addBoogieGlobalVariable("hdr");
+//		addBoogieGlobalVariable("meta");
+//		addBoogieGlobalVariable("standard_metadata");
 //		addBoogieGlobalVariable("packet.map");
 //		addBoogieGlobalVariable("packet.index");
 		return code;
@@ -607,6 +607,7 @@ public class Parser {
 		procedure.declare = declare;
 		addModifiedGlobalVariable("forward");
 		addMainPreBoogieStatement("	call clear_forward();\n");
+		mainProcedure.childrenNames.add(procedureName);
 		return code;
 	}
 	
@@ -1007,6 +1008,10 @@ public class Parser {
 
 	Type_Header getHeader(String name) {
 		return headers.get(name);
+	}
+	
+	Type_Struct getStruct(String name) {
+		return structs.get(name);
 	}
 	
 	Commands getCommands() {

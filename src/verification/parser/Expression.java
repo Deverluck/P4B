@@ -2,6 +2,8 @@ package verification.parser;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -409,12 +411,32 @@ class Member extends Expression {
 			//Parser.getInstance().addModifiedGlobalVariable(expr.getTypeName()+"."+member);
 //			Parser.getInstance().addModifiedGlobalVariable("Heap");
 //			String code = "Heap["+expr.p4_to_Boogie()+", "+expr.getTypeName()+"."+member+"]";
-			String code = expr.getTypeName()+"."+member+"["+expr.p4_to_Boogie()+"]";
-			if(member.equals("last")) {
-				code = "last["+expr.p4_to_Boogie()+"]";
-			}
+			String code = expr.p4_to_Boogie()+"."+member;
+//			String code = expr.getTypeName()+"."+member+"["+expr.p4_to_Boogie()+"]";
+			
+//			if(member.equals("last")) {
+//				code = "last["+expr.p4_to_Boogie()+"]";
+//			}
+			
 //			String code = expr.getTypeName()+"."+member;
 //			code += "["+expr.p4_to_Boogie()+"]";
+			
+			if(code.contains("].")) {
+				System.out.println("wryyyyyy"+code);
+				Pattern pattern = Pattern.compile(".+(\\[.*\\]).+");
+				Matcher m = pattern.matcher(code);
+				ArrayList<String> strs = new ArrayList<>();
+				if(m.matches()) {
+					for(int i = 1; i <= m.groupCount(); i++) {
+						strs.add(m.group(i));
+						System.out.println(m.group(i));
+					}
+				}
+				for(String str:strs) {
+					code = code.replace(str, "."+str.substring(1, str.length()-1));
+				}
+				System.out.println(code);
+			}
 			
 			// Add reference header to procedure
 			addRef(code);
