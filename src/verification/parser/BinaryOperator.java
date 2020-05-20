@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
+import com.microsoft.z3.IntNum;
 
 public class BinaryOperator extends Node {
 	Node left;
@@ -384,7 +385,7 @@ class ArrayIndex extends BinaryOperator {
 	}
 	@Override
 	String addAssertStatement() {
-		if(type.Node_Type.equals("Type_Header")) {
+		if(Parser.getInstance().getCommands().ifCheckHeaderValidity()&&type.Node_Type.equals("Type_Header")) {
 			Context ctx = Parser.getInstance().getContext();
 			BoolExpr condition = Parser.getInstance().getSetValidHeaderCondition(this.p4_to_Boogie());
 			String statement = addIndent()+"assert(isValid["+this.p4_to_Boogie()+"]);\n";
@@ -397,6 +398,22 @@ class ArrayIndex extends BinaryOperator {
 //			String statement = addIndent()+"assert(isValid["+this.p4_to_Boogie()+"]);\n";
 //			Parser.getInstance().addBoogieStatement(statement);
 			return statement;
+		}
+		if(Parser.getInstance().getCommands().ifCheckHeaderStackBound()) {
+//			Parser.getInstance().addStack(stack);
+			if(left instanceof Member) {
+				Member m = (Member)left;
+				Type_Stack stack = (Type_Stack)m.type;
+				int idx = Integer.valueOf(right.p4_to_Boogie());
+				int size = stack.size.value;
+				if(idx>size) {
+					String statement = "\n// Header Stack Out of Bound\n"+addIndent()+"assert(false);\n";
+					Parser.getInstance().addBoogieStatement(statement);
+					Parser.getInstance().getResult().headerStackOutOfBound.inc();
+				}
+//				String statement = addIndent()+"assert("+right.p4_to_Boogie()+"<="+stack.size.value+");\n";
+//				Parser.getInstance().addBoogieStatement(statement);
+			}
 		}
 		return super.addAssertStatement();
 	}

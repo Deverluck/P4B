@@ -24,27 +24,21 @@ public class BoogieStatement {
 			solver.add(bas.condition);
 //			if(condition!=null)
 //				solver.add(condition);
-			
-//			if(cont.contains("Heap[hdr, headers.fabric_header_sflow]")) {
-//				System.out.println("***test Heap[hdr, headers.fabric_header_sflow]***");
-//				System.out.println(condition);
-//				System.out.println(bas.condition);
-//			}
 			Parser.getInstance().count();
 			
-			System.out.println("verifying:");
-			System.out.println(toBoogie());
-			System.out.println(solver.toString());
+//			System.out.println("verifying:");
+//			System.out.println(toBoogie());
+//			System.out.println(solver.toString());
 			if(solver.check()==Status.UNSATISFIABLE) {
 				Parser.getInstance().decCount();
-				System.out.println(Status.UNSATISFIABLE);
+//				System.out.println(Status.UNSATISFIABLE);
 				return "";
 			}
 			else {
 				System.out.println(cont);
 //				System.out.println(Status.SATISFIABLE);
 			}
-			System.out.println("verification ends\n");
+//			System.out.println("verification ends\n");
 		}
 		return toBoogie();
 	}
@@ -86,14 +80,14 @@ class BoogieAssertStatement extends BoogieStatement{
 				cnt++;
 			}
 		}
-		if(cnt>0) {
-			System.out.println("\n****** Remove Duplicate ******");
-			System.out.println("procedure "+procedureName+":");
-			System.out.println(names);
-			System.out.println(cont);
-			System.out.println("Remove duplicate assert statements num: "+cnt);
-			System.out.println("****** Remove Duplicate ENDS ******\n");
-		}
+//		if(cnt>0) {
+//			System.out.println("\n****** Remove Duplicate ******");
+//			System.out.println("procedure "+procedureName+":");
+//			System.out.println(names);
+//			System.out.println(cont);
+//			System.out.println("Remove duplicate assert statements num: "+cnt);
+//			System.out.println("****** Remove Duplicate ENDS ******\n");
+//		}
 		return duplicate;
 	}
 	
@@ -101,7 +95,9 @@ class BoogieAssertStatement extends BoogieStatement{
 		if(!Parser.getInstance().getAssertStatements().contains(this)) {
 			return "";
 		}
-		removeDuplicate();
+		if(Parser.getInstance().getCommands().ifCheckHeaderValidity()) {
+			removeDuplicate();
+		}
 		
 		BoogieAssertStatement bas = (BoogieAssertStatement)this;
 		Solver solver = Parser.getInstance().createSolver();
@@ -110,18 +106,14 @@ class BoogieAssertStatement extends BoogieStatement{
 			solver.add(condition);
 		Parser.getInstance().count();
 			
-		System.out.println("verifying:");
-		System.out.println(toBoogie());
-		System.out.println(solver.toString());
 		if(solver.check()==Status.UNSATISFIABLE) {
 			Parser.getInstance().decCount();
-			System.out.println(Status.UNSATISFIABLE);
+//			System.out.println(Status.UNSATISFIABLE);
 			return "";
 		}
 		else {
-			System.out.println(cont);
+//			System.out.println(cont);
 		}
-		System.out.println("verification ends\n");
 		return toBoogie();
 	}
 }

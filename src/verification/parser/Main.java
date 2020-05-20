@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.HashSet;
 
 public class Main {
 	public File create_file(String path) throws IOException {
@@ -26,6 +27,7 @@ public class Main {
 		bufferedWriter.write(text);
 		bufferedWriter.close();
 	}
+	
 	public void p4_to_Boogie(String input, String output) {
 		Parser myParser = Parser.getInstance();
 		String code = myParser.parse(input);
@@ -35,23 +37,57 @@ public class Main {
 			e.printStackTrace();
 		}
 	}
+	
 	public void setCommands() {
 		Parser myParser = Parser.getInstance();
 		Commands commands = myParser.getCommands();
-		commands.setControlPlaneConstrain();
+//		commands.setControlPlaneConstrain();
+		commands.setCheckHeaderValidity();
+		commands.setCheckHeaderStackBound();
+		commands.setCheckForwardOrDrop();
 	}
 	public static void main(String args[]) {
 		Main m = new Main();
-//		if(args.length<2) {
-//			System.out.println("Usage: java -jar p2b.jar <inputFile> <outputFile>");
-//			return;
-//		}
-//		String input = args[0];
-//		File file = new File(input);
-//		if(!file.exists()) {
-//			System.out.println("File \""+input+"\" doesn't exists.");
-//			return;
-//		}
+//		m.setCommands();
+		if(args.length<2) {
+			System.out.println("Usage: java -jar p4b.jar [options] <inputFile> <outputFile>");
+			System.out.println("options: -headerValidity -headerStackBound -implicitDrop -readOnly -all -control");
+			return;
+		}
+		
+		if(args.length>2) {
+			HashSet<String> cmd = new HashSet<>();
+			for(int i = 0; i < args.length-2; i++) {
+				cmd.add(args[i]);
+			}
+			Parser myParser = Parser.getInstance();
+			Commands commands = myParser.getCommands();
+			if(cmd.contains("-headerValidity"))
+				commands.setCheckHeaderValidity();
+			if(cmd.contains("-headerStackBound"))
+				commands.setCheckHeaderStackBound();
+			if(cmd.contains("-implicitDrop"))
+				commands.setCheckForwardOrDrop();
+			if(cmd.contains("-readOnly"))
+				commands.setCheckReadOnlyMetadata();
+			if(cmd.contains("-control"))
+				commands.setControlPlaneConstrain();
+			if(cmd.contains("-all")) {
+				commands.setCheckHeaderValidity();
+				commands.setCheckHeaderStackBound();
+				commands.setCheckForwardOrDrop();
+				commands.setCheckReadOnlyMetadata();
+			}
+		}
+		
+		String input = args[args.length-2];
+		File file = new File(input);
+		if(!file.exists()) {
+			System.out.println("File \""+input+"\" doesn't exists.");
+			return;
+		}
+		String output = args[args.length-1];
+		m.p4_to_Boogie(input, output);
 		
 		
 //		Parser myParser = Parser.getInstance();
@@ -77,8 +113,8 @@ public class Main {
 //		m.p4_to_Boogie("/media/invincible/WORK/Programs/P4-verification/sharedir/test/header_stack_test.json", 
 //				"/media/invincible/WORK/Programs/P4-verification/sharedir/test/header_stack_test.bpl");
 		
-		m.p4_to_Boogie("/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch.json", 
-		"/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch-without-map.bpl");
+//		m.p4_to_Boogie("/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch.json", 
+//		"/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch-without-map.bpl");
 		
 //		m.p4_to_Boogie("E:\\Programs\\P4-verification\\p4toBoogie\\benchmark\\vera-testcases\\big-switch\\p416-switch.json", 
 //				"E:\\Programs\\P4-verification\\p4toBoogie\\benchmark\\vera-testcases\\big-switch\\p416-switch-without-map.bpl");

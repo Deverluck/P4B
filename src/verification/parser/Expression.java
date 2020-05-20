@@ -422,20 +422,17 @@ class Member extends Expression {
 //			code += "["+expr.p4_to_Boogie()+"]";
 			
 			if(code.contains("].")) {
-				System.out.println("wryyyyyy"+code);
 				Pattern pattern = Pattern.compile(".+(\\[.*\\]).+");
 				Matcher m = pattern.matcher(code);
 				ArrayList<String> strs = new ArrayList<>();
 				if(m.matches()) {
 					for(int i = 1; i <= m.groupCount(); i++) {
 						strs.add(m.group(i));
-						System.out.println(m.group(i));
 					}
 				}
 				for(String str:strs) {
 					code = code.replace(str, "."+str.substring(1, str.length()-1));
 				}
-				System.out.println(code);
 			}
 			
 			// Add reference header to procedure
@@ -458,7 +455,7 @@ class Member extends Expression {
 	}
 	@Override
 	String addAssertStatement() {
-		if(type.Node_Type.equals("Type_Header")) {
+		if(Parser.getInstance().getCommands().ifCheckHeaderValidity()&&type.Node_Type.equals("Type_Header")) {
 			Context ctx = Parser.getInstance().getContext();
 //			BoolExpr expr = ctx.mkBool(false);
 //			ArrayList<BoogieProcedure> states = Parser.getInstance().fromHeaderToParserStates(this.p4_to_Boogie()); 

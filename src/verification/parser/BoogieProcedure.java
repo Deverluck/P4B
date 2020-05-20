@@ -22,6 +22,7 @@ public class BoogieProcedure {
 	String body;
 	BoogieBlock preBlock;
 	BoogieBlock mainBlock;
+	BoogieBlock postBlock;
 	boolean implemented;
 	
 	HashSet<String> refHeaders;
@@ -40,6 +41,7 @@ public class BoogieProcedure {
 		localVariables = new LinkedHashMap<String, String>();
 		preBlock = new BoogieBlock();
 		mainBlock = new BoogieBlock();
+		postBlock = new BoogieBlock();
 		implemented = true;
 		
 		refHeaders = new HashSet<>();
@@ -101,8 +103,9 @@ public class BoogieProcedure {
 //				System.out.println("***test***");
 //				System.out.println(preCondition);
 //			}
-			System.out.println(name);
+//			System.out.println(name);
 			code += mainBlock.toBoogie(preCondition);
+			code += postBlock.toBoogie();
 			code += "}\n";
 		}
 //		code += body;
@@ -276,7 +279,7 @@ class BoogieProcedureOperator {
 //	}
 	void update(Context ctx) {
 		updateModify();
-		System.out.println("wryyyyyyyy");
+//		System.out.println("wryyyyyyyy");
 		updateCondition(ctx);
 	}
 }

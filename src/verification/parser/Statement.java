@@ -61,6 +61,16 @@ class AssignmentStatement extends Statement {
 //		return ctx.mkEq(left.getBitVecExpr(), right.getBitVecExpr());
 ////		return super.getCondition();
 //	}
+	
+	void checkReadOnly() {
+		String leftCode = left.p4_to_Boogie();
+		if(leftCode.equals("standard_metadata.ingress_port")||
+				leftCode.equals("standard_metadata.packet_length")||
+				leftCode.equals("standard_metadata.egress_port")||
+				leftCode.equals("standard_metadata.egress_instance")) {
+			Parser.getInstance().addBoogieStatement("\n	// Modify ReadOnly Metadata\n	assert(false);\n");
+		}
+	}
 
 	@Override
 	String p4_to_Boogie() {
@@ -76,9 +86,11 @@ class AssignmentStatement extends Statement {
 //				Parser.getInstance().updateCondition(ctx.mkAnd(expr, oldExpr));
 //			}
 //		}
+		if(Parser.getInstance().getCommands().ifCheckReadOnlyMetadata())
+			checkReadOnly();
 		
 		String leftCode = left.p4_to_Boogie();
-		if(leftCode.startsWith("standard_metadata_t.egress_spec[")) {
+		if(leftCode.startsWith("standard_metadata.egress_spec")) {
 			Parser.getInstance().addBoogieStatement(addIndent()+"forward := true;\n");
 			Parser.getInstance().addModifiedGlobalVariable("forward");
 		}
@@ -100,9 +112,14 @@ class AssignmentStatement extends Statement {
 		left.addAssertStatement();
 		right.addAssertStatement();
 		
-		if(Parser.getInstance().isParserState()||Parser.getInstance().isUsefulAssignmentStatement(Node_ID)) {
-//			if(code.contains(":= true") || code.contains(":= false"))
-				Parser.getInstance().addBoogieStatement(code);
+		if(Parser.getInstance().getCommands().ifCheckHeaderValidity()) {
+			if(Parser.getInstance().isParserState()||Parser.getInstance().isUsefulAssignmentStatement(Node_ID)) {
+//				if(code.contains(":= true") || code.contains(":= false"))
+					Parser.getInstance().addBoogieStatement(code);
+			}
+		}
+		else {
+			Parser.getInstance().addBoogieStatement(code);
 		}
 		return code;
 	}
@@ -198,9 +215,6 @@ class IfStatement extends Statement {
 	}
 	@Override
 	HashSet<String> getBranchVariables() {
-		System.out.println(this.Node_ID);
-		System.out.println(condition.getBranchVariables());
-		System.out.println();
 		return condition.getBranchVariables();
 	}
 }

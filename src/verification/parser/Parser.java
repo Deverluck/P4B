@@ -79,6 +79,8 @@ public class Parser {
 		assertStatements = new LinkedHashSet<>();
 		procedureSetValidHeaders = new HashMap<>();
 		cnt = 0;
+		
+		result = new VerificationResult();
 	}
 
 	private void clear() {
@@ -126,21 +128,20 @@ public class Parser {
 		try {
 			long startTime = System.currentTimeMillis();
 
-			System.out.println("parse:");
 			System.out.println("####################");
+			System.out.println("Parse starts");
 			ObjectNode rootNode = (ObjectNode)mapper.readTree(file);
 			getAllNodes(rootNode);
-			System.out.println("getAllNodes() ends");
-			System.out.println("total: "+allJsonNodes.size());
+			System.out.println("Finish updating node attributes");
+			System.out.println("    Total: "+allJsonNodes.size()+" AST nodes");
 
 			//parse
 			Node program = jsonParse(rootNode);
-			System.out.println("jsonParse() ends");
+			System.out.println("Finish analyzing AST");
 
 //			System.out.println("######## C Program ########");
 //			String C_code = p4_to_C(program);
 //			System.out.println(C_code);
-
 
 			String Boogie_code = p4_to_Boogie(program);
 //			System.out.println("######## Boogie Program ########");
@@ -630,8 +631,6 @@ public class Parser {
 			if(tmp != null)
 				branchVariables.addAll(tmp);
 		}
-		System.out.println(branchVariables.size());
-		System.out.println(assignmentStatements.size());
 		
 		// store the variables dependency graph
 		HashMap<String, HashSet<String>> variableDependency = new HashMap<>();
@@ -668,7 +667,6 @@ public class Parser {
 		queue.addAll(branchVariables);
 		for(String var:branchVariables)
 			inQueue.put(var, true);
-		System.out.println("Here");
 		while(!queue.isEmpty()) {
 			String var = queue.get(0);
 			queue.remove(0);
@@ -683,7 +681,6 @@ public class Parser {
 				}
 			}
 		}
-		System.out.println(branchVariables.size());
 		
 		HashSet<Integer> usefulAssignment = new HashSet<>();
 		for(int id:assignment.keySet()) {
@@ -693,8 +690,9 @@ public class Parser {
 			if(tmp.isEmpty())
 				usefulAssignment.add(id);
 		}
-		System.out.println("useful assign: "+usefulAssignment.size());
-		System.out.println("useless assign: "+(assignmentStatements.size()-usefulAssignment.size()));
+		System.out.println("Analyze useless assignment statements:");
+		System.out.println("    useful assign: "+usefulAssignment.size());
+		System.out.println("    useless assign: "+(assignmentStatements.size()-usefulAssignment.size()));
 		return usefulAssignment;
 	}
 	
@@ -706,7 +704,7 @@ public class Parser {
 
 	String p4_to_Boogie(Node program) {
 		usefulAssignmentStatements = analyzeControlFlow();
-		System.out.println("######## Unhandled Types ########");
+//		System.out.println("######## Unhandled Types ########");
 		String [] handledTypes = {"Path", "Type_Name", "StructField", "Type_Struct",
 				"MethodCallStatement", "Constant", "MethodCallExpression", "Type_Header",
 				"P4Program", "Type_Typedef", "BlockStatement", "AssignmentStatement",
@@ -718,7 +716,7 @@ public class Parser {
 			mytypes.remove(str);
 		}
 		for(String type : mytypes) {
-			System.out.println(type);
+//			System.out.println(type);
 		}
 		String code = p4_to_Boogie_Main_Declaration();
 		
@@ -760,18 +758,30 @@ public class Parser {
 					procedures.get(childName).parents.add(procedure);
 			}
 		}
+		
+		if(getCommands().ifCheckForwardOrDrop()) {
+			addMainPostBoogieStatement("\n	// Check Implicit Drop\n	assert(forward||drop);\n");
+		}
+		
 		BoogieProcedureOperator bpo = new BoogieProcedureOperator();
 		for(String name:procedures.keySet()) {
 //			procedures.get(name).setPreCondition(getProcedurePrecondition(name));
 			bpo.addProcedure(procedures.get(name));
 		}
-		bpo.update(ctx);
-		updateBoogieAssertStatementCondition();
+		
+		if(getCommands().ifCheckHeaderValidity()) {
+			System.out.println("Updating procedure modifies set and precondition");
+			bpo.update(ctx);
+			System.out.println("Updating assert statement condition");
+			updateBoogieAssertStatementCondition();
+		}
+		
+		System.out.println("Generating Boogie code");
 		for(BoogieProcedure procedure:bpo.procedures) {
 			code += procedure.toBoogie();
 //			System.out.println(procedure.toBoogie());
 		}
-		System.out.println(cnt);
+		System.out.println("Header Validity: "+cnt+" bugs");
 		return code;
 	}
 
@@ -801,6 +811,9 @@ public class Parser {
 //	private ArrayList<BoogieAssertStatement> assertStatements;
 	private LinkedHashSet<BoogieAssertStatement> assertStatements;
 	private HashMap<BoogieProcedure, HashMap<String, BoolExpr>> procedureSetValidHeaders;
+	
+	// Verification Result
+	private VerificationResult result;
 
 	private void initContext() {
 		HashMap<String, String> cfg = new HashMap<String, String>();
@@ -852,6 +865,11 @@ public class Parser {
 			}
 		}
 		return false;
+	}
+	
+	void addBoogieAssertStatement(String cont) {
+		BoogieAssertStatement statement = new BoogieAssertStatement(cont, currentProcedure.name);
+		addBoogieStatement(statement);
 	}
 	
 	void addBoogieAssertStatement(String cont, BoolExpr expr) {
@@ -941,6 +959,11 @@ public class Parser {
 	void addMainBoogieStatement(String cont) {
 		BoogieStatement statement = new BoogieStatement(cont);
 		mainProcedure.mainBlock.addToFirst(statement);
+	}
+	
+	void addMainPostBoogieStatement(String cont) {
+		BoogieStatement statement = new BoogieStatement(cont);
+		mainProcedure.postBlock.addToFirst(statement);
 	}
 
 	BoogieProcedure getCurrentProcedure() {
@@ -1167,6 +1190,10 @@ public class Parser {
 		if(!procedureSetValidHeaders.containsKey(procedure))
 			return false;
 		return procedureSetValidHeaders.get(procedure).containsKey(header);
+	}
+	
+	VerificationResult getResult() {
+		return result;
 	}
 //
 //	HashSet<String> getModifiedGlobalVariables() {
