@@ -128,7 +128,7 @@ public class Parser {
 		try {
 			long startTime = System.currentTimeMillis();
 
-			System.out.println("####################");
+//			System.out.println("####################");
 			System.out.println("Parse starts");
 			ObjectNode rootNode = (ObjectNode)mapper.readTree(file);
 			getAllNodes(rootNode);
@@ -422,6 +422,16 @@ public class Parser {
 
 		String code = "var drop:bool;\n";
 		addBoogieGlobalVariable("drop");
+		String procedureName = "clear_drop";
+		BoogieProcedure clear_drop = new BoogieProcedure(procedureName);
+		clear_drop.implemented = false;
+		addProcedure(clear_drop);
+		setCurrentProcedure(clear_drop);
+		clear_drop.declare = "\nprocedure "+procedureName+"();\n";
+		clear_drop.declare += "	ensures forward==false;\n";
+		addModifiedGlobalVariable("drop");
+		addMainPreBoogieStatement("	call clear_drop();\n");
+		mainProcedure.childrenNames.add(procedureName);
 		return code;
 	}
 
@@ -768,10 +778,11 @@ public class Parser {
 //			procedures.get(name).setPreCondition(getProcedurePrecondition(name));
 			bpo.addProcedure(procedures.get(name));
 		}
-		
+		bpo.updateModify();
 		if(getCommands().ifCheckHeaderValidity()) {
 			System.out.println("Updating procedure modifies set and precondition");
-			bpo.update(ctx);
+			bpo.updateCondition(ctx);
+//			bpo.update(ctx);
 			System.out.println("Updating assert statement condition");
 			updateBoogieAssertStatementCondition();
 		}
@@ -781,7 +792,13 @@ public class Parser {
 			code += procedure.toBoogie();
 //			System.out.println(procedure.toBoogie());
 		}
-		System.out.println("Header Validity: "+cnt+" bugs");
+		
+		System.out.println();
+		if(cnt == 0)
+			System.out.println("Header Validity: "+cnt+" bug");
+		else
+			System.out.println("Header Validity: "+cnt+" bugs");
+		result.show();
 		return code;
 	}
 
@@ -886,6 +903,7 @@ public class Parser {
 	}
 	
 	void addBoogieAssertStatement(String cont, String headerName) {
+		result.headerValidityAssertionTotal.inc();
 		BoogieHeaderValidityAssertStatement statement = new BoogieHeaderValidityAssertStatement(cont, headerName, currentProcedure.name);
 		BoolExpr condition = getContext().mkBool(true);
 		for(BoolExpr expr:getCurrentProcedure().getConditions()) {
@@ -899,6 +917,7 @@ public class Parser {
 	}
 	
 	void addBoogieAssertStatement(String cont, String headerName, BoolExpr c) {
+		result.headerValidityAssertionTotal.inc();
 		BoogieHeaderValidityAssertStatement statement = new BoogieHeaderValidityAssertStatement(cont, headerName, currentProcedure.name);
 		BoolExpr condition = c;
 		for(BoolExpr expr:getCurrentProcedure().getConditions()) {

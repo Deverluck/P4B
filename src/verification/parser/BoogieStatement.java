@@ -112,9 +112,10 @@ class BoogieAssertStatement extends BoogieStatement{
 			return "";
 		}
 		else {
+			return "";
 //			System.out.println(cont);
 		}
-		return toBoogie();
+//		return toBoogie();
 	}
 }
 

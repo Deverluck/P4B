@@ -13,7 +13,7 @@ public class Main {
 		// File dir = new File("./");
 		// listAll(dir);
 		if (!file.exists()) {
-			if (!file.getParentFile().exists())
+			if (file.getParentFile()!=null&&!file.getParentFile().exists())
 				file.getParentFile().mkdirs();
 			file.createNewFile();
 		}

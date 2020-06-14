@@ -239,7 +239,9 @@ class MethodCallStatement extends Statement {
 		String code = methodCall.p4_to_Boogie()+";\n";
 		if(code.contains("update_checksum") || code.contains("verify_checksum"))
 			return "";
-		if(code.contains(".write(")||code.contains(".read(")||code.contains(".count(")||code.contains(".execute_meter("))
+		if(code.contains(".write(")||code.contains(".read(")||code.contains(".count(")||
+				code.contains(".execute_meter(")||code.contains("resubmit(")||code.contains("recirculate(")||
+				code.contains("clone(")||code.contains("truncate("))
 			return "";
 		if(!code.contains(":="))
 			code = "call "+code;

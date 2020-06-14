@@ -549,6 +549,18 @@ class P4Table extends P4Component {
 				decIndent();
 				Parser.getInstance().popBoogieBlock();
 			}
+			if(cnt != 0) {
+				Parser.getInstance().getCurrentProcedure().updateModifies("drop");
+				Parser.getInstance().addModifiedGlobalVariable("drop");
+				String condition = addIndent()+"else {\n";
+				String end = addIndent()+"}\n";
+				BoogieIfStatement ifStatement = new BoogieIfStatement(condition, end);
+				Parser.getInstance().addBoogieBlock(ifStatement);
+				incIndent();
+				Parser.getInstance().addBoogieStatement(addIndent()+"call mark_to_drop();\n");
+				decIndent();
+				Parser.getInstance().popBoogieBlock();
+			}
 		}
 		body += "}\n";
 		decIndent();
@@ -638,8 +650,10 @@ class ActionList extends P4Component {
 					parameters.put(parameterName, parameterTypeName);
 				}
 			}
-			actionParameters.put(action, parameters);
-			actionList.add(action);
+			if(!action.contains("NoAction")) {
+				actionParameters.put(action, parameters);
+				actionList.add(action);
+			}
 //			actionList.add((ActionListElement)Parser.getInstance().jsonParse(element));
 		}
 	}
