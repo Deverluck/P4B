@@ -1,4 +1,4 @@
-package verification.parser;
+package verification.p4verifier;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -46,6 +46,15 @@ public class Main {
 		commands.setCheckHeaderStackBound();
 		commands.setCheckForwardOrDrop();
 	}
+	
+	public void printOptions() {
+		System.out.println("P4b  options:");
+		System.out.println("  -headerValidity\tcheck header validity");
+		System.out.println("  -headerStackBound\tcheck header stack out-of-bounds error");
+		System.out.println("  -implicitDrop\tcheck implicit drops, which occur when egress_spec"
+				+ "is not assigned");
+	}
+	
 	public static void main(String args[]) {
 		Main m = new Main();
 //		m.setCommands();

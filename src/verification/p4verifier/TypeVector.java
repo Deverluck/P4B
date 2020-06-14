@@ -1,4 +1,4 @@
-package verification.parser;
+package verification.p4verifier;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;

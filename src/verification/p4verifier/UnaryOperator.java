@@ -1,4 +1,4 @@
-package verification.parser;
+package verification.p4verifier;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.z3.BoolExpr;

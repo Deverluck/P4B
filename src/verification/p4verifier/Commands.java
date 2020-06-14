@@ -1,4 +1,4 @@
-package verification.parser;
+package verification.p4verifier;
 
 public class Commands {
 	boolean addControlPlaneConstrain;

@@ -1,4 +1,4 @@
-package verification.parser;
+package verification.p4verifier;
 
 import java.io.File;
 import java.io.IOException;
