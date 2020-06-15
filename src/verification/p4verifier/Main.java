@@ -48,19 +48,35 @@ public class Main {
 	}
 	
 	public void printOptions() {
-		System.out.println("P4b  options:");
-		System.out.println("  -headerValidity\tcheck header validity");
-		System.out.println("  -headerStackBound\tcheck header stack out-of-bounds error");
-		System.out.println("  -implicitDrop\tcheck implicit drops, which occur when egress_spec"
-				+ "is not assigned");
+		System.out.println("Usage: java -jar p4b.jar [options]* <inputFile> <outputFile>");
+		System.out.println();
+		System.out.println("P4B  options:");
+		System.out.println("  -h                     show usage");
+		System.out.println("  -headerValidity        check header validity");
+		System.out.println("  -headerStackBound      check header stack out-of-bounds error");
+		System.out.println("  -implicitDrop          check implicit drops, which occur when egress_spec"
+				+ " is not assigned");
+		System.out.println("  -readOnly              check modification of read-only fields");
+		System.out.println("  -all                   verify all the properties above");
+		System.out.println("  -control               add control plane constraints (developing)");
+		System.out.println();
+		System.out.println("If no options are chosen, P4B by default generate Boogie programs without assertions.");
 	}
 	
 	public static void main(String args[]) {
 		Main m = new Main();
 //		m.setCommands();
 		if(args.length<2) {
+			HashSet<String> cmd = new HashSet<>();
+			for(int i = 0; i < args.length; i++) {
+				cmd.add(args[i]);
+			}
+			if(cmd.contains("-h")) {
+				m.printOptions();
+				System.exit(0);
+			}
 			System.out.println("Usage: java -jar p4b.jar [options] <inputFile> <outputFile>");
-			System.out.println("options: -headerValidity -headerStackBound -implicitDrop -readOnly -all -control");
+			System.out.println("use -h option for more information");
 			return;
 		}
 		
@@ -71,6 +87,10 @@ public class Main {
 			}
 			Parser myParser = Parser.getInstance();
 			Commands commands = myParser.getCommands();
+			if(cmd.contains("-h")) {
+				m.printOptions();
+				System.exit(0);
+			}
 			if(cmd.contains("-headerValidity"))
 				commands.setCheckHeaderValidity();
 			if(cmd.contains("-headerStackBound"))
