@@ -18,28 +18,28 @@ public class BoogieStatement {
 		return cont;
 	}
 	String toBoogie(BoolExpr condition){
-		if(this instanceof BoogieAssertStatement) {
-			BoogieAssertStatement bas = (BoogieAssertStatement)this;
-			Solver solver = Parser.getInstance().createSolver();
-			solver.add(bas.condition);
-//			if(condition!=null)
-//				solver.add(condition);
-			Parser.getInstance().count();
-			
-//			System.out.println("verifying:");
-//			System.out.println(toBoogie());
-//			System.out.println(solver.toString());
-			if(solver.check()==Status.UNSATISFIABLE) {
-				Parser.getInstance().decCount();
-//				System.out.println(Status.UNSATISFIABLE);
-				return "";
-			}
-			else {
-				System.out.println(cont);
-//				System.out.println(Status.SATISFIABLE);
-			}
-//			System.out.println("verification ends\n");
-		}
+//		if(this instanceof BoogieAssertStatement) {
+//			BoogieAssertStatement bas = (BoogieAssertStatement)this;
+//			Solver solver = Parser.getInstance().createSolver();
+//			solver.add(bas.condition);
+////			if(condition!=null)
+////				solver.add(condition);
+//			Parser.getInstance().count();
+//			
+////			System.out.println("verifying:");
+////			System.out.println(toBoogie());
+////			System.out.println(solver.toString());
+//			if(solver.check()==Status.UNSATISFIABLE) {
+//				Parser.getInstance().decCount();
+////				System.out.println(Status.UNSATISFIABLE);
+//				return "";
+//			}
+//			else {
+//				System.out.println(cont);
+////				System.out.println(Status.SATISFIABLE);
+//			}
+////			System.out.println("verification ends\n");
+//		}
 		return toBoogie();
 	}
 }
@@ -68,6 +68,16 @@ class BoogieAssertStatement extends BoogieStatement{
 				continue;
 			BoogieProcedure p1 = Parser.getInstance().getProcedrue(procedureName);
 			BoogieProcedure p2 = Parser.getInstance().getProcedrue(statement.procedureName);
+			if(p1.getPreCondition()==null&&p2.getPreCondition()==null) {
+				names.add(statement.procedureName);
+				duplicate = true;
+				it.remove();
+				cnt++;
+			}
+			if(p1.getPreCondition()==null)
+				continue;
+			if(p2.getPreCondition()==null)
+				continue;
 			Context ctx = Parser.getInstance().getContext();
 			BoolExpr c1 = ctx.mkAnd(condition, p1.getPreCondition());
 			BoolExpr c2 = ctx.mkAnd(statement.condition, p2.getPreCondition());
@@ -92,26 +102,42 @@ class BoogieAssertStatement extends BoogieStatement{
 	}
 	
 	String toBoogie(BoolExpr condition){
+		if(Parser.getInstance().getCommands().ifShowLog()) {
+			System.out.println("##verifying##");
+			System.out.println(this.procedureName);
+		}
+//		System.out.println(condition);
+		
 		if(!Parser.getInstance().getAssertStatements().contains(this)) {
 			return "";
 		}
-		if(Parser.getInstance().getCommands().ifCheckHeaderValidity()) {
+		if(Parser.getInstance().getCommands().ifCheckHeaderValidity()
+				&&Parser.getInstance().getCommands().ifRemoveRedundantAssertions()) {
 			removeDuplicate();
 		}
 		
-		BoogieAssertStatement bas = (BoogieAssertStatement)this;
+//		BoogieAssertStatement bas = (BoogieAssertStatement)this;
 		Solver solver = Parser.getInstance().createSolver();
-		solver.add(bas.condition);
+		solver.add(this.condition);
+//		System.out.println(this.condition);
 		if(condition!=null)
 			solver.add(condition);
-		Parser.getInstance().count();
+//		Parser.getInstance().count();
 			
 		if(solver.check()==Status.UNSATISFIABLE) {
-			Parser.getInstance().decCount();
+//			Parser.getInstance().decCount();
 //			System.out.println(Status.UNSATISFIABLE);
+//			System.out.println();
 			return "";
 		}
 		else {
+			Parser.getInstance().count();
+			if(Parser.getInstance().getCommands().ifShowLog()) {
+				System.out.println("!!!Bugs in "+this.procedureName+"!!!");
+				System.out.println(this.cont);
+			}
+//			System.out.println(condition);
+//			System.out.println(this.condition);
 			return "";
 //			System.out.println(cont);
 		}
@@ -127,6 +153,39 @@ class BoogieHeaderValidityAssertStatement extends BoogieAssertStatement {
 	}
 	String getHeaderName() {
 		return headerName;
+	}
+	@Override
+	String toBoogie(BoolExpr condition) {
+		String exprName = "isValid["+headerName+"]";
+		exprName = exprName.replace('[', '_');
+		exprName = exprName.replace("], ", "_");
+		exprName = exprName.replace(", ", "_");
+		exprName = exprName.replace(']', '_');
+		exprName = exprName.replace('.', '_');
+		BoolExpr expr = Parser.getInstance().getContext().mkBoolConst(exprName);
+		BoolExpr c = null;
+		if(condition!=null&&condition.toString().contains(exprName))
+			c = condition;
+		else if(this.condition!=null&&this.condition.toString().contains(exprName))
+			c = this.condition;
+		if(c!=null&&c.toString().contains(exprName)) {
+			Solver solver = Parser.getInstance().createSolver();
+			solver.add(c);
+			solver.add(Parser.getInstance().getContext().mkNot(expr));
+			if(solver.check()==Status.UNSATISFIABLE) {
+//				Parser.getInstance().decCount();
+				return "";
+			}
+		}
+		ArrayList<BoogieProcedure> states = Parser.getInstance().fromHeaderToParserStates(headerName);
+		if(states!=null) {
+			for(BoogieProcedure state:states) {
+				if(StateMachine.getInstance().work(state.name)) {
+					return "";
+				}
+			}
+		}
+		return super.toBoogie(condition);
 	}
 }
 
@@ -150,8 +209,8 @@ class BoogieBlock extends BoogieStatement {
 		return code;
 	}
 	String toBoogie(BoolExpr condition) {
-		if(condition==null)
-			return toBoogie();
+//		if(condition==null)
+//			return toBoogie();
 		String code = "";
 		for(BoogieStatement bs:conts) {
 			code += bs.toBoogie(condition);

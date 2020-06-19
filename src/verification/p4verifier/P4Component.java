@@ -119,6 +119,7 @@ class ParserState extends P4Component {
 	String name;
 	Node components;        // body
 	Node selectExpression;
+	State state;
 
 	@Override
 	void parse(ObjectNode object) {
@@ -134,6 +135,9 @@ class ParserState extends P4Component {
 		}
 		else
 			selectExpression = null;
+		
+		state = new State(name);
+		StateMachine.getInstance().addState(state);
 //		addChild(selectExpression);
 	}
 	@Override
@@ -159,8 +163,15 @@ class ParserState extends P4Component {
 		String body = "{\n";
 		addIndent();
 		body += components.p4_to_Boogie();
-		if(selectExpression != null)
+		if(selectExpression != null) {
 			body += selectExpression.p4_to_Boogie(JsonKeyName.PARSERSTATE);
+			if(selectExpression instanceof PathExpression) {
+				state.addSucc(((PathExpression)selectExpression).getName());
+			}
+			else if(selectExpression instanceof SelectExpression) {
+				state.addSucc(((SelectExpression)selectExpression).getCaseNames());
+			}
+		}
 		decIndent();
 		body += "}\n";
 		decIndent();

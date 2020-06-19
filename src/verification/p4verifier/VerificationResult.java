@@ -7,6 +7,7 @@ public class VerificationResult {
 	Counter modifyReadOnlyField;
 	
 	Counter headerValidityAssertionTotal;
+	Counter headerStackAssertionTotal;
 	
 	public VerificationResult() {
 		headerValidityCounter = new Counter();
@@ -15,6 +16,7 @@ public class VerificationResult {
 		modifyReadOnlyField = new Counter();
 		
 		headerValidityAssertionTotal = new Counter();
+		headerStackAssertionTotal = new Counter();
 	}
 	String helper(int cnt) {
 		if(cnt <= 1)
@@ -26,6 +28,7 @@ public class VerificationResult {
 		System.out.println("Header Stack Out Of Bound: "+helper(headerStackOutOfBound.cnt));
 		System.out.println("Modify ReadOnly Field: "+helper(modifyReadOnlyField.cnt));
 		System.out.println("Header Validity Assertion Total Number: "+headerValidityAssertionTotal.cnt);
+		System.out.println("Header Stack Assertion Total Number: "+headerStackAssertionTotal.cnt);
 	}
 }
 

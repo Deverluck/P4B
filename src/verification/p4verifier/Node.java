@@ -115,6 +115,10 @@ public class Node {
 		return "";
 	}
 	
+	String addAssertStatement(BoolExpr condition) {
+		return "";
+	}
+	
 	/** 
 	 * For some particular properties, useless statements can be deleted.
 	 * Useful statements are those that may be related to branches.

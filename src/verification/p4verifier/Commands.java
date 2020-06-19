@@ -10,6 +10,12 @@ public class Commands {
 	// check assignment statements
 	boolean checkAssignmentCondition; 
 	
+	// Optimizations
+	boolean removeRedundantAssertions;
+	boolean removeRedundantAssignment;
+	
+	boolean showLog;
+	
 	public Commands() {
 		addControlPlaneConstrain = false;
 		checkHeaderValidity = false;
@@ -17,6 +23,9 @@ public class Commands {
 		checkForwardOrDrop = false;
 		checkReadOnlyMetadata = false;
 		checkAssignmentCondition = false;
+		removeRedundantAssertions = false;
+		removeRedundantAssignment = false;
+		showLog = false;
 	}
 	
 	boolean ifConstrainControlPlane() {
@@ -64,6 +73,27 @@ public class Commands {
 		return checkAssignmentCondition;
 	}
 	void setCheckAssignmentCondition() {
-		checkAssignmentCondition = false;
+		checkAssignmentCondition = true;
+	}
+	
+	boolean ifRemoveRedundantAssertions() {
+		return removeRedundantAssertions;
+	}
+	void setRemoveRedundantAssertions() {
+		removeRedundantAssertions = true;
+	}
+	
+	boolean ifRemoveRedundantAssignment() {
+		return removeRedundantAssignment;
+	}
+	void setRemoveRedundantAssignment() {
+		removeRedundantAssignment = true;
+	}
+	
+	boolean ifShowLog() {
+		return showLog;
+	}
+	void setShowLog() {
+		showLog = true;
 	}
 }

@@ -208,7 +208,7 @@ public class Parser {
 			}
 			else {
 				types.add(typeName);
-				Class<?> nodeClass = Class.forName("verification.parser."+typeName);
+				Class<?> nodeClass = Class.forName("verification.p4verifier."+typeName);
 				node = (Node)nodeClass.newInstance();
 			}
 			node.parse(object);
@@ -875,6 +875,8 @@ public class Parser {
 	
 	// Used when inserting assert statements
 	boolean isAssertStatementDuplicate(String cont, BoolExpr condition, String procedureName) {
+		if(!commands.ifRemoveRedundantAssertions())
+			return false;
 		for(BoogieAssertStatement statement:assertStatements) {
 			if(statement.procedureName.equals(procedureName)&&
 					statement.cont.equals(cont)&&statement.condition.toString().equals(condition.toString())) {
@@ -902,6 +904,11 @@ public class Parser {
 		assertStatements.add(statement);
 	}
 	
+	void showAssertStatement(BoogieHeaderValidityAssertStatement s) {
+//		System.out.println("In procedure "+getCurrentProcedure().name);
+//		System.out.println(s.cont);
+	}
+	
 	void addBoogieAssertStatement(String cont, String headerName) {
 		result.headerValidityAssertionTotal.inc();
 		BoogieHeaderValidityAssertStatement statement = new BoogieHeaderValidityAssertStatement(cont, headerName, currentProcedure.name);
@@ -914,6 +921,7 @@ public class Parser {
 		statement.setCondition(condition);
 		addBoogieStatement(statement);
 		assertStatements.add(statement);
+		showAssertStatement(statement);
 	}
 	
 	void addBoogieAssertStatement(String cont, String headerName, BoolExpr c) {
@@ -928,6 +936,7 @@ public class Parser {
 		statement.setCondition(condition);
 		addBoogieStatement(statement);
 		assertStatements.add(statement);
+		showAssertStatement(statement);
 	}
 	
 	void updateBoogieAssertStatementCondition() {

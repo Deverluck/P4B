@@ -42,9 +42,10 @@ public class Main {
 		Parser myParser = Parser.getInstance();
 		Commands commands = myParser.getCommands();
 //		commands.setControlPlaneConstrain();
-		commands.setCheckHeaderValidity();
+//		commands.setCheckHeaderValidity();
+//		commands.setRemoveRedundantAssertions();
 		commands.setCheckHeaderStackBound();
-		commands.setCheckForwardOrDrop();
+//		commands.setCheckForwardOrDrop();
 	}
 	
 	public void printOptions() {
@@ -59,20 +60,21 @@ public class Main {
 		System.out.println("  -readOnly              check modification of read-only fields");
 		System.out.println("  -all                   verify all the properties above");
 		System.out.println("  -control               add control plane constraints (developing)");
+		System.out.println("  -rAssertion            remove redundant assertion statements");
+		System.out.println("  -log                   show debug information");
 		System.out.println();
 		System.out.println("If no options are chosen, P4B by default generate Boogie programs without assertions.");
 	}
 	
-	public static void main(String args[]) {
-		Main m = new Main();
-//		m.setCommands();
+	// For p4b.jar
+	public void runWithOptions(String args[]) {
 		if(args.length<2) {
 			HashSet<String> cmd = new HashSet<>();
 			for(int i = 0; i < args.length; i++) {
 				cmd.add(args[i]);
 			}
 			if(cmd.contains("-h")) {
-				m.printOptions();
+				printOptions();
 				System.exit(0);
 			}
 			System.out.println("Usage: java -jar p4b.jar [options] <inputFile> <outputFile>");
@@ -88,9 +90,10 @@ public class Main {
 			Parser myParser = Parser.getInstance();
 			Commands commands = myParser.getCommands();
 			if(cmd.contains("-h")) {
-				m.printOptions();
+				printOptions();
 				System.exit(0);
 			}
+//			System.out.println(cmd);
 			if(cmd.contains("-headerValidity"))
 				commands.setCheckHeaderValidity();
 			if(cmd.contains("-headerStackBound"))
@@ -107,6 +110,12 @@ public class Main {
 				commands.setCheckForwardOrDrop();
 				commands.setCheckReadOnlyMetadata();
 			}
+			if(cmd.contains("-rAssertion")){
+				commands.setRemoveRedundantAssertions();
+			}
+			if(cmd.contains("-log")){
+				commands.setShowLog();
+			}
 		}
 		
 		String input = args[args.length-2];
@@ -116,8 +125,69 @@ public class Main {
 			return;
 		}
 		String output = args[args.length-1];
-		m.p4_to_Boogie(input, output);
+		p4_to_Boogie(input, output);
+	}
+	
+	void run() {
+		setCommands();
+		String input, output;
+		// axon (ok)
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/axon/p416-axon-ppc.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/axon/p416-axon-ppc-without-map.bpl";
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch-without-map.bpl";
 		
+		// simple-nat
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/simple-nat/p416-simple_nat-ppc.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/simple-nat/p416-simple_nat-ppc.bpl";
+		
+		// p4xos
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/p4xos-learner/p416-learner-ppc.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/p4xos-learner/p416-learner-ppc.bpl";
+		
+		// simple router
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/simple-router/p416-simple_router-ppc.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/simple-router/p416-simple_router-ppc.bpl";
+		
+		// ndp
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/ndp-router/p416-ndp_router-ppc.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/ndp-router/p416-ndp_router-ppc.bpl";
+		
+		// copy-to-cpu
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/copy-to-cpu/p416-copy_to_cpu-ppc.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/copy-to-cpu/p416-copy_to_cpu-ppc.bpl";
+		
+		// resubmit
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/resubmit/p416-resubmit-ppc.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/resubmit/p416-resubmit-ppc.bpl";
+		
+		// mc_nat
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/paper-experiment/benchmarks/full/mc_nat/mc_nat-16.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/paper-experiment/benchmarks/full/mc_nat/mc_nat-16.bpl";
+		
+		// vpc
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/paper-experiment/benchmarks/full/vpc/p416-vpc.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/paper-experiment/benchmarks/full/vpc/p416-vpc.bpl";
+		
+		// dapper
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/dapper/p416-rinc-ppc.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/dapper/p416-rinc-ppc.bpl";
+		
+		// switch
+		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch.json";
+		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch.bpl";
+		
+		//
+//		input = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch.json";
+//		output = "/media/invincible/WORK/Programs/P4-verification/p4toBoogie/benchmark/vera-testcases/big-switch/p416-switch.bpl";
+		p4_to_Boogie(input, output);
+	}
+	
+	public static void main(String args[]) {
+		Main m = new Main();
+//		m.setCommands();
+		m.runWithOptions(args);
+//		m.run();
 		
 //		Parser myParser = Parser.getInstance();
 //		String input = "/media/invincible/WORK/Programs/P4-verification/sharedir/test/header_stack_test.json";

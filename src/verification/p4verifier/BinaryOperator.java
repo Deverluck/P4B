@@ -77,6 +77,12 @@ public class BinaryOperator extends Node {
 		right.addAssertStatement();
 		return super.addAssertStatement();
 	}
+	@Override
+	String addAssertStatement(BoolExpr expr) {
+		left.addAssertStatement(expr);
+		right.addAssertStatement(expr);
+		return super.addAssertStatement(expr);
+	}
 }
 
 class Shl extends BinaryOperator {
@@ -300,6 +306,13 @@ class LAnd extends BinaryOperator {
 		BoolExpr expr = Parser.getInstance().getContext().mkAnd(left.getCondition(), right.getCondition());
 		return expr;
 	}
+	@Override
+	String addAssertStatement() {
+		left.addAssertStatement();
+		BoolExpr expr = left.getCondition();
+		right.addAssertStatement(expr);
+		return "";
+	}
 }
 
 // ||
@@ -400,6 +413,7 @@ class ArrayIndex extends BinaryOperator {
 			return statement;
 		}
 		if(Parser.getInstance().getCommands().ifCheckHeaderStackBound()) {
+			Parser.getInstance().getResult().headerStackAssertionTotal.inc();
 //			Parser.getInstance().addStack(stack);
 			if(left instanceof Member) {
 				Member m = (Member)left;

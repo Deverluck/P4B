@@ -94,6 +94,12 @@ class MethodCallExpression extends Expression {
 	String p4_to_Boogie() {
 		String code = "";
 		String methodName = method.p4_to_Boogie();
+		
+		if(methodName.contains(".write")) {
+			for(Node n:arguments)
+				n.addAssertStatement();
+		}
+		
 		if(methodName.equals("extract")) {
 //			methodName = "packet_in."+methodName+"."+typeArguments.get(0).getTypeName();
 			String argument = arguments.get(0).getName();
@@ -308,6 +314,11 @@ class Cast extends Expression {
 		}
 		return super.p4_to_Boogie();
 	}
+	@Override
+	String addAssertStatement() {
+		expr.addAssertStatement();
+		return super.addAssertStatement();
+	}
 }
 
 class Member extends Expression {
@@ -484,6 +495,23 @@ class Member extends Expression {
 		return expr.addAssertStatement();
 	}
 	@Override
+	String addAssertStatement(BoolExpr c) {
+		if(Parser.getInstance().getCommands().ifCheckHeaderValidity()&&type.Node_Type.equals("Type_Header")) {
+			Context ctx = Parser.getInstance().getContext();
+			BoolExpr condition = Parser.getInstance().getSetValidHeaderCondition(this.p4_to_Boogie());
+			
+			String statement = addIndent()+"assert(isValid["+this.p4_to_Boogie()+"]);\n";
+			if(condition!=null) {
+				Parser.getInstance().addBoogieAssertStatement(statement, this.p4_to_Boogie(), ctx.mkAnd(c, ctx.mkNot(condition)));
+			}
+			else
+				Parser.getInstance().addBoogieAssertStatement(statement, this.p4_to_Boogie(), c);
+			return statement;
+		}
+		return expr.addAssertStatement(c);
+	}
+	
+	@Override
 	HashSet<String> getBranchVariables() {
 		HashSet<String> variables = new HashSet<>();
 		variables.add(p4_to_Boogie());
@@ -514,6 +542,7 @@ class Member extends Expression {
 		exprName = exprName.replace(']', '_');
 		exprName = exprName.replace('.', '_');
 		BoolExpr expr = Parser.getInstance().getContext().mkBoolConst(exprName);
+//		System.out.println(exprName);
 		return expr;
 	}
 }

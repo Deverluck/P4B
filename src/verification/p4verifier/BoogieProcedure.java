@@ -279,7 +279,6 @@ class BoogieProcedureOperator {
 //	}
 	void update(Context ctx) {
 		updateModify();
-//		System.out.println("wryyyyyyyy");
 		updateCondition(ctx);
 	}
 }

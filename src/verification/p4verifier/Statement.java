@@ -108,12 +108,15 @@ class AssignmentStatement extends Statement {
 			code = addIndent()+"havoc "+leftCode+";\n";
 		}
 		
-		// Add assert statement
+		/* Add assert statement
+		 * Writing invalid fields is allowed
+		 */
 		left.addAssertStatement();
 		right.addAssertStatement();
 		
 		if(Parser.getInstance().getCommands().ifCheckHeaderValidity()) {
-			if(Parser.getInstance().isParserState()||Parser.getInstance().isUsefulAssignmentStatement(Node_ID)) {
+			if(Parser.getInstance().isParserState()||
+					(!Parser.getInstance().getCommands().ifRemoveRedundantAssignment()||Parser.getInstance().isUsefulAssignmentStatement(Node_ID))) {
 //				if(code.contains(":= true") || code.contains(":= false"))
 					Parser.getInstance().addBoogieStatement(code);
 			}
@@ -177,6 +180,9 @@ class IfStatement extends Statement {
 	@Override
 	String p4_to_Boogie() {
 		getCondition();
+		if(Parser.getInstance().getCommands().ifCheckHeaderValidity()) {
+			condition.addAssertStatement();
+		}
 		String code = addIndent()+"if(";
 		code += condition.p4_to_Boogie();
 		code += "){\n";
@@ -335,6 +341,17 @@ class SelectExpression extends Statement {
 		}
 		return code;
 	}
+	
+	HashSet<String> getCaseNames(){
+		HashSet<String> res = new HashSet<>();
+		for(Node casenode:cases) {
+			res.add(casenode.getName());
+		}
+		if(default_case!=null) {
+			res.add(default_case.getName());
+		}
+		return res;
+	}
 
 	@Override
 	String p4_to_Boogie() {
@@ -432,8 +449,8 @@ class SwitchStatement extends Statement {
 	}
 	@Override
 	BoolExpr getCondition() {
-		System.out.println(expression.p4_to_Boogie());
-		System.out.println(expression.getCondition());
+//		System.out.println(expression.p4_to_Boogie());
+//		System.out.println(expression.getCondition());
 		return expression.getCondition();
 	}
 	BoolExpr getNegCondition() {
