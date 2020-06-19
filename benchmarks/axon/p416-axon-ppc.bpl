@@ -607,9 +607,6 @@ modifies drop, hdr.axon_revHop.0.port, forward, isValid, meta.my_metadata.header
 	call clear_valid();
 	call clear_forward();
 	call main();
-
-	// Check Implicit Drop
-	assert(forward||drop);
 }
 
 procedure clear_forward();
@@ -697,7 +694,7 @@ procedure {:inline 1} egress()
 
 // Control ingress
 procedure {:inline 1} ingress()
-modifies standard_metadata.egress_spec, drop, hdr.axon_revHop.0.port, forward, isValid, hdr.axon_head.revHopCount, hdr.axon_head.fwdHopCount;
+modifies drop, standard_metadata.egress_spec, hdr.axon_revHop.0.port, forward, isValid, hdr.axon_head.revHopCount, hdr.axon_head.fwdHopCount;
 {
 	if(hdr.axon_head.axonLength!=meta.my_metadata.headerLen){
 		call drop_pkt.apply();
@@ -757,7 +754,7 @@ modifies drop;
 
 // Table route_pkt
 procedure {:inline 1} route_pkt.apply()
-modifies standard_metadata.egress_spec, drop, hdr.axon_revHop.0.port, forward, isValid, hdr.axon_head.revHopCount, hdr.axon_head.fwdHopCount;
+modifies drop, standard_metadata.egress_spec, hdr.axon_revHop.0.port, forward, isValid, hdr.axon_head.revHopCount, hdr.axon_head.fwdHopCount;
 {
 	if(route_pkt.action_run == action._drop_2){
 		call _drop_2();
@@ -915,7 +912,7 @@ procedure {:inline 1} computeChecksum()
 {
 }
 procedure {:inline 1} main()
-modifies standard_metadata.egress_spec, drop, meta.my_metadata.fwdHopCount, hdr.axon_revHop.0.port, forward, isValid, meta.my_metadata.revHopCount, meta.my_metadata.headerLen, emit, parser.tmp_0, hdr.axon_head.revHopCount, hdr.axon_head.fwdHopCount;
+modifies drop, standard_metadata.egress_spec, meta.my_metadata.fwdHopCount, hdr.axon_revHop.0.port, forward, isValid, meta.my_metadata.revHopCount, meta.my_metadata.headerLen, emit, parser.tmp_0, hdr.axon_head.revHopCount, hdr.axon_head.fwdHopCount;
 {
 	call ParserImpl();
 	if(drop != true){

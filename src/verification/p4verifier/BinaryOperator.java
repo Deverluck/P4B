@@ -398,20 +398,6 @@ class ArrayIndex extends BinaryOperator {
 	}
 	@Override
 	String addAssertStatement() {
-		if(Parser.getInstance().getCommands().ifCheckHeaderValidity()&&type.Node_Type.equals("Type_Header")) {
-			Context ctx = Parser.getInstance().getContext();
-			BoolExpr condition = Parser.getInstance().getSetValidHeaderCondition(this.p4_to_Boogie());
-			String statement = addIndent()+"assert(isValid["+this.p4_to_Boogie()+"]);\n";
-			if(condition!=null) {
-				Parser.getInstance().addBoogieAssertStatement(statement, this.p4_to_Boogie(), ctx.mkNot(condition));
-			}
-			else
-				Parser.getInstance().addBoogieAssertStatement(statement, this.p4_to_Boogie());
-			
-//			String statement = addIndent()+"assert(isValid["+this.p4_to_Boogie()+"]);\n";
-//			Parser.getInstance().addBoogieStatement(statement);
-			return statement;
-		}
 		if(Parser.getInstance().getCommands().ifCheckHeaderStackBound()) {
 			Parser.getInstance().getResult().headerStackAssertionTotal.inc();
 //			Parser.getInstance().addStack(stack);
@@ -428,6 +414,20 @@ class ArrayIndex extends BinaryOperator {
 //				String statement = addIndent()+"assert("+right.p4_to_Boogie()+"<="+stack.size.value+");\n";
 //				Parser.getInstance().addBoogieStatement(statement);
 			}
+		}
+		if(Parser.getInstance().getCommands().ifCheckHeaderValidity()&&type.Node_Type.equals("Type_Header")) {
+			Context ctx = Parser.getInstance().getContext();
+			BoolExpr condition = Parser.getInstance().getSetValidHeaderCondition(this.p4_to_Boogie());
+			String statement = addIndent()+"assert(isValid["+this.p4_to_Boogie()+"]);\n";
+			if(condition!=null) {
+				Parser.getInstance().addBoogieAssertStatement(statement, this.p4_to_Boogie(), ctx.mkNot(condition));
+			}
+			else
+				Parser.getInstance().addBoogieAssertStatement(statement, this.p4_to_Boogie());
+			
+//			String statement = addIndent()+"assert(isValid["+this.p4_to_Boogie()+"]);\n";
+//			Parser.getInstance().addBoogieStatement(statement);
+			return statement;
 		}
 		return super.addAssertStatement();
 	}
