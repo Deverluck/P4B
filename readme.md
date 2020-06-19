@@ -29,7 +29,7 @@ java -jar p4b.jar [options]* <inputfiles> <outputfiles>
   -h                     show usage
   -headerValidity        check header validity
   -headerStackBound      check header stack out-of-bounds error
-  -implicitDrop          check implicit drops, which occur when egress_spec is not 								 assigned
+  -implicitDrop          check implicit drops, which occur when egress_spec is not assigned
   -readOnly              check modification of read-only fields
   -all                   verify all the properties above
   -control               add control plane constraints (developing)
