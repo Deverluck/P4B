@@ -90,7 +90,8 @@ class AssignmentStatement extends Statement {
 			checkReadOnly();
 		
 		String leftCode = left.p4_to_Boogie();
-		if(leftCode.startsWith("standard_metadata.egress_spec")) {
+		if(leftCode.startsWith("standard_metadata.egress_spec") || 
+				leftCode.startsWith("Heap[standard_metadata, standard_metadata_t.egress_spec]")) {
 			Parser.getInstance().addBoogieStatement(addIndent()+"forward := true;\n");
 			Parser.getInstance().addModifiedGlobalVariable("forward");
 		}

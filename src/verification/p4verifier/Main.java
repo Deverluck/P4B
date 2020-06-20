@@ -42,10 +42,10 @@ public class Main {
 		Parser myParser = Parser.getInstance();
 		Commands commands = myParser.getCommands();
 //		commands.setControlPlaneConstrain();
-//		commands.setCheckHeaderValidity();
-//		commands.setRemoveRedundantAssertions();
+		commands.setCheckHeaderValidity();
+		commands.setRemoveRedundantAssertions();
 		commands.setCheckHeaderStackBound();
-//		commands.setCheckForwardOrDrop();
+		commands.setCheckForwardOrDrop();
 	}
 	
 	public void printOptions() {

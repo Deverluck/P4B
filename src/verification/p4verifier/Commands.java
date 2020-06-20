@@ -16,6 +16,8 @@ public class Commands {
 	
 	boolean showLog;
 	
+	boolean useCorral;
+	
 	public Commands() {
 		addControlPlaneConstrain = false;
 		checkHeaderValidity = false;
@@ -26,6 +28,7 @@ public class Commands {
 		removeRedundantAssertions = false;
 		removeRedundantAssignment = false;
 		showLog = false;
+		useCorral = true;
 	}
 	
 	boolean ifConstrainControlPlane() {
@@ -95,5 +98,12 @@ public class Commands {
 	}
 	void setShowLog() {
 		showLog = true;
+	}
+	
+	boolean ifUseCorral() {
+		return useCorral;
+	}
+	void setUseCorral() {
+		useCorral = true;
 	}
 }

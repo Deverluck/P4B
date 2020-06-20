@@ -339,10 +339,14 @@ public class Parser {
 	String p4_to_Boogie_Main_Declaration() {
 		String code = "";
 		code += "\ntype Ref;\n";
-//		code += "type Field T;\n";
-//		code += "type HeapType = <T>[Ref, Field T]T;\n";
+		if(!getCommands().ifUseCorral()) {
+			code += "type Field T;\n";
+			code += "type HeapType = <T>[Ref, Field T]T;\n";
+			code += "var Heap:HeapType;\n";
+		}
+
 		code += "type HeaderStack = [int]Ref;\n";
-//		code += "var Heap:HeapType;\n";
+
 		code += "var last:[HeaderStack]Ref;\n";
 		addBoogieGlobalVariable("Heap");
 		
@@ -428,7 +432,7 @@ public class Parser {
 		addProcedure(clear_drop);
 		setCurrentProcedure(clear_drop);
 		clear_drop.declare = "\nprocedure "+procedureName+"();\n";
-		clear_drop.declare += "	ensures forward==false;\n";
+		clear_drop.declare += "	ensures drop==false;\n";
 		addModifiedGlobalVariable("drop");
 		addMainPreBoogieStatement("	call clear_drop();\n");
 		mainProcedure.childrenNames.add(procedureName);

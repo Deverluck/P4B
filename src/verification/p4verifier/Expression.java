@@ -423,6 +423,12 @@ class Member extends Expression {
 //			Parser.getInstance().addModifiedGlobalVariable("Heap");
 //			String code = "Heap["+expr.p4_to_Boogie()+", "+expr.getTypeName()+"."+member+"]";
 			String code = expr.p4_to_Boogie()+"."+member;
+			if(!Parser.getInstance().getCommands().ifUseCorral()) {
+				code = "Heap["+expr.p4_to_Boogie()+", "+expr.getTypeName()+"."+member+"]";
+				if(member.equals("last")) {
+					code = "last["+expr.p4_to_Boogie()+"]";
+				}
+			}
 //			String code = expr.getTypeName()+"."+member+"["+expr.p4_to_Boogie()+"]";
 			
 //			if(member.equals("last")) {

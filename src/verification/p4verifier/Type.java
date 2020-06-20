@@ -70,23 +70,38 @@ class Type_Header extends Type {
 //	}
 	@Override
 	String p4_to_Boogie() {
-		String code = "\n// Header "+name+"\n";
-		for(StructField field : fields) {
-			String var = name+"."+field.name;
-			code += "var "+var+":[Ref]"+field.p4_to_Boogie()+";\n";
-			Parser.getInstance().addBoogieGlobalVariable(var);
+		if(Parser.getInstance().getCommands().ifUseCorral()) {
+			String code = "\n// Header "+name+"\n";
+			for(StructField field : fields) {
+				String var = name+"."+field.name;
+				code += "var "+var+":[Ref]"+field.p4_to_Boogie()+";\n";
+				Parser.getInstance().addBoogieGlobalVariable(var);
+			}
+			return super.p4_to_Boogie();
 		}
-		return super.p4_to_Boogie();
+		else {
+			String code = "\n// Header "+name+"\n";
+			for(StructField field : fields) {
+				String var = name+"."+field.name;
+				code += "const unique "+var+":Field "+field.p4_to_Boogie()+";\n";
+			}
+			return code;
+		}
 	}
 	@Override
 	String p4_to_Boogie(String arg) {
 		String code = "\n// Header "+name+"\n";
 		// there may be assignments like header1:=header2;
-		code += "var "+arg+":Ref;\n";
-		Parser.getInstance().addBoogieGlobalVariable(arg);
-		for(StructField field : fields) {
-			code += field.p4_to_Boogie(arg);
-//			code += 
+		
+		if(Parser.getInstance().getCommands().ifUseCorral()) {
+			code += "var "+arg+":Ref;\n";
+			Parser.getInstance().addBoogieGlobalVariable(arg);
+			for(StructField field : fields) {
+				code += field.p4_to_Boogie(arg);
+			}
+		}
+		else {
+			return "";
 		}
 		return code;
 	}
@@ -161,31 +176,48 @@ class Type_Struct extends Type {
 	
 	@Override
 	String p4_to_Boogie() {
-		String code = "\n// Struct "+name+"\n";
-		boolean spec = true;
-		String instanceName = "";
-		if(name.equals("headers")) {
-			instanceName = "hdr";
-		}
-		else if(name.equals("metadata")) {
-			instanceName = "meta";
-		}
-		else if(name.equals("standard_metadata_t")) {
-			instanceName = "standard_metadata";
+		if(Parser.getInstance().getCommands().ifUseCorral()) {
+			String code = "\n// Struct "+name+"\n";
+			boolean spec = true;
+			String instanceName = "";
+			if(name.equals("headers")) {
+				instanceName = "hdr";
+			}
+			else if(name.equals("metadata")) {
+				instanceName = "meta";
+			}
+			else if(name.equals("standard_metadata_t")) {
+				instanceName = "standard_metadata";
+			}
+			else {
+				spec = false;
+			}
+			
+			if(spec) {
+				for(StructField field:fields) {
+					code += field.p4_to_Boogie(instanceName);
+				}
+				return code;
+			}else {
+				return "";
+			}
 		}
 		else {
-			spec = false;
-		}
-		
-		if(spec) {
-			for(StructField field:fields) {
-				code += field.p4_to_Boogie(instanceName);
+			// Use Boogie as backend
+			String code = "\n// Struct "+name+"\n";
+			for(StructField field : fields) {
+				String var = name+"."+field.name;
+				Parser.getInstance().addBoogieGlobalVariable(var);
+				if(field.type.Node_Type.equals("Type_Stack")) {
+					code += "const unique "+name+"."+field.name+":Field "+"HeaderStack"+";\n";
+					Parser.getInstance().addBoogieGlobalDeclaration(field.type.p4_to_Boogie());
+				}
+				else {
+					code += "const unique "+name+"."+field.name+":Field "+field.p4_to_Boogie()+";\n";
+				}
 			}
 			return code;
-		}else {
-			return "";
 		}
-		
 		
 //		// TODO field may be bv, header, typedef
 //		String code = "\n// Struct "+name+"\n";
